@@ -35,6 +35,7 @@ class RewardUnit(ABC):
         """
         self._reward_function = reward_function
         self._on_safe_dist_violation = _on_safe_dist_violation
+        self._sum_reward = 0.0
 
     @property
     def robot_radius(self):

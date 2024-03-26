@@ -31,6 +31,8 @@ __all__ = [
     "RewardFixedStep",
 ]
 
+if_show_reward = False
+
 
 @RewardUnitFactory.register("goal_reached")
 class RewardGoalReached(RewardUnit):
@@ -79,11 +81,16 @@ class RewardGoalReached(RewardUnit):
         if distance_to_goal < self._reward_function.goal_radius:
             self.add_reward(self._reward)
             self.add_info(self.DONE_INFO)
+            if if_show_reward:
+                self._sum_reward += self._reward
         else:
             self.add_info(self.NOT_DONE_INFO)
 
     def reset(self):
         self._goal_radius = self._reward_function.goal_radius
+        if if_show_reward:
+            print("GoalReached reward:", self._sum_reward)
+            self._sum_reward = 0
 
 
 @RewardUnitFactory.register("safe_distance")
@@ -128,6 +135,13 @@ class RewardSafeDistance(RewardUnit):
         ):
             self.add_reward(self._reward)
             self.add_info(self.SAFE_DIST_VIOLATION_INFO)
+            if if_show_reward:
+                self._sum_reward += self._reward
+                
+    def reset(self):
+        if if_show_reward:
+            print("SafeDistance reward:", self._sum_reward)
+            self._sum_reward = 0
 
 @RewardUnitFactory.register("safe_distance_exp")
 class RewardSafeDistanceExp(RewardUnit):
@@ -174,6 +188,13 @@ class RewardSafeDistanceExp(RewardUnit):
             self._reward = self._reward * np.exp(-1.0*self._w_factor * (laser_min-0.))
             self.add_reward(self._reward)
             self.add_info(self.SAFE_DIST_VIOLATION_INFO)
+            if if_show_reward:
+                self._sum_reward += self._reward
+    
+    def reset(self):
+        if if_show_reward:
+            print("SafeDistanceExp reward:", self._sum_reward)
+            self._sum_reward = 0
 
 @RewardUnitFactory.register("fixed_per_step")
 class RewardFixedStep(RewardUnit):
@@ -205,6 +226,13 @@ class RewardFixedStep(RewardUnit):
 
     def __call__(self, action: np.ndarray, *args: Any, **kwargs: Any):
             self.add_reward(self._reward)
+            if if_show_reward:
+                self._sum_reward += self._reward
+    
+    def reset(self):
+        if if_show_reward:
+            print("FixedStep reward:", self._sum_reward)
+            self._sum_reward = 0
 
 @RewardUnitFactory.register("no_movement")
 class RewardNoMovement(RewardUnit):
@@ -242,6 +270,13 @@ class RewardNoMovement(RewardUnit):
             and abs(action[0]) <= REWARD_CONSTANTS.NO_MOVEMENT_TOLERANCE
         ):
             self.add_reward(self._reward)
+            if if_show_reward:
+                self._sum_reward += self._reward
+
+    def reset(self):    
+        if if_show_reward:
+            print("NoMovement reward:", self._sum_reward)
+            self._sum_reward = 0
 
 
 @RewardUnitFactory.register("approach_goal")
@@ -291,10 +326,15 @@ class RewardApproachGoal(RewardUnit):
                 else self._neg_factor
             )
             self.add_reward(w * (self.last_goal_dist - distance_to_goal))
+            if if_show_reward:
+                self._sum_reward += w * (self.last_goal_dist - distance_to_goal)
         self.last_goal_dist = distance_to_goal
 
     def reset(self):
         self.last_goal_dist = None
+        if if_show_reward:
+            print("ApproachGoal reward:", self._sum_reward)
+            self._sum_reward = 0
 
 
 @RewardUnitFactory.register("collision")
@@ -343,6 +383,13 @@ class RewardCollision(RewardUnit):
         if laser_min <= self.robot_radius or coll_in_blind_spots:
             self.add_reward(self._reward)
             self.add_info(self.DONE_INFO)
+            if if_show_reward:
+                self._sum_reward += self._reward
+    
+    def reset(self):
+        if if_show_reward:
+            print("Collision reward:", self._sum_reward)
+            self._sum_reward = 0
 
 
 @RewardUnitFactory.register("distance_travelled")
@@ -379,6 +426,13 @@ class RewardDistanceTravelled(RewardUnit):
             (lin_vel * self._lin_vel_scalar) + (ang_vel * self._ang_vel_scalar)
         ) * -self._factor
         self.add_reward(reward)
+        if if_show_reward:
+            self._sum_reward += reward
+
+    def reset(self):
+        if if_show_reward:
+            print("DistanceTravelled reward:", self._sum_reward)
+            self._sum_reward = 0
 
 
 # not used in globalplan_collector_unit.py
@@ -571,6 +625,13 @@ class RewardReverseDrive(RewardUnit):
         """
         if action is not None and action[0] < 0:
             self.add_reward(self._reward)
+            if if_show_reward:
+                self._sum_reward += self._reward
+
+    def reset(self):
+        if if_show_reward:
+            print("ReverseDrive reward:", self._sum_reward)
+            self._sum_reward = 0
 
 
 @RewardUnitFactory.register("abrupt_velocity_change")
@@ -741,10 +802,15 @@ class RewardTwoFactorVelocityDifference(RewardUnit):
         if self.last_action is not None:
             diff = (action - self.last_action) ** 2
             self.add_reward(-(diff[0] * self._alpha + diff[-1] * self._beta))
+            if if_show_reward:
+                self._sum_reward += -(diff[0] * self._alpha + diff[-1] * self._beta)
         self.last_action = action
 
     def reset(self):
         self.last_action = None
+        if if_show_reward:
+            print("TwoFactorVelocityDifference reward:", self._sum_reward)
+            self._sum_reward = 0
 
 
 @RewardUnitFactory.register("active_heading_direction")
