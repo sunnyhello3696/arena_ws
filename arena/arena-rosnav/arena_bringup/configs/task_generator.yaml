@@ -1,0 +1,28 @@
+SCENARIO:
+  file: default.json
+
+PARAMETRIZED:
+  file: default.xml 
+
+STAGED:
+  curriculum: "default.yaml"
+  index: 0
+
+RANDOM:
+  # The seed parameter controls the random seed used for obstacle, robot start, and goal position generation. 
+  # Providing a seed allows for stable reproduction of tasks. 
+  # A value of -1 indicates a random seed will be used.
+  seed: -1
+  static:
+    min: 5
+    max: 10
+    # models: ["shelf","random","long_shelf","warehouse_shelf","table","pallet"]
+    models: ["shelf","random"]
+  interactive:
+    min: 0
+    max: 0
+    models: ["shelf"]
+  dynamic:
+    min: 5
+    max: 10
+    models: ["actor1"]

@@ -1,0 +1,76 @@
+# Training Curriculum 
+# this yaml serves as container of the learning curriculum for the agent
+# by determining the number of static/dynamic obstacles per stage
+# (will carry on training on last stage when threshhold reached)
+
+# Training Curriculum 
+# this yaml serves as container of the learning curriculum for the agent
+# by determining the number of static/dynamic obstacles per stage
+# (will carry on training on last stage when threshhold reached)
+
+- #0
+  goal_radius: 1.0
+  map_generator:
+    algorithm: "barn"
+    algorithm_config:
+      fill_pct: 0.075
+      smooth_iter: 3
+    
+    # src/arena/arena-rosnav/utils/misc/map_generator/map_generator/barn/map_gen.py
+    # smooth_iter (int, optional): The number of smoothing iterations to perform. Defaults to 5.
+    # fill_pct (float, optional): The percentage of the map to be filled with obstacles. Defaults to 0.25.
+  static: 0
+  dynamic: 0
+- #1
+  goal_radius: 0.75
+  map_generator:
+    algorithm: "barn"
+    algorithm_config:
+      fill_pct: 0.10
+      smooth_iter: 8
+  static: 5
+  dynamic: 0
+- #2
+  goal_radius: 0.5
+  map_generator:
+    algorithm: "barn"
+    algorithm_config:
+      fill_pct: 0.10
+      smooth_iter: 2
+  static: 5
+  dynamic: 5
+- #3
+  goal_radius: 0.3
+  map_generator:
+    algorithm: "barn"
+    algorithm_config:
+      fill_pct: 0.125
+      smooth_iter: 5
+
+  static: 10
+  dynamic: 5
+- #4
+  goal_radius: 0.25
+  map_generator:
+    algorithm: "barn"
+    algorithm_config:
+      fill_pct: 0.125
+      smooth_iter: 2
+  static: 10
+  dynamic: 10
+- #5
+  map_generator:
+    algorithm: "barn"
+    algorithm_config:
+      fill_pct: 0.15
+      smooth_iter: 2
+  static: 10
+  dynamic: 15
+# - #6
+#   map_generator:
+#     algorithm: "barn"
+#     algorithm_config:
+#       fill_pct: 0.15
+#       smooth_iter: 5
+#   static: 10
+#   dynamic: 15
