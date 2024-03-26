@@ -274,6 +274,7 @@ class FlatlandEnv(gymnasium.Env):
         )
 
         self._steps_curr_episode += 1
+        # print(f"Step: {self._steps_curr_episode}, Reward: {reward}")
 
         # info
         info, done = self._determine_termination(

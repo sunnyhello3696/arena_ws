@@ -12,14 +12,17 @@ subgoal_tolerance: &subgoal_tolerance 0.2
 
 planning_time_horizon: &planning_time_horizon 3.0       # sec look ahead time
 planning_horizon: &planning_horizon 1.0                # m   look ahead distance
+# # burger
 # sensor_range: &sensor_range 3.5                         # m   laser sensor range
-# originBot
+# originBot/turtlebot2
 sensor_range: &sensor_range 8.0                         # m   laser sensor range
 
-#max_vel: &max_vel 2.0                                 # m/s   robot max vel
+# # burger
 # max_vel: &max_vel 0.22                                 # m/s   robot max vel
-# originBot
-max_vel: &max_vel 0.8                                 # m/s   robot max vel
+# # originBot
+# max_vel: &max_vel 0.8                                 # m/s   robot max vel
+# turtlebot2
+max_vel: &max_vel 0.7                                 # m/s   robot max vel
 max_acc: &max_acc 3.0                                   # m/s^2 srobot max acc
 max_jerk: &max_jerk 4.0                                 # m/s^3 robot max jerk
 
@@ -29,7 +32,10 @@ min_vel: &min_vel 0.08                                 # m/s for timed_astar act
 
 
 #robot_radius: &robot_radius 0.3                         # m
-robot_radius: &robot_radius 0.113                         # m
+# # burger\originBot
+# robot_radius: &robot_radius 0.113                         # m
+# turtlebot2
+robot_radius: &robot_radius 0.177                         # m
 #obstacle_radius: &obstacle_radius 0.4                   # m
 obstacle_radius: &obstacle_radius 0.150                   # m
 obstacles_inflation: &obstacles_inflation 0.05           # m

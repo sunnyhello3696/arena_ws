@@ -9,8 +9,9 @@
 #include <signal.h>
 #include <math.h>
 
+// // burger
 // #define MAX_LASER_DISTANCE 3.5
-// originBot
+// originBot/turtlebot2
 #define MAX_LASER_DISTANCE 8.0
 #define forEach BOOST_FOREACH
 
