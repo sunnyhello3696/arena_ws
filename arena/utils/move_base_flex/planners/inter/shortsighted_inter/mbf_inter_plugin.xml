@@ -1,0 +1,8 @@
+<library path="lib/libshortsighted_inter">
+    <class name="shortsighted_inter/ShortsightedInter" type="shortsighted_inter::ShortsightedInter"
+        base_class_type="mbf_costmap_core::CostmapInter">
+        <description>
+            An intermediate planner that simply forwards the global plan.
+        </description>
+    </class>
+</library>  

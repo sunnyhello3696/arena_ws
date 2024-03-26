@@ -1,0 +1,8 @@
+<library path="lib/libbypass_inter">
+    <class name="bypass_inter/BypassInter" type="bypass_inter::BypassInter"
+        base_class_type="mbf_costmap_core::CostmapInter">
+        <description>
+            An intermediate planner that simply forwards the global plan.
+        </description>
+    </class>
+</library>  

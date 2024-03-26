@@ -1,0 +1,10 @@
+<library path="lib/libpolite_inter">
+    <class name="polite_inter/PoliteInter" type="polite_inter::PoliteInter"
+        base_class_type="mbf_costmap_core::CostmapInter">
+        <description>
+            An intermediate planner that tries to be polite towards pedestrians.
+            Has a specified range that detecs pedestrians and makes robot slow down.
+            The robot moves back a specified amount when pedestrian is near him to make space.
+        </description>
+    </class>
+</library>

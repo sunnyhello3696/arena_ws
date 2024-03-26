@@ -1,0 +1,8 @@
+<library path="lib/libsideways_inter">
+    <class name="sideways_inter/SidewaysInter" type="sideways_inter::SidewaysInter"
+        base_class_type="mbf_costmap_core::CostmapInter">
+        <description>
+            An intermediate planner that stops the robot if a pedestrian is detected within 2 meters and waits until the pedestrian is at least 4 meters away.
+        </description>
+    </class>
+</library>
