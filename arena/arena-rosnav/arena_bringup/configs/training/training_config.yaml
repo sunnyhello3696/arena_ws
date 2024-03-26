@@ -84,7 +84,7 @@ rl_agent:
       norm_obs: true
       norm_reward: true # Whether to normalize rewards or not
       clip_obs: 30.0 # Max absolute value for observation
-      clip_reward: 50.0 # Max value absolute for discounted reward
+      clip_reward: 40.0 # Max value absolute for discounted reward
       gamma: 0.99 # discount factor
 
   laser:

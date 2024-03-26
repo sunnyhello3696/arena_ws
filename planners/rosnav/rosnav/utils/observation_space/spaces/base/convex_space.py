@@ -39,7 +39,7 @@ class ConvexSpace(BaseObservationSpace):
         **kwargs,
     ) -> None:
         self.map_size = convex_map_size
-        self.lidar_max_range = 9.0
+        self.lidar_max_range = rospy.get_param_cached("laser/range", 8.0) + 0.4
         self.xy_resolution = (self.lidar_max_range*2)/self.map_size
         self.scale_factor = 1.0
 

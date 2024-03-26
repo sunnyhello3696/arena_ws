@@ -210,7 +210,10 @@ bool Laser::process_scan_msg(sensor_msgs::LaserScan& msg_LaserScan,Points& scans
     std::cout<<"Laser.cpp: laser num wrong "<<laser_num << std::endl;
   double drad = 2*M_PI/laser_num;
   double laser_frame_theta = 0.,base_frame_x = 0.,base_frame_y = 0.;
-  double safe_dist = 0.113;//exp_dist + robot_radius
+  // // burger\originBot
+  // double safe_dist = 0.113;//exp_dist + robot_radius
+  // turtlebot2
+  double safe_dist = 0.177;//exp_dist + robot_radius
   for(int i = 0;i < laser_num;++i)
   {
     if(std::isnan(ranges[i]))

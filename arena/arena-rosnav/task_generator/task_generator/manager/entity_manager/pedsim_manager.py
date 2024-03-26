@@ -378,7 +378,7 @@ class PedsimManager(EntityManager):
 
             msg.type = _get_ped_type()
             msg.number_of_peds = 1
-            msg.vmax = Pedsim.VMAX(obstacle.extra.get("vmax", 1.5))
+            msg.vmax = Pedsim.VMAX(obstacle.extra.get("vmax", 1.0))
             msg.start_up_mode = Pedsim.START_UP_MODE(
                 obstacle.extra.get("start_up_mode", None)
             )
