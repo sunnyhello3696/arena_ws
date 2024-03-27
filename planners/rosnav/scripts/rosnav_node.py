@@ -76,7 +76,9 @@ class RosnavNode:
 
         # Agent name and path
         self.agent_name = rospy.get_param("agent_name","burger") # burger
-        self.agent_path = RosnavNode._get_model_path(self.agent_name)
+        self.model_name = "burger_AGENT_66_2024_03_26__20_19_25"
+        self.agent_path = RosnavNode._get_model_path(self.model_name)
+        print("agent_path: ", self.agent_path)
 
         assert os.path.isdir(
             self.agent_path
@@ -138,7 +140,7 @@ class RosnavNode:
         self.state = None
         self._last_action = [0, 0, 0]
         self._reset_state = True
-        self.clock_sub = rospy.Subscriber(self.ns.oldname("clock"), Clock, self.clock_cb)
+        self.clock_sub = rospy.Subscriber(self.ns("clock"), Clock, self.clock_cb)
         self.clock_time = None
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
         print("RosnavNode initialized")
@@ -201,7 +203,7 @@ class RosnavNode:
         Returns:
             The encoded observation.
         """
-        if self.enable_rviz:
+        if self.enable_rviz and self.clock_time is not None:
             
             _robot_pose = observation[OBS_DICT_KEYS.ROBOT_POSE]  # observation_space_manager.py
             # 创建 TransformStamped 消息
@@ -284,6 +286,10 @@ class RosnavNode:
         action, self.state = self._agent.predict(**predict_dict)
 
         decoded_action = self._encoder.decode_action(action)
+        
+        print("=======================")
+        print("action: ", action)
+        print("decoded_action: ", decoded_action)
 
         self._last_action = decoded_action
 
@@ -431,9 +437,7 @@ def parse_args():
 if __name__ == "__main__":
     rospy.init_node("rosnav_node")
     print("rosnav_node started")
-
     args = parse_args()
-
     node = RosnavNode(ns=args.namespace)
 
     while not rospy.is_shutdown():

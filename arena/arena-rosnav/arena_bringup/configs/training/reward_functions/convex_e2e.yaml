@@ -18,8 +18,8 @@ no_movement:
   _on_safe_dist_violation: true
 
 approach_goal:
-  pos_factor: 0.4
-  neg_factor: 0.6
+  pos_factor: 0.5
+  neg_factor: 0.7
   _on_safe_dist_violation: true
 
 collision:
