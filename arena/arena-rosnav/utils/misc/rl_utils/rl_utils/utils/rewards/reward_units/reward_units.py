@@ -31,7 +31,7 @@ __all__ = [
     "RewardFixedStep",
 ]
 
-if_show_reward = False
+if_show_reward = True
 
 
 @RewardUnitFactory.register("goal_reached")
@@ -687,6 +687,8 @@ class RewardAbruptVelocityChange(RewardUnit):
             assert isinstance(self.last_action, np.ndarray)
             vel_diff = abs(action[idx] - self.last_action[idx])
             self.add_reward(-((vel_diff**4 / 100) * factor))
+            if if_show_reward:
+                self._sum_reward += -((vel_diff**4 / 100) * factor)
 
         return vel_change_fct
 
@@ -698,6 +700,9 @@ class RewardAbruptVelocityChange(RewardUnit):
 
     def reset(self):
         self.last_action = None
+        if if_show_reward:
+            print("AbruptVelocityChange reward:", self._sum_reward)
+            self._sum_reward = 0
 
 
 @RewardUnitFactory.register("root_velocity_difference")

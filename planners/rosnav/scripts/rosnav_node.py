@@ -76,7 +76,7 @@ class RosnavNode:
 
         # Agent name and path
         self.agent_name = rospy.get_param("agent_name","burger") # burger
-        self.model_name = "burger_AGENT_66_2024_03_26__20_19_25"
+        self.model_name = "burger_AGENT_66_2024_03_27__21_27_56"
         self.agent_path = RosnavNode._get_model_path(self.model_name)
         print("agent_path: ", self.agent_path)
 
@@ -86,6 +86,13 @@ class RosnavNode:
 
         # Load hyperparams
         self._hyperparams = RosnavNode._load_hyperparams(self.agent_path)
+
+        # 检查 'rl_agent' 是否在 self._hyperparams 中，并且是否含有 'resume' 键
+        if "rl_agent" in self._hyperparams and "resume" in self._hyperparams["rl_agent"]:
+            # 如果 'resume' 的值为 None，则将其替换为一个空字符串 ""
+            if self._hyperparams["rl_agent"]["resume"] is None:
+                self._hyperparams["rl_agent"]["resume"] = ""
+
         rospy.set_param("rl_agent", self._hyperparams["rl_agent"])
 
         self._setup_action_space(self._hyperparams)
