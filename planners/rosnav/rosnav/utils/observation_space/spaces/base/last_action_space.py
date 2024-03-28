@@ -57,7 +57,10 @@ class LastActionSpace(BaseObservationSpace):
         self._max_translational_vel = max_translational_vel
         self._min_angular_vel = min_angular_vel
         self._max_angular_vel = max_angular_vel
-        super().__init__(*args, **kwargs)
+        self._normalize_points = True
+        self._action_points_num = 2*2
+        self._space = self.get_gym_space()
+        # super().__init__(*args, **kwargs)
 
     def get_gym_space(self) -> spaces.Space:
         """
@@ -66,27 +69,56 @@ class LastActionSpace(BaseObservationSpace):
         Returns:
             A tuple of gym spaces representing the last action space.
         """
-        _spaces = (
-            spaces.Box(
-                low=self._min_linear_vel,
-                high=self._max_linear_vel,
-                shape=(1,),
-                dtype=np.float32,
-            ),
-            spaces.Box(
-                low=self._min_translational_vel,
-                high=self._max_translational_vel,
-                shape=(1,),
-                dtype=np.float32,
-            ),
-            spaces.Box(
-                low=self._min_angular_vel,
-                high=self._max_angular_vel,
-                shape=(1,),
-                dtype=np.float32,
-            ),
-        )
-        return stack_spaces(*_spaces)
+        if not self._normalize_points:
+            _spaces = (
+                spaces.Box(
+                    low=self._min_linear_vel,
+                    high=self._max_linear_vel,
+                    shape=(1,),
+                    dtype=np.float32,
+                ),
+                spaces.Box(
+                    low=self._min_translational_vel,
+                    high=self._max_translational_vel,
+                    shape=(1,),
+                    dtype=np.float32,
+                ),
+                spaces.Box(
+                    low=self._min_angular_vel,
+                    high=self._max_angular_vel,
+                    shape=(1,),
+                    dtype=np.float32,
+                ),
+            )
+            return stack_spaces(*_spaces)
+        else:
+            _spaces = (
+                spaces.Box(
+                    low=0,
+                    high=1,
+                    shape=(1,),
+                    dtype=np.float32,
+                ),
+               spaces.Box(
+                    low=0,
+                    high=1,
+                    shape=(1,),
+                    dtype=np.float32,
+                ),
+                spaces.Box(
+                    low=0,
+                    high=1,
+                    shape=(1,),
+                    dtype=np.float32,
+                ),
+                spaces.Box(
+                    low=0,
+                    high=1,
+                    shape=(1,),
+                    dtype=np.float32,
+                ),
+            )
+            return stack_spaces(*_spaces)
 
     def encode_observation(self, observation: dict, *args, **kwargs) -> ndarray:
         """
@@ -98,4 +130,6 @@ class LastActionSpace(BaseObservationSpace):
         Returns:
             ndarray: The encoded observation representing the last action.
         """
+        # print lenghth
+        print("LastActionSpace: ", len(observation[OBS_DICT_KEYS.LAST_ACTION]))
         return observation[OBS_DICT_KEYS.LAST_ACTION]

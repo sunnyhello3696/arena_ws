@@ -44,7 +44,7 @@ class ActionSpaceManager:
         self._actions = actions
         self._stacked = stacked
         self._normalize_points = normalize_points
-        self._action_points_num = action_points_num
+        self._action_points_num = action_points_num*2
 
         self._space = self.get_action_space()
 

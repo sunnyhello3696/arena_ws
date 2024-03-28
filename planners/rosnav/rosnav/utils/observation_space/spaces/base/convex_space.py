@@ -13,6 +13,9 @@ import numpy as np
 import rospy  # Assuming use of ROS for rviz
 from sensor_msgs.msg import Image  # Assuming conversion to Image message for rviz
 import cv2  # 导入OpenCV库
+from flatland_msgs.msg import Galaxy2D
+from typing import Any, Dict
+
 # import ros_numpy
 
 
@@ -79,7 +82,7 @@ class ConvexSpace(BaseObservationSpace):
             dtype=np.float32,
         )
 
-    def encode_observation(self, observation: dict, *args, **kwargs) -> ndarray:
+    def encode_observation(self, observation: Dict[str, Any], *args, **kwargs) -> ndarray:
         """
         Encodes the laser scan observation.
 
@@ -106,7 +109,7 @@ class ConvexSpace(BaseObservationSpace):
         return laser_convex_map
 
 
-    def lidar_convex_to_map(self, laser_scan: np.ndarray, laser_convex: np.ndarray) -> np.ndarray:
+    def lidar_convex_to_map(self, laser_scan: np.ndarray, laser_convex: Galaxy2D) -> np.ndarray:
         """
         Convert the laser scan data to a 2D map.
 
@@ -117,11 +120,13 @@ class ConvexSpace(BaseObservationSpace):
         Returns:
             np.ndarray: The 2D map.
         """
-        # convex_vertex == np.array([]) -> is_convex_reliable= false
-        if len(laser_convex) == 0:
-            is_convex_reliable = False
-        else:
-            is_convex_reliable = True
+        # # convex_vertex == np.array([]) -> is_convex_reliable= false
+        # if len(laser_convex) == 0:
+        #     is_convex_reliable = False
+        # else:
+        #     is_convex_reliable = True
+
+        is_convex_reliable = laser_convex.success.data
 
         x_lidar, y_lidar = self.lidar_ranges_to_xy(laser_scan)
         x_lidar = np.append(x_lidar, 0)
@@ -187,7 +192,7 @@ class ConvexSpace(BaseObservationSpace):
         y = laser_scan * np.sin(angles)
         return x, y
     
-    def convex_vertex_to_xy(self, laser_convex: np.ndarray) -> np.ndarray:
+    def convex_vertex_to_xy(self, laser_convex: Galaxy2D) -> np.ndarray:
         """
         Convert the laser convex data to x, y coordinates.
 
@@ -204,8 +209,8 @@ class ConvexSpace(BaseObservationSpace):
             np.ndarray: The x, y coordinates.
         """
 
-        x = laser_convex[:, 0]
-        y = laser_convex[:, 1]
+        x = [vertex.x for vertex in laser_convex.convex_vertex.points]
+        y = [vertex.y for vertex in laser_convex.convex_vertex.points]
         return np.array(x), np.array(y)
     
     def occupancy_fill(self, ox, oy, occupancy_map, min_x, min_y, center_x, center_y, x_w, y_w, fill_value=0, method='fillPoly'):

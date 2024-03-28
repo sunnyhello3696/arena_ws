@@ -16,6 +16,7 @@ from .base_agent import BaseAgent, PolicyType
 from .feature_extractors import *
 
 from rosnav.rosnav_space_manager.convex_encoder import ConvexEncoder
+from rosnav.rosnav_space_manager.convex_mpc_encoder import ConvexMPCEncoder
 from rosnav.model.feature_extractors.convex import ConvexExtractor_1d,ConvexExtractor_2d
 
 
@@ -206,7 +207,7 @@ class AGENT_59(BaseAgent):
 @AgentFactory.register("AGENT_66")
 class AGENT_66(BaseAgent):
     type = PolicyType.CNN
-    space_encoder_class = ConvexEncoder
+    space_encoder_class = ConvexMPCEncoder
 
     # 注意顺序
     observation_spaces = [

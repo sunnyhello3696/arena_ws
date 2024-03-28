@@ -121,7 +121,7 @@ class FlatlandEnv(gymnasium.Env):
         self._steps_curr_episode = 0
         self._episode = 0
         self._max_steps_per_episode = max_steps_per_episode
-        self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        self._last_action = np.array([0, 0, 0, 0])  # linear x, linear y, angular z
 
         self.enable_rviz = rospy.get_param("/if_viz", False)
         self.clock_sub = rospy.Subscriber(self.ns.oldname("clock"), Clock, self.clock_cb)
@@ -154,8 +154,8 @@ class FlatlandEnv(gymnasium.Env):
             obs_structur=[
                 # BaseCollectorUnit,
                 ConvexCollectorUnit,
-                GlobalplanCollectorUnit,
-                SemanticAggregateUnit,
+                # GlobalplanCollectorUnit,
+                # SemanticAggregateUnit,
             ],
         )
         return True
@@ -203,8 +203,8 @@ class FlatlandEnv(gymnasium.Env):
 
         self.agent_action_pub.publish(action_msg)
 
-    def _decode_action(self, action: np.ndarray) -> np.ndarray:
-        return self.model_space_encoder.decode_action(action)
+    def _decode_action(self, action: np.ndarray, action_obs_dict) -> np.ndarray:
+        return self.model_space_encoder.decode_action(action, action_obs_dict)
 
     def _encode_observation(self, observation, *args, **kwargs):
 
@@ -256,8 +256,12 @@ class FlatlandEnv(gymnasium.Env):
 
         """
 
-        decoded_action = self._decode_action(action)
-        self._pub_action(decoded_action)
+        action_obs_dict = self.observation_collector.get_observations(
+            last_action=self._last_action
+        )
+
+        decoded_action = self._decode_action(action , action_obs_dict)
+        # self._pub_action(decoded_action)
 
         if self._is_train_mode:
             self.call_service_takeSimStep()

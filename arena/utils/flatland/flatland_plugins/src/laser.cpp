@@ -156,10 +156,10 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
     // convex publisher
     bool is_collision = process_scan_msg(laser_scan_,scans_xy);
 
-    if(galaxy_xyin_360out(res, scans_xy,1000,0,0,15.0))
+    if(galaxy_xyin_360out(res, scans_xy,360,0,0,15.0))
     {
       g2dres.success.data = true;
-      // g2dres.scans = laser_scan_.ranges;
+      g2dres.scans = laser_scan_.ranges;
       
       // polygon：它由一系列点组成，这些点定义了多边形的顶点。在这段代码中，polygon 的顶点来自 convex 向量，其中每个顶点由一个 geometry_msgs::Point32 类型的对象表示。Point32 对象包含三个浮点数字段 x, y, z，在这种情况下只使用 x 和 y 来表示二维空间中的点。
       // polar_convex、polar_convex_theta：极坐标下的距离、角度。相比于convex，polar_convex已经根据max_vertex_num计算重新Q分配后的点

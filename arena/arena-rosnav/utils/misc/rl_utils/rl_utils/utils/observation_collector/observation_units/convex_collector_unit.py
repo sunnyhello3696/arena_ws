@@ -46,7 +46,7 @@ class ConvexCollectorUnit(CollectorUnit):
     _laser: np.ndarray
     _full_range_laser: np.ndarray
     _subgoal: Pose2D
-    _laser_convex:np.ndarray
+    _laser_convex:Galaxy2D
     # std_msgs/Bool success
     # float32[] scans
     # geometry_msgs/Polygon convex_vertex
@@ -85,7 +85,7 @@ class ConvexCollectorUnit(CollectorUnit):
         self._laser = np.array([])
         self._full_range_laser = np.array([])
         self._subgoal = Pose2D()
-        self._laser_convex = np.array([])
+        self._laser_convex = Galaxy2D()
         self._laser_convex_sub: rospy.Subscriber = None
 
         self._scan_sub: rospy.Subscriber = None
@@ -197,9 +197,10 @@ class ConvexCollectorUnit(CollectorUnit):
                 OBS_DICT_KEYS.GOAL_LOCATION_IN_ROBOT_FRAME: goal_in_robot_frame,
                 OBS_DICT_KEYS.DISTANCE_TO_GOAL: dist_to_goal,
                 OBS_DICT_KEYS.LAST_ACTION: kwargs.get(
-                    "last_action", np.array([0, 0, 0])
+                    "last_action", np.array([0, 0, 0, 0])
                 ),
                 OBS_DICT_KEYS.LASER_CONVEX: self._laser_convex,
+                OBS_DICT_KEYS.ROBOT_STATE: self._robot_state,
             }
         )
 
@@ -260,20 +261,22 @@ class ConvexCollectorUnit(CollectorUnit):
         Args:
             laser_convex_msg (Galaxy2D): Laser convex message.
         """
+        # self._received_laser_convex = True
+        # is_convex_reliable = laser_convex_msg.success.data
+        # convex_vertex = laser_convex_msg.convex_vertex  # geometry_msgs/Polygon
+        # # convert to numpy array
+        # if is_convex_reliable:
+        #     convex_vertex = np.array(
+        #         [
+        #             [point.x, point.y]
+        #             for point in convex_vertex.points
+        #         ]
+        #     )
+        # else:
+        #     convex_vertex = np.array([])
+        # self._laser_convex = convex_vertex
         self._received_laser_convex = True
-        is_convex_reliable = laser_convex_msg.success.data
-        convex_vertex = laser_convex_msg.convex_vertex  # geometry_msgs/Polygon
-        # convert to numpy array
-        if is_convex_reliable:
-            convex_vertex = np.array(
-                [
-                    [point.x, point.y]
-                    for point in convex_vertex.points
-                ]
-            )
-        else:
-            convex_vertex = np.array([])
-        self._laser_convex = convex_vertex
+        self._laser_convex = laser_convex_msg
 
     @staticmethod
     def process_laser_msg(laser_msg: LaserScan, laser_num_beams: int) -> np.ndarray:
