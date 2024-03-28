@@ -94,6 +94,10 @@ rl_agent:
       num_beams: 200
 
   action_space:
+    normalize_points: 
+      enabled: false # normalize points_num action points to [0, 1] and no continuous and discrete action space
+      action_points_num: 3
+
     discrete: false
     custom_discretization: # only used if discrete is true, otherwise ignored
       enabled: true

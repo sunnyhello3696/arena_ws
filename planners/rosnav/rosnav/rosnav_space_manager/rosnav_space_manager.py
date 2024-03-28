@@ -69,6 +69,9 @@ class RosnavSpaceManager:
         self._ped_min_speed_y = -5.0
         self._ped_max_speed_y = 5.0
 
+        self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
+        self.action_points_num = rospy.get_param_cached("action_points_num", 0)
+
         is_action_space_discrete = rospy.get_param_cached(
             "rl_agent/action_space/discrete", False
         )
@@ -84,6 +87,8 @@ class RosnavSpaceManager:
             "action_space_discrete": is_action_space_discrete,
             "actions": actions,
             "stacked": self._stacked,
+            "normalize_points": self.is_normalize_points,
+            "action_points_num": self.action_points_num,
             **action_space_kwargs,
         }
 
