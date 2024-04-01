@@ -1,9 +1,9 @@
 ### General
 # in debug_mode no agent directories will be created and no models will be saved
 # further no wandb logging and fake (simulated) multiprocessing for traceback
-debug_mode: false
+debug_mode: true
 # number of parallel environments
-n_envs: 8
+n_envs: 1
 # gpu yes or no
 no_gpu: false
 
@@ -15,7 +15,7 @@ tm_modules: "staged"
 # number of simulation timesteps
 n_timesteps: 40000000
 max_num_moves_per_eps: 300
-goal_radius: 0.25
+goal_radius: 0.8
 safety_distance: 0.4
 
 ### Training Monitoring
@@ -37,12 +37,12 @@ callbacks:
   ### Periodic Eval
   periodic_eval:
     # max number of steps per episode
-    max_num_moves_per_eps: 400
+    max_num_moves_per_eps: 300
     # number of evaluation episodes
-    n_eval_episodes: 30
+    n_eval_episodes: 20
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 8000
+    eval_freq: 1
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -67,9 +67,9 @@ rl_agent:
   # architecture_name: "RosnavResNet_3"
   architecture_name: "AGENT_66"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: null # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
+  resume: "burger_AGENT_66_2024_03_29__12_56_37"
   # resume: "burger"
-  checkpoint: "best_model" # gonna be ignored if resume is not null
+  checkpoint: "last_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:

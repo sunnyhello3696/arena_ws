@@ -111,7 +111,7 @@ class Agent(StatechartProvider):
         for event in (*events, "tick"):
             self._statemachine.queue(event).execute_once()
 
-        if self._destination is not None:
+        if self._destination is not None and len(self._destination)==3:
             in_data.agents[i].destination.x, in_data.agents[i].destination.y, in_data.agents[i].destination.z = self._destination
 
     def post(self, in_data: InData, work_data: WorkData, i: int):
