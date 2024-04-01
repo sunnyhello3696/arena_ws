@@ -11,7 +11,7 @@ class Lidar2Image():
     def __init__(
         self, *args, **kwargs
     ) -> None:
-        self.map_size = 256
+        self.map_size = 80
         self.lidar_max_range = 4.0
         self.xy_resolution = (self.lidar_max_range*2)/self.map_size
 
@@ -248,8 +248,8 @@ class Lidar2Image():
 # main
 # Usage example
 lidar_to_image = Lidar2Image()
-lidar_filepath = '/home/tuanjie/arena_ws/src/arena/arena-rosnav/testing/scripts/lidar_filepath.txt'
-convex_filepath = '/home/tuanjie/arena_ws/src/arena/arena-rosnav/testing/scripts/convex_filepath.txt'
+lidar_filepath = '/home/dmz/arena_ws/src/arena/arena-rosnav/testing/scripts/lidar_filepath.txt'
+convex_filepath = '/home/dmz/arena_ws/src/arena/arena-rosnav/testing/scripts/convex_filepath.txt'
 
 # You'll need to replace 'lidar_filepath' and 'convex_filepath' with the actual file paths
 merged_map, lidar_map, convex_map = lidar_to_image.lidar_convex_to_map(lidar_filepath, convex_filepath)

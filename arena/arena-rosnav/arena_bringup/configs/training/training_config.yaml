@@ -42,7 +42,7 @@ callbacks:
     n_eval_episodes: 30
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 8000
+    eval_freq: 9000
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -65,15 +65,15 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_66"
+  architecture_name: "AGENT_67"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: null # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
+  resume: null 
   # resume: "burger"
   checkpoint: "best_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
-    enabled: true
+    enabled: false
     stack_size: 4
 
   reward_fnc: "convex_e2e"
@@ -82,7 +82,7 @@ rl_agent:
     enabled: true
     settings:
       norm_obs: true
-      norm_reward: true # Whether to normalize rewards or not
+      norm_reward: false # Whether to normalize rewards or not
       clip_obs: 30.0 # Max absolute value for observation
       clip_reward: 40.0 # Max value absolute for discounted reward
       gamma: 0.99 # discount factor

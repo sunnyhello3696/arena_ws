@@ -132,18 +132,18 @@ class StackedLaserMapSpace(BaseFeatureMapSpace):
             temp = np.array(laser_queue, dtype=np.float32).flatten()
 
             # 初始化一个空的特征映射矩阵 scan_avg，其大小为 (20, 80)。这个矩阵用于存放处理后的激光数据，即经过最小化和平均化处理的数据。
-            scan_avg = np.zeros((20, 80))
+            scan_avg = np.zeros((10, 80))
 
 
-            for n in range(10):
+            for n in range(5):
                 scan_tmp = temp[n * 720 : (n + 1) * 720]
                 for i in range(80):
                     scan_avg[2 * n, i] = np.min(scan_tmp[i * 9 : (i + 1) * 9])
                     scan_avg[2 * n + 1, i] = np.mean(scan_tmp[i * 9 : (i + 1) * 9])
 
-            scan_avg = scan_avg.reshape(1600)
+            scan_avg = scan_avg.reshape(800)
             # 将一个由激光扫描数据处理得到的一维数组 scan_avg 重复扩展，并重新整形为一个 (80, 80) 形状的二维数组
-            scan_avg_map = np.matlib.repmat(scan_avg, 1, 4).reshape((80, 80))
+            scan_avg_map = np.matlib.repmat(scan_avg, 2, 4).reshape((80, 80))
         except Exception as e:
             rospy.logwarn(
                 f"[{rospy.get_name()}, {StackedLaserMapSpace.__name__}]: {e} \n Cannot build laser map. Instead return empty map."
