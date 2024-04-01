@@ -115,13 +115,21 @@ class FlatlandEnv(gymnasium.Env):
         self._is_train_mode = rospy.get_param_cached("/train_mode", default=True)
         self._step_size = rospy.get_param_cached("/step_size")
 
+        self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
+        self.action_points_num = rospy.get_param_cached("action_points_num", 0)
+
         self._reward_fnc = reward_fnc
         self._kwargs = kwargs
 
         self._steps_curr_episode = 0
         self._episode = 0
         self._max_steps_per_episode = max_steps_per_episode
-        self._last_action = np.array([0, 0, 0, 0])  # linear x, linear y, angular z
+
+        if not self.is_normalize_points:
+            self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        else:
+            # len = self.action_points_num * 2
+            self._last_action = np.array([0]*self.action_points_num * 2)
 
         self.enable_rviz = rospy.get_param("/if_viz", False)
         self.clock_sub = rospy.Subscriber(self.ns.oldname("clock"), Clock, self.clock_cb)
@@ -256,6 +264,7 @@ class FlatlandEnv(gymnasium.Env):
 
         """
 
+        print("=============================namespaces: ", self.ns)
         action_obs_dict = self.observation_collector.get_observations(
             last_action=self._last_action
         )
@@ -286,9 +295,16 @@ class FlatlandEnv(gymnasium.Env):
             curr_steps=self._steps_curr_episode,
             max_steps=self._max_steps_per_episode,
         )
+        # check obs_dict values is null
+        for key in obs_dict.keys():
+            if obs_dict[key] is None:
+                print(f"obs_dict[{key}] is None")
+        obs_encode_narray = self._encode_observation(obs_dict, is_done=done)
+        
+        print("encoded observation shape: ", obs_encode_narray.shape)
 
         return (
-            self._encode_observation(obs_dict, is_done=done),
+            obs_encode_narray,
             reward,
             done,
             False,
@@ -327,7 +343,12 @@ class FlatlandEnv(gymnasium.Env):
         )
         self.reward_calculator.reset()
         self._steps_curr_episode = 0
-        self._last_action = np.array([0, 0, 0])
+
+        if not self.is_normalize_points:
+            self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        else:
+            # len = self.action_points_num * 2
+            self._last_action = np.zeros(self.action_points_num * 2)
 
         if self._is_train_mode:
             self.agent_action_pub.publish(Twist())

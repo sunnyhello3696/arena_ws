@@ -80,6 +80,15 @@ class ConvexCollectorUnit(CollectorUnit):
         self._laser_num_beams = rospy.get_param("laser/num_beams")
         self._enable_full_range_laser = rospy.get_param("laser/full_range_laser", False)
 
+        self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
+        self.action_points_num = rospy.get_param_cached("action_points_num", 0)
+
+        if not self.is_normalize_points:
+            self._init_last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        else:
+            # len = self.action_points_num * 2
+            self._init_last_action = np.zeros(self.action_points_num * 2)
+
         self._robot_state = Odometry()
         self._robot_pose = Pose2D()
         self._laser = np.array([])
@@ -184,7 +193,10 @@ class ConvexCollectorUnit(CollectorUnit):
 
         dist_to_goal = np.linalg.norm(goal_in_robot_frame)
         angle_to_goal = np.arctan2(goal_in_robot_frame[1], goal_in_robot_frame[0])
-
+        if kwargs.get("last_action") is not None:
+            last_action = kwargs.get("last_action")
+        else:
+            last_action = self._init_last_action
         obs_dict.update(
             {
                 OBS_DICT_KEYS.LASER: self._laser,
@@ -196,9 +208,7 @@ class ConvexCollectorUnit(CollectorUnit):
                 OBS_DICT_KEYS.GOAL_LOCATION: (self._subgoal.x, self._subgoal.y),
                 OBS_DICT_KEYS.GOAL_LOCATION_IN_ROBOT_FRAME: goal_in_robot_frame,
                 OBS_DICT_KEYS.DISTANCE_TO_GOAL: dist_to_goal,
-                OBS_DICT_KEYS.LAST_ACTION: kwargs.get(
-                    "last_action", np.array([0, 0, 0, 0])
-                ),
+                OBS_DICT_KEYS.LAST_ACTION: last_action,
                 OBS_DICT_KEYS.LASER_CONVEX: self._laser_convex,
                 OBS_DICT_KEYS.ROBOT_STATE: self._robot_state,
             }

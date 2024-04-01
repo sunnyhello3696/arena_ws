@@ -62,7 +62,10 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
-        super().__init__(**action_space_kwargs, **observation_kwargs, **kwargs)
+        merged_kwargs = {}
+        merged_kwargs.update(action_space_kwargs)
+        merged_kwargs.update(observation_kwargs)
+        super().__init__(**merged_kwargs, **kwargs)
         self._observation_list = observation_list
         self._observation_kwargs = observation_kwargs
         self.setup_action_space(action_space_kwargs)
@@ -194,6 +197,10 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 # 假设 action_points 包含您从上面代码片段中计算出的点
                 action_points = np.array(action_points, dtype=np.float32)
 
+                # 打印action_points的形状和内容来进行检查
+                print("action_points shape:", action_points.shape)
+                print("action_points content:", action_points)
+
                 # 确保点的数量足够
                 if action_points.shape[0] < 3:
                     raise ValueError("至少需要3个点来进行2次B-Spline拟合")
@@ -201,14 +208,24 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 # 确保点的维度正确（这里我们假设是二维点，即n=2）
                 if action_points.ndim != 2 or action_points.shape[1] != 2:
                     raise ValueError("点的格式应为(m, 2)，其中m是点的数量")
+                
+                # 检查数据点是否包含NaN或无穷值
+                if np.isnan(action_points).any() or np.isinf(action_points).any():
+                    raise ValueError("数据点包含NaN或无穷值")
 
-                # 使用SciPy拟合二次B-Spline曲线
-                tck, u = splprep(action_points.T, s=0, per=False, k=2)  # 设置 k=2 以拟合二次曲线
-                u_new = np.linspace(u.min(), u.max(), 100)
-                x_new, y_new = splev(u_new, tck, der=0)
-                self.publish_spline(x_new, y_new)
+                # 尝试使用不同的平滑参数
+                s = 2  # 您可以根据需要调整这个参数
 
-        
+                try:
+                    tck, u = splprep(action_points.T, s=s, per=False, k=2)
+                    u_new = np.linspace(u.min(), u.max(), 100)
+                    x_new, y_new = splev(u_new, tck, der=0)
+                    self.publish_spline(x_new, y_new)
+                except Exception as e:
+                    print("拟合过程中发生错误:", e)
+                    # 根据错误类型进行适当的处理
+                    return None
+                     
         return self._action_space_manager.decode_action(action)
 
     def encode_observation(self, observation, *args, **kwargs) -> np.ndarray:
@@ -453,7 +470,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
     
     def publish_spline(self,x_new, y_new):
         marker = Marker()
-        marker.header.frame_id = "/base_link"
+        marker.header.frame_id = "map"
         marker.type = marker.LINE_STRIP
         marker.action = marker.ADD
         marker.scale.x = 0.02  # 线宽

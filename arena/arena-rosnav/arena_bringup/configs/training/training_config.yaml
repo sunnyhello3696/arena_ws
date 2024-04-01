@@ -76,7 +76,7 @@ rl_agent:
     enabled: true
     stack_size: 4
 
-  reward_fnc: "convex_e2e"
+  reward_fnc: "convex_points"
 
   normalize:
     enabled: true

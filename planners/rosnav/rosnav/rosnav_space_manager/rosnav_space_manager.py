@@ -105,6 +105,8 @@ class RosnavSpaceManager:
             "max_speed_x": self._ped_max_speed_x,
             "min_speed_y": self._ped_min_speed_y,
             "max_speed_y": self._ped_max_speed_y,
+            "normalize_points": self.is_normalize_points,
+            "action_points_num": self.action_points_num,
             **observation_space_kwargs,
         }
         
