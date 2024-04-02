@@ -41,32 +41,6 @@ Visualization Manager:
       Unreliable: false
       Use Timestamp: false
       Value: false
-    - Alpha: 0.699999988079071
-      Class: rviz/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: false
-      Name: Global_costmap
-      Topic: /rto_lab_0_2/move_base/global_costmap/costmap
-      Unreliable: false
-      Use Timestamp: false
-      Value: false
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/Pose
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Subgoal
-      Queue Size: 10
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
-      Topic: /subgoal
-      Unreliable: false
-      Value: true
     - Class: rviz/InteractiveMarkers
       Enable Transparency: true
       Enabled: true
@@ -205,7 +179,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Flat Squares
-      Topic: /sim_1/sim_1_burger/scan
+      Topic: /eval_sim/scan_vis
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -233,7 +207,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /sim_1/scan_vis
+      Topic: /eval_sim/scan_vis
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -244,28 +218,11 @@ Visualization Manager:
       Enabled: true
       Name: Polygon
       Queue Size: 10
-      Topic: /sim_1/convex_polygon_vis
+      Topic: /eval_sim/convex_polygon_vis
       Unreliable: false
       Value: true
-    - Class: rviz/TF
-      Enabled: false
-      Filter (blacklist): ""
-      Filter (whitelist): ""
-      Frame Timeout: 15
-      Frames:
-        All Enabled: true
-      Marker Alpha: 1
-      Marker Scale: 1
-      Name: TF
-      Show Arrows: true
-      Show Axes: true
-      Show Names: true
-      Tree:
-        {}
-      Update Interval: 0
-      Value: false
     - Class: rviz/Image
-      Enabled: false
+      Enabled: true
       Image Topic: /laser_convex_map/convex
       Max Value: 1
       Median window: 5
@@ -275,9 +232,9 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: false
+      Value: true
     - Class: rviz/Image
-      Enabled: false
+      Enabled: true
       Image Topic: /laser_convex_map/lidar
       Max Value: 1
       Median window: 5
@@ -287,7 +244,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz/Axes
       Enabled: true
@@ -303,13 +260,22 @@ Visualization Manager:
       Length: 0.5
       Name: Axes
       Radius: 0.10000000149011612
-      Reference Frame: sim_1/robot
+      Reference Frame: sim_1_burger/odom
       Show Trail: false
+      Value: true
+    - Class: rviz/InteractiveMarkers
+      Enable Transparency: true
+      Enabled: true
+      Name: InteractiveMarkers
+      Show Axes: false
+      Show Descriptions: true
+      Show Visual Aids: false
+      Update Topic: /eval_sim/interactive_model_markers/update
       Value: true
     - Alpha: 1
       Class: rviz/Axes
       Enabled: true
-      Length: 0.5
+      Length: 1
       Name: Axes
       Radius: 0.10000000149011612
       Reference Frame: eval_sim/robot

@@ -4,12 +4,12 @@
   <param name="SIMULATOR" value="flatland" />
   <param name="local_planner" value="rosnav" />
 
-  <param name="if_viz" value="true" />
+  <param name="if_viz" value="false" />
   <arg name="model" default="burger"      doc="model type [burger, jackal, ridgeback, agvota, rto, rto_real]"/>
 
   <!-- Here are the argument that may be frequently changed -->
   <arg name="ns_prefix" default="sim" />
-  <arg name="num_envs" default="1" />
+  <arg name="num_envs" default="10" />
 
   <param name="single_env" value="false" />
 

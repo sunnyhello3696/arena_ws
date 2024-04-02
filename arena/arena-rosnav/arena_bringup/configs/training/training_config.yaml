@@ -3,7 +3,7 @@
 # further no wandb logging and fake (simulated) multiprocessing for traceback
 debug_mode: true
 # number of parallel environments
-n_envs: 1
+n_envs: 10
 # gpu yes or no
 no_gpu: false
 
@@ -42,7 +42,7 @@ callbacks:
     n_eval_episodes: 20
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 1
+    eval_freq: 8000
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -52,14 +52,14 @@ callbacks:
     training_curriculum_file: "default.yaml"
     curr_stage: 0
     threshold_type: "succ"
-    upper_threshold: 0.90
-    lower_threshold: 0.65
+    upper_threshold: 0.85
+    lower_threshold: 0.60
 
   ### Stop Training on Threshold
   # stops training when last stage reached and threshold satisfied
   stop_training:
     threshold_type: "succ"
-    threshold: 0.95
+    threshold: 0.90
 
 ### Agent Specs: Training Hyperparameter and Network Architecture
 rl_agent:
@@ -67,14 +67,14 @@ rl_agent:
   # architecture_name: "RosnavResNet_3"
   architecture_name: "AGENT_66"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: "burger_AGENT_66_2024_03_29__12_56_37"
+  resume: null
   # resume: "burger"
-  checkpoint: "last_model" # gonna be ignored if resume is not null
+  checkpoint: "best_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
-    enabled: true
-    stack_size: 4
+    enabled: false
+    stack_size: 3
 
   reward_fnc: "convex_e2e"
 
@@ -82,7 +82,7 @@ rl_agent:
     enabled: true
     settings:
       norm_obs: true
-      norm_reward: true # Whether to normalize rewards or not
+      norm_reward: false # Whether to normalize rewards or not
       clip_obs: 30.0 # Max absolute value for observation
       clip_reward: 40.0 # Max value absolute for discounted reward
       gamma: 0.99 # discount factor

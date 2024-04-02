@@ -15,14 +15,14 @@ RANDOM:
   seed: -1
   static:
     min: 5
-    max: 10
+    max: 5
     # models: ["shelf","random","long_shelf","warehouse_shelf","table","pallet"]
-    models: ["shelf","random"]
+    models: ["shelf","random","table","pallet"]
   interactive:
     min: 0
     max: 0
     models: ["shelf"]
   dynamic:
     min: 5
-    max: 10
+    max: 5
     models: ["actor1"]
