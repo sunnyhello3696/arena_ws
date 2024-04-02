@@ -59,10 +59,11 @@ def load_vec_normalize(config: dict, paths: dict, env: VecEnv, eval_env: VecEnv)
                 rospy.loginfo(
                     "Succesfully loaded VecNormalize object from pickle file.."
                 )
-        return env, eval_env
-
-    rospy.logfatal("No VecNormalize object found to load..")
-    sys.exit()
+                print("Succesfully loaded VecNormalize object from pickle file..")
+                return env, eval_env
+            else:
+                rospy.logfatal("No VecNormalize object found to load..")
+                sys.exit()
 
 
 def load_vec_framestack(config: dict, env: VecEnv, eval_env: VecEnv):

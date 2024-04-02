@@ -267,6 +267,26 @@ class AGENT_67(BaseAgent):
     net_arch = dict(pi=[256, 64], vf=[256, 64])
     activation_fn = nn.ReLU
 
+@AgentFactory.register("AGENT_68")
+class AGENT_68(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+    }
+    features_extractor_class = ConvexExtractor_2d
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[64, 64, 64], vf=[64, 64, 64])
+    activation_fn = nn.ReLU
+
 @AgentFactory.register("BarnResNet")
 class BarnResNet(BaseAgent):
     """
