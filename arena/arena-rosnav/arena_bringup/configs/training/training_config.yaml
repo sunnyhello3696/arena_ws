@@ -1,9 +1,9 @@
 ### General
 # in debug_mode no agent directories will be created and no models will be saved
 # further no wandb logging and fake (simulated) multiprocessing for traceback
-debug_mode: true
+debug_mode: false
 # number of parallel environments
-n_envs: 12
+n_envs: 16
 # gpu yes or no
 no_gpu: false
 
@@ -16,7 +16,7 @@ tm_modules: "staged"
 n_timesteps: 40000000
 max_num_moves_per_eps: 300
 goal_radius: 0.8
-safety_distance: 0.4
+safety_distance: 0.35
 
 ### Training Monitoring
 monitoring:
@@ -39,10 +39,10 @@ callbacks:
     # max number of steps per episode
     max_num_moves_per_eps: 300
     # number of evaluation episodes
-    n_eval_episodes: 200
+    n_eval_episodes: 30
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 1
+    eval_freq: 8000
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -50,7 +50,7 @@ callbacks:
   training_curriculum:
     # file for the robot's learning curriculum
     training_curriculum_file: "default.yaml"
-    curr_stage: 2
+    curr_stage: 3
     threshold_type: "succ"
     upper_threshold: 0.85
     lower_threshold: 0.60
@@ -65,16 +65,16 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_66"
+  architecture_name: "AGENT_68"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: "burger_AGENT_66_2024_04_01__13_09_44"
+  resume: "burger_AGENT_68_2024_04_02__22_11_20"
   # resume: "burger"
   checkpoint: "best_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
-    enabled: false
-    stack_size: 4
+    enabled: true
+    stack_size: 3
 
   reward_fnc: "convex_e2e"
 
@@ -111,7 +111,7 @@ rl_agent:
       final_value: 0.0001
 
   ppo:
-    batch_size: 2560
+    batch_size: 10240
     gamma: 0.99
     n_steps: 1200
     ent_coef: 0.005
@@ -119,6 +119,6 @@ rl_agent:
     vf_coef: 0.22
     max_grad_norm: 0.5
     gae_lambda: 0.95
-    m_batch_size: 256
+    m_batch_size: 1024
     n_epochs: 3
     clip_range: 0.25

@@ -59,7 +59,7 @@
   static: 10
   dynamic: 10
 - #5
-  goal_radius: 0.4
+  goal_radius: 0.8
   map_generator:
     algorithm: "barn"
     algorithm_config:

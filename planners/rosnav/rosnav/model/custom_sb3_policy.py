@@ -7,6 +7,7 @@ from rosnav.model.feature_extractors.resnet.resnet import (
     RESNET_MID_FUSION_EXTRACTOR_4,
     RESNET_MID_FUSION_EXTRACTOR_5,
     RESNET_MID_FUSION_EXTRACTOR_6,
+    RESNET_COVEXMAP_EXTRACTOR_1,
 )
 from rosnav.rosnav_space_manager.default_encoder import DefaultEncoder
 from torch import nn
@@ -243,7 +244,48 @@ class AGENT_66(BaseAgent):
 #     net_arch = dict(pi=[64, 64, 64], vf=[64, 64, 64])
 #     activation_fn = nn.ReLU
 
+@AgentFactory.register("AGENT_67")
+class AGENT_67(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexEncoder
 
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.STACKED_LASER_MAP,
+        SPACE_INDEX.CONVEX,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 80,
+        "roi_in_m": 20,
+        "feature_map_size": 80,
+        "laser_stack_size": 10,
+    }
+    features_extractor_class = RESNET_COVEXMAP_EXTRACTOR_1
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[256, 64], vf=[256, 64])
+    activation_fn = nn.ReLU
+
+@AgentFactory.register("AGENT_68")
+class AGENT_68(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+    }
+    features_extractor_class = ConvexExtractor_2d
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[128, 64, 64], vf=[128, 64, 64])
+    activation_fn = nn.ReLU
 
 @AgentFactory.register("BarnResNet")
 class BarnResNet(BaseAgent):
