@@ -5,6 +5,7 @@
   <param name="local_planner" value="rosnav" />
 
   <param name="if_viz" value="true" />
+  <param name="max_vertex_num" value="120" />
   <arg name="model" default="burger"      doc="model type [burger, jackal, ridgeback, agvota, rto, rto_real]"/>
 
   <!-- Here are the argument that may be frequently changed -->

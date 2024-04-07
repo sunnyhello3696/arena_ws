@@ -69,7 +69,10 @@ void Laser::OnInitialize(const YAML::Node &config) {
   convex_polygon_vis_publisher_ = nh_.advertise<geometry_msgs::PolygonStamped>("convex_polygon_vis", 1);
 
   if_viz = false; // 定义一个变量来存储参数值
-  nh_.getParam("/if_viz", if_viz); // 传递变量作为引用  
+  nh_.getParam("/if_viz", if_viz); // 传递变量作为引用
+  max_vertex_num = 120;
+  nh_.getParam("/max_vertex_num", max_vertex_num); // 传递变量作为引用
+
 
   // construct the body to laser transformation matrix once since it never
   // changes
@@ -156,7 +159,7 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
     // convex publisher
     bool is_collision = process_scan_msg(laser_scan_,scans_xy);
 
-    if(galaxy_xyin_360out(res, scans_xy,360,0,0,15.0))
+    if(galaxy_xyin_360out(res, scans_xy,max_vertex_num,0,0,15.0))
     {
       g2dres.success.data = true;
       g2dres.scans = laser_scan_.ranges;
@@ -170,7 +173,7 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
     else
     {
       g2dres.success.data = false;
-      // g2dres.scans = laser_scan_.ranges;
+      g2dres.scans = laser_scan_.ranges;
     }
     galaxy_publisher_.publish(g2dres); 
     

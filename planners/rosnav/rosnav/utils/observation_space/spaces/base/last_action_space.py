@@ -71,40 +71,27 @@ class LastActionSpace(BaseObservationSpace):
         Returns:
             A tuple of gym spaces representing the last action space.
         """
-        if not self._normalize_points:
-            _spaces = (
-                spaces.Box(
-                    low=self._min_linear_vel,
-                    high=self._max_linear_vel,
-                    shape=(1,),
-                    dtype=np.float32,
-                ),
-                spaces.Box(
-                    low=self._min_translational_vel,
-                    high=self._max_translational_vel,
-                    shape=(1,),
-                    dtype=np.float32,
-                ),
-                spaces.Box(
-                    low=self._min_angular_vel,
-                    high=self._max_angular_vel,
-                    shape=(1,),
-                    dtype=np.float32,
-                ),
-            )
-            return stack_spaces(*_spaces)
-        else:
-            _spaces = []
-            for _ in range(self._action_points_num):
-                _spaces.append(
-                    spaces.Box(
-                        low=0,
-                        high=1,
-                        shape=(1,),
-                        dtype=np.float32,
-                    )
-                )
-            return stack_spaces(*_spaces)
+        _spaces = (
+            spaces.Box(
+                low=self._min_linear_vel,
+                high=self._max_linear_vel,
+                shape=(1,),
+                dtype=np.float32,
+            ),
+            spaces.Box(
+                low=self._min_translational_vel,
+                high=self._max_translational_vel,
+                shape=(1,),
+                dtype=np.float32,
+            ),
+            spaces.Box(
+                low=self._min_angular_vel,
+                high=self._max_angular_vel,
+                shape=(1,),
+                dtype=np.float32,
+            ),
+        )
+        return stack_spaces(*_spaces)
 
     def encode_observation(self, observation: dict, *args, **kwargs) -> ndarray:
         """

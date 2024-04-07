@@ -86,6 +86,7 @@ class Laser : public ModelPlugin {
   uint16_t layers_bits_;  ///< for setting the layers where laser will function
   ThreadPool pool_;       ///< ThreadPool for managing concurrent scan threads
   bool if_viz;
+  int max_vertex_num;
   /*
    * for setting reflectance layers. if the laser hits those layers,
    * intensity will be high (255)

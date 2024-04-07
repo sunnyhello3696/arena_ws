@@ -83,11 +83,7 @@ class ConvexCollectorUnit(CollectorUnit):
         self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
         self.action_points_num = rospy.get_param_cached("action_points_num", 0)
 
-        if not self.is_normalize_points:
-            self._init_last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
-        else:
-            # len = self.action_points_num * 2
-            self._init_last_action = np.zeros(self.action_points_num * 2)
+        self._init_last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
 
         self._robot_state = Odometry()
         self._robot_pose = Pose2D()

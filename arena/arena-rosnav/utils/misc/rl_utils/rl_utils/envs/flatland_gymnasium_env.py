@@ -125,11 +125,7 @@ class FlatlandEnv(gymnasium.Env):
         self._episode = 0
         self._max_steps_per_episode = max_steps_per_episode
 
-        if not self.is_normalize_points:
-            self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
-        else:
-            # len = self.action_points_num * 2
-            self._last_action = np.array([0]*self.action_points_num * 2)
+        self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
 
         self.enable_rviz = rospy.get_param("/if_viz", False)
         self.clock_sub = rospy.Subscriber(self.ns.oldname("clock"), Clock, self.clock_cb)
@@ -301,7 +297,7 @@ class FlatlandEnv(gymnasium.Env):
                 print(f"obs_dict[{key}] is None")
         obs_encode_narray = self._encode_observation(obs_dict, is_done=done)
         
-        print("encoded observation shape: ", obs_encode_narray.shape)
+        # print("encoded observation shape: ", obs_encode_narray.shape)
 
         return (
             obs_encode_narray,
@@ -344,11 +340,7 @@ class FlatlandEnv(gymnasium.Env):
         self.reward_calculator.reset()
         self._steps_curr_episode = 0
 
-        if not self.is_normalize_points:
-            self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
-        else:
-            # len = self.action_points_num * 2
-            self._last_action = np.zeros(self.action_points_num * 2)
+        self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
 
         if self._is_train_mode:
             self.agent_action_pub.publish(Twist())
