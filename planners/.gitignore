@@ -6,3 +6,6 @@ crowdnav-ros/
 lflh/
 sarl-star/
 trail/
+*__pycache__*
+*.pyc
+*.vscode

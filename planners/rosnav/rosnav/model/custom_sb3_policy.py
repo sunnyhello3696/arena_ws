@@ -284,7 +284,7 @@ class AGENT_68(BaseAgent):
     }
     features_extractor_class = ConvexExtractor_2d
     features_extractor_kwargs = {"features_dim": 256}
-    net_arch = dict(pi=[64, 64, 64], vf=[64, 64, 64])
+    net_arch = dict(pi=[128, 64, 64], vf=[128, 64, 64])
     activation_fn = nn.ReLU
 
 @AgentFactory.register("AGENT_69")
