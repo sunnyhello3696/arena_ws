@@ -260,7 +260,7 @@ class FlatlandEnv(gymnasium.Env):
 
         """
 
-        print("=============================namespaces: ", self.ns)
+        # print("=============================namespaces: ", self.ns)
         action_obs_dict = self.observation_collector.get_observations(
             last_action=self._last_action
         )
