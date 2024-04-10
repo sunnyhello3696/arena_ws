@@ -69,6 +69,9 @@ class RosnavSpaceManager:
         self._ped_min_speed_y = -5.0
         self._ped_max_speed_y = 5.0
 
+        self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
+        self.action_points_num = rospy.get_param_cached("action_points_num", 0)
+
         is_action_space_discrete = rospy.get_param_cached(
             "rl_agent/action_space/discrete", False
         )
@@ -84,6 +87,8 @@ class RosnavSpaceManager:
             "action_space_discrete": is_action_space_discrete,
             "actions": actions,
             "stacked": self._stacked,
+            "normalize_points": self.is_normalize_points,
+            "action_points_num": self.action_points_num,
             **action_space_kwargs,
         }
 
@@ -100,6 +105,8 @@ class RosnavSpaceManager:
             "max_speed_x": self._ped_max_speed_x,
             "min_speed_y": self._ped_min_speed_y,
             "max_speed_y": self._ped_max_speed_y,
+            "normalize_points": self.is_normalize_points,
+            "action_points_num": self.action_points_num,
             **observation_space_kwargs,
         }
         
@@ -163,7 +170,7 @@ class RosnavSpaceManager:
         encoded_obs = self._encoder.encode_observation(observation, **kwargs)
         return encoded_obs
 
-    def decode_action(self, action):
+    def decode_action(self, action , action_obs_dict=None):
         """
         Decodes the given action using the space encoder.
         Args:
@@ -171,4 +178,4 @@ class RosnavSpaceManager:
         Returns:
             object: The decoded action.
         """
-        return self._encoder.decode_action(action)
+        return self._encoder.decode_action(action ,action_obs_dict)

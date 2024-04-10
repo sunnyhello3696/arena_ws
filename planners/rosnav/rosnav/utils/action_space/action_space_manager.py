@@ -34,6 +34,8 @@ class ActionSpaceManager:
         action_space_discrete: bool,
         actions: dict,
         stacked: bool,
+        normalize_points: bool,
+        action_points_num: int,
         *args,
         **kwargs,
     ) -> None:
@@ -41,6 +43,8 @@ class ActionSpaceManager:
         self._discrete = action_space_discrete
         self._actions = actions
         self._stacked = stacked
+        self._normalize_points = normalize_points
+        self._action_points_num = action_points_num*2
 
         self._space = self.get_action_space()
 
@@ -81,41 +85,48 @@ class ActionSpaceManager:
         Returns:
             object: The action space object.
         """
-        if self._discrete:
-            return spaces.Discrete(len(self._actions))
+        if not self._normalize_points:
+            if self._discrete:
+                return spaces.Discrete(len(self._actions))
 
-        linear_range = self._actions["linear_range"]
-        angular_range = self._actions["angular_range"]
+            linear_range = self._actions["linear_range"]
+            angular_range = self._actions["angular_range"]
 
-        if not self._holonomic:
-            return spaces.Box(
-                low=np.array([linear_range[0], angular_range[0]]),
-                high=np.array([linear_range[1], angular_range[1]]),
-                dtype=np.float32,
+            if not self._holonomic:
+                return spaces.Box(
+                    low=np.array([linear_range[0], angular_range[0]]),
+                    high=np.array([linear_range[1], angular_range[1]]),
+                    dtype=np.float32,
+                )
+
+            linear_range_x, linear_range_y = (
+                linear_range["x"],
+                linear_range["y"],
             )
 
-        linear_range_x, linear_range_y = (
-            linear_range["x"],
-            linear_range["y"],
-        )
-
-        return spaces.Box(
-            low=np.array(
-                [
-                    linear_range_x[0],
-                    linear_range_y[0],
-                    angular_range[0],
-                ]
-            ),
-            high=np.array(
-                [
-                    linear_range_x[1],
-                    linear_range_y[1],
-                    angular_range[1],
-                ]
-            ),
-            dtype=np.float32,
-        )
+            return spaces.Box(
+                low=np.array(
+                    [
+                        linear_range_x[0],
+                        linear_range_y[0],
+                        angular_range[0],
+                    ]
+                ),
+                high=np.array(
+                    [
+                        linear_range_x[1],
+                        linear_range_y[1],
+                        angular_range[1],
+                    ]
+                ),
+                dtype=np.float32,
+            )
+        else:
+            return spaces.Box(
+                low=np.array([0] * self._action_points_num),
+                high=np.array([1] * self._action_points_num),
+                dtype=np.float32,
+            )
 
     def decode_action(self, action):
         """
@@ -127,16 +138,21 @@ class ActionSpaceManager:
         Returns:
             np.ndarray: The decoded action.
         """
-        if type(action) == int:
-            action = [action]
+        if not self._normalize_points:
+            if type(action) == int:
+                action = [action]
 
-        if self._stacked:
-            action = action[0] if action.ndim == 2 else action
+            if self._stacked:
+                action = action[0] if action.ndim == 2 else action
 
-        if self._discrete:
-            return self._extend_action_array(self._translate_disc_action(action))
+            if self._discrete:
+                return self._extend_action_array(self._translate_disc_action(action))
 
-        return self._extend_action_array(action)
+            return self._extend_action_array(action)
+        else:
+            if self._stacked:
+                action = action[0] if action.ndim == 2 else action
+            return action
 
     def _extend_action_array(self, action: np.ndarray) -> np.ndarray:
         """

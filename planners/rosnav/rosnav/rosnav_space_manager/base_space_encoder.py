@@ -61,7 +61,7 @@ class BaseSpaceEncoder:
         """
         raise NotImplementedError()
 
-    def decode_action(self, action) -> np.ndarray:
+    def decode_action(self, action ,action_obs_dict=None) -> np.ndarray:
         """
         Decode the action.
 

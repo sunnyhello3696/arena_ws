@@ -48,6 +48,8 @@ class LastActionSpace(BaseObservationSpace):
         max_angular_vel: float,
         min_translational_vel: float = 0.0,
         max_translational_vel: float = 0.0,
+        is_normalize_points: bool = False,
+        action_points_num: int = 2,
         *args,
         **kwargs
     ) -> None:
@@ -57,6 +59,9 @@ class LastActionSpace(BaseObservationSpace):
         self._max_translational_vel = max_translational_vel
         self._min_angular_vel = min_angular_vel
         self._max_angular_vel = max_angular_vel
+        self._normalize_points = is_normalize_points
+        self._action_points_num = action_points_num*2
+        # self._space = self.get_gym_space()
         super().__init__(*args, **kwargs)
 
     def get_gym_space(self) -> spaces.Space:
@@ -98,4 +103,5 @@ class LastActionSpace(BaseObservationSpace):
         Returns:
             ndarray: The encoded observation representing the last action.
         """
+        # print("observation[OBS_DICT_KEYS.LAST_ACTION] ndarray shape: ", observation[OBS_DICT_KEYS.LAST_ACTION].shape)
         return observation[OBS_DICT_KEYS.LAST_ACTION]

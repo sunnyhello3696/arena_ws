@@ -149,7 +149,7 @@ class ConvexEncoder(BaseSpaceEncoder):
             frame_stacking=self._stacked,
         )
 
-    def decode_action(self, action) -> np.ndarray:
+    def decode_action(self, action, action_obs_dict) -> np.ndarray:
         """
         Decodes the action.
 

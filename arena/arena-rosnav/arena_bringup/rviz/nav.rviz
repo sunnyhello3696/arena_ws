@@ -5,6 +5,16 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /InteractiveMarkers1
+        - /LaserScan2
+        - /Polygon1
+        - /Image2
+        - /Image3
+        - /Axes2
+        - /Axes3
+        - /Marker1
+        - /Marker2
+        - /Marker3
       Splitter Ratio: 0.5310015678405762
     Tree Height: 777
   - Class: rviz/Selection
@@ -13,6 +23,7 @@ Panels:
     Expanded:
       - /2D Pose Estimate1
       - /2D Nav Goal1
+      - /Publish Point1
     Name: Tool Properties
     Splitter Ratio: 0.4285709857940674
   - Class: rviz/Views
@@ -23,7 +34,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -48,7 +59,42 @@ Visualization Manager:
       Show Axes: false
       Show Descriptions: true
       Show Visual Aids: false
-      Update Topic: /eval_sim/interactive_model_markers/update
+      Update Topic: /sim_1/interactive_model_markers/update
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /sim_1/pedsim_simulator/robot_position
+      Unreliable: false
       Value: true
     - Alpha: 1
       Axes Length: 1
@@ -207,7 +253,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /eval_sim/scan_vis
+      Topic: /sim_1/scan_vis
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -218,11 +264,11 @@ Visualization Manager:
       Enabled: true
       Name: Polygon
       Queue Size: 10
-      Topic: /eval_sim/convex_polygon_vis
+      Topic: /sim_1/convex_polygon_vis
       Unreliable: false
       Value: true
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /laser_convex_map/convex
       Max Value: 1
       Median window: 5
@@ -232,9 +278,9 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /laser_convex_map/lidar
       Max Value: 1
       Median window: 5
@@ -244,7 +290,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Class: rviz/Axes
       Enabled: true
@@ -254,13 +300,13 @@ Visualization Manager:
       Reference Frame: map
       Show Trail: false
       Value: true
-    - Alpha: 1
+    - Alpha: 0.5
       Class: rviz/Axes
       Enabled: true
       Length: 0.5
       Name: Axes
       Radius: 0.10000000149011612
-      Reference Frame: sim_1_burger/odom
+      Reference Frame: sim_1/robot
       Show Trail: false
       Value: true
     - Class: rviz/InteractiveMarkers
@@ -281,14 +327,29 @@ Visualization Manager:
       Reference Frame: eval_sim/robot
       Show Trail: false
       Value: true
-    - Class: rviz/InteractiveMarkers
-      Enable Transparency: true
+    - Class: rviz/Marker
       Enabled: true
-      Name: InteractiveMarkers
-      Show Axes: false
-      Show Descriptions: true
-      Show Visual Aids: false
-      Update Topic: /sim_1/interactive_model_markers/update
+      Marker Topic: /action_points_spline
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /action_points
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /visualization_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -314,10 +375,13 @@ Visualization Manager:
       Topic: goal
     - Class: rviz_plugins/TaskGenerator
     - Class: rviz/Measure
+    - Class: rviz/PublishPoint
+      Single click: true
+      Topic: /clicked_point
   Value: true
   Views:
     Current:
-      Angle: -12.555022239685059
+      Angle: -12.560022354125977
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -327,10 +391,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: -33.651039123535156
+      Scale: -26.70952606201172
       Target Frame: <Fixed Frame>
-      X: 15.245377540588379
-      Y: 11.63138198852539
+      X: 8.975107192993164
+      Y: 13.54994010925293
     Saved: ~
 Window Geometry:
   Displays:
@@ -340,7 +404,7 @@ Window Geometry:
   Hide Right Dock: false
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000002770000039cfc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000198000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003e0000039c000000ca00fffffffb0000000a0049006d0061006700650000000148000000a40000001600fffffffb0000000a0049006d0061006700650000000194000000d80000001600fffffffb0000000a0049006d0061006700650000000220000001190000001600ffffff000000010000010f00000270fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000270000000a600fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004a00000003efc0100000002fb0000000800540069006d00650000000000000004a00000036d00fffffffb0000000800540069006d00650100000000000004500000000000000000000004bb0000039c00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000027e0000039cfc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000198000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003e0000039c000000ca00fffffffb0000000a0049006d0061006700650000000148000000a40000001600fffffffb0000000a0049006d0061006700650000000227000000950000001600fffffffb0000000a0049006d0061006700650000000289000001520000001600ffffff000000010000010f00000270fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000270000000a600fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004a00000003efc0100000002fb0000000800540069006d00650000000000000004a00000036d00fffffffb0000000800540069006d00650100000000000004500000000000000000000004b40000039c00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
