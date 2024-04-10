@@ -39,6 +39,7 @@ from geometry_msgs.msg import TransformStamped
 from rosgraph_msgs.msg import Clock
 import math
 from rl_utils.utils.observation_collector.constants import OBS_DICT_KEYS, TOPICS
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 
 def get_ns_idx(ns: str):
@@ -266,7 +267,7 @@ class FlatlandEnv(gymnasium.Env):
         )
 
         decoded_action = self._decode_action(action , action_obs_dict)
-        # self._pub_action(decoded_action)
+        self._pub_action(decoded_action)
 
         if self._is_train_mode:
             self.call_service_takeSimStep()

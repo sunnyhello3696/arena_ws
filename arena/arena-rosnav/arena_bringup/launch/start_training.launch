@@ -6,11 +6,12 @@
 
   <param name="if_viz" value="true" />
   <param name="max_vertex_num" value="120" />
+  <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
   <arg name="model" default="burger"      doc="model type [burger, jackal, ridgeback, agvota, rto, rto_real]"/>
 
   <!-- Here are the argument that may be frequently changed -->
   <arg name="ns_prefix" default="sim" />
-  <arg name="num_envs" default="1" />
+  <arg name="num_envs" default="2" />
 
   <param name="single_env" value="false" />
 

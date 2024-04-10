@@ -168,7 +168,7 @@ class RewardSafeDistanceExp(RewardUnit):
         self._safe_dist = self._reward_function._safe_dist
         self._w_factor = w_factor
         self._punish_dist = punish_dist
-        print("self._w_factor",self._w_factor)
+        # print("self._w_factor",self._w_factor)
 
     def check_parameters(self, *args, **kwargs):
         if self._reward > 0.0:

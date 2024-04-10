@@ -8,6 +8,7 @@ from gymnasium import spaces
 from ..utils.action_space.action_space_manager import ActionSpaceManager
 from ..utils.observation_space.observation_space_manager import ObservationSpaceManager
 from ..utils.observation_space.space_index import SPACE_INDEX
+from ..utils.unicycle_mpc_x2_u0 import ConvexUnicycleMPC
 from .base_space_encoder import BaseSpaceEncoder
 from .encoder_factory import BaseSpaceEncoderFactory
 # from rl_utils.utils.observation_collector.constants import OBS_DICT_KEYS
@@ -22,6 +23,8 @@ from geometry_msgs.msg import Point
 from scipy.interpolate import splprep, splev
 import time
 from geometry_msgs.msg import PoseWithCovarianceStamped
+import yaml
+from numpy import genfromtxt
 
 """
     This encoder offers a robot specific observation and action space
@@ -68,16 +71,33 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         merged_kwargs.update(action_space_kwargs)
         merged_kwargs.update(observation_kwargs)
         super().__init__(**merged_kwargs, **kwargs)
-        self.debug_vis = False
         self._observation_list = observation_list
         self._observation_kwargs = observation_kwargs
         self.setup_action_space(action_space_kwargs)
         self.setup_observation_space(observation_list, observation_kwargs)
-        self.enable_rviz = False
         self.is_normalize_points = merged_kwargs.get("normalize_points", False)
         self.action_points_num = merged_kwargs.get("action_points_num", 0)
+        if self.is_normalize_points and self.action_points_num > 0:
+            self.setup_mpc_cotroller()
         self._step_size = rospy.get_param_cached("/step_size", 0.2)
+        print("step_size:",self._step_size)
         self._max_vertex_num = rospy.get_param_cached("/max_vertex_num", 120)
+        self.obs_dict_d86 = None
+        self.laser_num_beams = 360
+        self._robot_pose = None
+        self._robot_vel = None
+        self._last_action_points = None
+
+        self.debug_vis = False
+        self.mpc_test_map_frame = False
+        if self.mpc_test_map_frame:
+            # self.mpc_xref_traj = genfromtxt("/home/dmz/Documents/mpc_test_traj/ref_states_2.csv", delimiter=',')
+            # remove z from mpc_xref_traj(x,y,z)
+            self.mpc_xref_traj = self.mpc_xref_traj[:,:2]
+            initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
+            self.mpc_xref_traj_count = 1
+
+        self.enable_rviz = False
         if rospy.get_param("/debug_mode", False):
             self.spline_pub = rospy.Publisher('action_points_spline', Marker, queue_size=1)
             self.action_points_pub = rospy.Publisher('action_points', Marker, queue_size=1)
@@ -85,6 +105,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
             self.enable_rviz = rospy.get_param("/if_viz", False)
         print("ConvexMPCEncoder init")
         rospy.loginfo("ConvexMPCEncoder init")
+
+        # time.sleep(10)
 
     @property
     def observation_space(self) -> spaces.Space:
@@ -176,6 +198,26 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
             frame_stacking=self._stacked,
         )
 
+    def setup_mpc_cotroller(self):
+        cfg_file_path = rospy.get_param("/mpc_config_path")
+        cfg = {}
+        with open(cfg_file_path, 'r') as stream:
+            cfg = yaml.safe_load(stream)
+
+        # print("cfg:",cfg)
+        T = cfg['mpc']['T']
+        N = int(cfg['mpc']['N'])
+        xmin = np.array(cfg['mpc']['xmin1']).astype(np.float32)
+        xmax = np.array(cfg['mpc']['xmax1']).astype(np.float32)
+        umin = np.array(cfg['mpc']['umin1']).astype(np.float32)
+        umax = np.array(cfg['mpc']['umax1']).astype(np.float32)
+
+        Q = np.array(cfg['mpc']['Q1']).astype(np.float32)
+        QN = np.array(cfg['mpc']['QN1']).astype(np.float32)
+        R = np.array(cfg['mpc']['R1']).astype(np.float32)
+        self.mpc = ConvexUnicycleMPC(T, N, xmin, xmax, umin, umax, Q, QN, R)
+        
+
     def decode_action(self, action, action_obs_dict: Dict[str, Any]) -> np.ndarray:
         """
         Decodes the action.
@@ -187,145 +229,250 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
             np.ndarray: The decoded action.
         """
         if self.is_normalize_points and self.action_points_num > 0:
-            action_points = [] # base下
-            polar_action = []
-            netout_scale_factors = self._action_space_manager.decode_action(action)
-            netout_scale_factors = np.clip(netout_scale_factors, 0.0, 1.0)
-            netout_scale_factors = np.random.rand(2*self.action_points_num)
+            # if self.action_obs_dict is None:
+            #     self.action_obs_dict = action_obs_dict
+            #     self.action = action
+            # else:
+            #     self.index += 1
+            
+            # if self.action_obs_dict is not None:
+            #     if self.index > 5:
+            #         self.index = 0
+            #         self.action_obs_dict = action_obs_dict
+            #         self.action = action
+            #     else:
+            #         action = self.action
+            #         action_obs_dict = self.action_obs_dict
 
-            if action_obs_dict is not None:
-                self.obs_dict_d86 = self.get_observations_d86(action_obs_dict)
-                if self.obs_dict_d86["laser_convex"][0] is not None:
-                    rvx,rvy = self.worldva2robotva(self.obs_dict_d86["robot_world_vel"].x,self.obs_dict_d86["robot_world_vel"].y,self.obs_dict_d86["robot_world_pose"].theta)
-
-                    action_points.append((0.,0.))
-                    polar_action.append((0.,0.))
-
-                    theta = np.arctan2(rvy, rvx)  # 第一个动作点的方向
-                    if len(netout_scale_factors) >= 2:
-                        one_action_point, one_polar_action = self.calc_polar_action_points(
-                            (0.0, 0.0, theta),
-                            (netout_scale_factors[0], netout_scale_factors[1]),
-                            0
-                        )
-                        action_points.append(one_action_point)
-                        polar_action.append(one_polar_action)
-
-                    # 对于后续的动作点，基于前一个动作点的位置和方向进行计算
-                    for i in range(1, self.action_points_num):
-                        sf_index = i * 2
-                        if (sf_index + 1) < len(netout_scale_factors):
-                            one_action_point, one_polar_action = self.calc_polar_action_points(
-                                (action_points[-1][0],action_points[-1][1],np.arctan2(action_points[-1][1],action_points[-1][0])),  # 使用前一个动作点的位置和方向
-                                (netout_scale_factors[sf_index], netout_scale_factors[sf_index + 1]),
-                                i  # 传递feasible_spaces索引
-                            )
-                            action_points.append(one_action_point)
-                            polar_action.append(one_polar_action)
-
-                    # # 输入的速度方向为 激光雷达0度坐标系下的方向
-                    # # 网络输出的点：xy坐标点action_points、极坐标点polar_action
-                    # one_action_point1,one_polar_action1 = self.calc_polar_action_points((0.,0.,np.arctan2(rvy,rvx)),(netout_scale_factors[0],netout_scale_factors[1]),0)
-                    # polar_action.append(one_polar_action1)
-                    # action_points.append(one_action_point1)
-
-                    # one_action_point2,one_polar_action2 = self.calc_polar_action_points((action_points[1][0],action_points[1][1],np.arctan2(action_points[1][1],action_points[1][0])),(netout_scale_factors[2],netout_scale_factors[3]),1)
-                    # polar_action.append(one_polar_action2)
-                    # action_points.append(one_action_point2)
-
-
-                    # 假设 action_points 包含您从上面代码片段中计算出的点
-                    action_points = np.array(action_points, dtype=np.float32)
-                    action_points = self.add_perturbation_to_duplicates(action_points)
-
-                    # # 打印action_points的形状和内容来进行检查
-                    # print("netout_scale_factors:", netout_scale_factors)
-                    # print("action_points content:", action_points)
-
-                    if self.enable_rviz:
-                        self.publish_points_rviz(action_points)
-
-
-                    if self.enable_rviz and self.debug_vis:
-                        feasible_space_points = []
-                        feasible_spaces = self.obs_dict_d86["feasible_spaces"]
-                        for idx, space in enumerate(feasible_spaces):
-                            if len(space) > 1:  # 确保space中至少有两个点可以连接
-                                # 为每个feasible_space创建一个唯一的namespace
-                                namespace = f'feasible_space_{idx}'
-                                for i in range(len(space)):
-                                    p = (space[i] * np.cos(self.obs_dict_d86["laser_convex"][2][i]), space[i] * np.sin(self.obs_dict_d86["laser_convex"][2][i]))
-                                    # 将space中的点转换为期望的格式
-                                    feasible_space_points.append(p)
-                                # 发布连线
-                                self.publish_marker(feasible_space_points, Marker.POINTS, 1.0, 1.0 - idx * 0.1, 0.0, namespace, 0.05 , 0.5)
-
-                    # # 计算每个点到原点(0, 0)的欧氏距离
-                    # distances = np.linalg.norm(action_points, axis=1)
-                    # # 找出所有距离大于或等于8的点的索引
-                    # indices = np.where(distances >= 2.2)[0]
-                    # if len(indices) > 0:
-                    #     print("以下action_points点离原点(0,0)的距离大于或等于8：")
-                    #     for idx in indices:
-                    #         print(f"点{idx + 1}: {action_points[idx]}，距离: {distances[idx]:.2f}")
-                    #     print("============================================")
-                    #     # save obs_dict file
-                    #     np.save("/home/dmz/Documents/obs_dict.npy",self.obs_dict_d86)
-                    #     initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
-
-                    # 确保点的数量足够
-                    if action_points.shape[0] < 3:
-                        raise ValueError("至少需要3个点来进行2次B-Spline拟合")
-
-                    # 确保点的维度正确（这里我们假设是二维点，即n=2）
-                    if action_points.ndim != 2 or action_points.shape[1] != 2:
-                        raise ValueError("点的格式应为(m, 2)，其中m是点的数量")
-                    
-                    # 检查数据点是否包含NaN或无穷值
-                    if np.isnan(action_points).any() or np.isinf(action_points).any():
-                        raise ValueError("数据点包含NaN或无穷值")
-
-                    # 尝试使用不同的平滑参数
-                    s = 2.0
-
-                    try:
-                        '''
-                        action_points.T: 这里 action_points 应该是一个形状为 (N, 2) 的数组，其中 N 表示点的数量，2 表示每个点的 x 和 y 坐标。.T 是 NumPy 数组的转置操作，用于将数组的形状从 (N, 2) 转置为 (2, N)，满足 splprep 输入参数的要求，即每一行代表一个维度。
-                        s=s: 平滑因子 s 控制样条曲线的平滑程度。较小的 s 值会使得曲线尽可能地经过所有给定的点（即更少的平滑），而较大的 s 值会使曲线更加平滑，即使它不完全经过所有点。如果 s 设置为 0，样条曲线会经过所有的点（插值条件）。
-                        per=False: 指定生成的样条曲线是否为周期性的。如果设置为 True，那么样条曲线的开始和结束将在空间中形成闭环。
-                        k=2: 样条的次数。这个参数决定了样条曲线的平滑程度和弯曲能力。k=2 表示使用二次样条。
-                            如果数据点之间的关系接近直线，使用线性样条（k=1）可能更合适。
-                            如果需要一定的曲线弯曲能力但又不希望太复杂，可以选择二次样条（k=2）。
-                            对于需要高度平滑曲线的应用，如道路或轨迹设计，三次样条（k=3）是常用的选择
-                        der=0 参数表示我们要计算的是曲线上的点，而不是其导数。
-                        '''
-                        tck, u = splprep(action_points.T, s=s, per=False, k=2)
-                        u_new = np.linspace(u.min(), u.max(), 10)
-                        x_new, y_new = splev(u_new, tck, der=0)
-                        if self.enable_rviz:
-                            self.publish_spline_rviz(x_new, y_new)
-
-                        # # 合并 x_new 和 y_new 为一个二维数组
-                        # spline_points = np.vstack((x_new, y_new)).T  # T 是转置操作，将行向量转换为列向量
-                        # # 计算每个点到原点(0, 0)的欧氏距离
-                        # distances = np.linalg.norm(spline_points, axis=1)
-                        # # 找出所有距离大于或等于8的点的索引
-                        # indices = np.where(distances >= 8)[0]
-                        # if len(indices) > 0:
-                        #     print("以下spline曲线上的点离原点(0,0)的距离大于或等于8：")
-                        #     time.sleep(5)
-                        #     for idx in indices:
-                        #         print(f"点{idx + 1}: {spline_points[idx]}，距离: {distances[idx]:.2f}")
-                        
-                    except Exception as e:
-                        print("b-spline拟合过程中发生错误:", e)
-                        rospy.logerr("b-spline拟合过程中发生错误")
-            # return np
-            return np.array([0.0, 0.0, 0.0], dtype=np.float32)
+            X_U_ref = self.generate_ref_X_and_U(action,action_obs_dict,k=2,s=3.0)
+            if X_U_ref is not None:
+                # xref: Entire reference trajectory from x0 to xf as numpy array of size (Kf+1, 3), where each row is (xref [m], yref [m], theta_ref[rad])
+                # uref: Entire reference input from ur0 to urf as numpy array of size (Kf, 2), where each row is (vref [m/s], ang_vel_ref [rad/s])
+                x_ref,u_ref = X_U_ref
+                self.mpc.set_ref_trajectory(x_ref, u_ref)
+                if self.mpc_test_map_frame:
+                    rx_w = self._robot_pose.x
+                    ry_w = self._robot_pose.y
+                    rtheta_w = self.NormalizeAngleTo2Pi(self._robot_pose.theta)
+                    start_pos = np.array([rx_w,ry_w,rtheta_w])
+                    status, u = self.mpc.update(start_pos)
+                    u = u.flatten()
+                    v = u[0]
+                    w = u[1]
+                    # self.worldvw2robotvw(v,w,rtheta_w)
+                    # print("mpc output",[v,0.0,w])
+                    return np.array([v,0.0,w], dtype=np.float32)
+                else:
+                    start_pos = np.array([0.,0.,0.])
+                    status, u = self.mpc.update(start_pos)
+                    u = u.flatten()
+                    v = u[0]
+                    w = u[1]
+                    # print("mpc output",[v,0.0,w])
+                    # time.sleep(1.5)
+                    return np.array([v,0.0,w], dtype=np.float32)
+            else:
+                return np.array([0.0, 0.0, 0.0], dtype=np.float32)
         else:
             return self._action_space_manager.decode_action(action)
         
+    def generate_ref_X_and_U(self,action,action_obs_dict: Dict[str, Any], k=2, s=5.0):
+
+        if self.action_points_num > 10:
+            self.action_points_num = 10
+            rospy.logerr("action_points_num should be less than 10.")
+        if action is None:
+            rospy.logerr("action is None.")
+            return None
+        # detect action all > 0 and < 1
+        if np.any(action < 0) or np.any(action > 1):
+            rospy.logerr("action should be in [0,1].")
+            return None
+
+        action_points = [] # base下
+        netout_scale_factors = self._action_space_manager.decode_action(action)
+        # angle dis
+        netout_scale_factors = np.clip(netout_scale_factors, 0.0, 1.0)
+        netout_scale_factors = np.random.rand(2*self.action_points_num)
+        netout_scale_factors[1] = 1.0
+        netout_scale_factors[3] = 1.0
+        netout_scale_factors[5] = 1.0 
+        # print("netout_scale_factors:",netout_scale_factors)
+
+        if action_obs_dict is not None:
+            self.obs_dict_d86 = self.get_observations_d86(action_obs_dict)
+            if self.obs_dict_d86["laser_convex"][0] is not None:
+                rvx,rvy = self.worldva2robotva(self.obs_dict_d86["robot_world_vel"].x,self.obs_dict_d86["robot_world_vel"].y,self.obs_dict_d86["robot_world_pose"].theta)
+                # print("rvx,rvy:",rvx,rvy)
+                # if rvx or rvy is None or nan
+                if rvx is None or rvy is None or np.isnan(rvx) or np.isnan(rvy):
+                    rospy.logerr("rvx or rvy is None or nan.")
+                    rvx = 0.0
+                    rvy = 0.0
+                
+                # action_points.append((0.,0.))
+                
+                theta = np.arctan2(rvy, rvx)  # 第一个动作点的方向
+                if len(netout_scale_factors) >= 2:
+                    one_action_point = self.calc_polar_action_points(
+                        (0.0, 0.0, 0.0),
+                        (netout_scale_factors[0], netout_scale_factors[1]),
+                        0
+                    )
+                    action_points.append(one_action_point)
+
+                # 对于后续的动作点，基于前一个动作点的位置和方向进行计算
+                for i in range(1, self.action_points_num):
+                    sf_index = i * 2
+                    if (sf_index + 1) < len(netout_scale_factors):
+                        one_action_point = self.calc_polar_action_points(
+                            (action_points[-1][0],action_points[-1][1],np.arctan2(action_points[-1][1],action_points[-1][0])),  # 使用前一个动作点的位置和方向
+                            (netout_scale_factors[sf_index], netout_scale_factors[sf_index + 1]),
+                            i  # 传递feasible_spaces索引
+                        )
+                        action_points.append(one_action_point)
+
+
+                # # 输入的速度方向为 激光雷达0度坐标系下的方向
+                # # 网络输出的点：xy坐标点action_points、极坐标点polar_action
+                # one_action_point1,one_polar_action1 = self.calc_polar_action_points((0.,0.,np.arctan2(rvy,rvx)),(netout_scale_factors[0],netout_scale_factors[1]),0)
+                # polar_action.append(one_polar_action1)
+                # action_points.append(one_action_point1)
+
+                # one_action_point2,one_polar_action2 = self.calc_polar_action_points((action_points[1][0],action_points[1][1],np.arctan2(action_points[1][1],action_points[1][0])),(netout_scale_factors[2],netout_scale_factors[3]),1)
+                # polar_action.append(one_polar_action2)
+                # action_points.append(one_action_point2)
+                
+                
+                # 假设 action_points 包含您从上面代码片段中计算出的点
+                action_points = np.array(action_points, dtype=np.float32)
+
+                if self.mpc_test_map_frame:
+                    self.publish_marker(self.mpc_xref_traj, Marker.LINE_STRIP, 0.0, 1.0, 0.0, "mpc_xref_traj", 0.2 , 0.8)
+                    action_points = self.update_action_points()
+
+                    # action_points_world = []
+                    # for pt in action_points:
+                    #     pt_w = self.robotpt2worldpt((pt[0],pt[1]))
+                    #     action_points_world.append(pt_w)
+                    # action_points_world = np.array(action_points_world)
+                    # action_points = action_points_world
+                
+                # if nan or none in action_points
+                if np.isnan(action_points).any() or np.any(action_points == None):
+                    rospy.logerr("action_points has nan or none.")
+                    if self._last_action_points is not None:
+                        action_points = self._last_action_points
+                        rospy.logwarn("action_points has nan or none. Use last action_points.")
+                    else:
+                        return None
+                self._last_action_points = action_points
+                action_points = self.add_perturbation_to_duplicates(action_points)
+
+                # # 打印action_points的形状和内容来进行检查
+                # print("netout_scale_factors:", netout_scale_factors)
+                # print("action_points content:", action_points)
+
+                if self.enable_rviz:
+                    self.publish_points_rviz(action_points)
+
+                if self.enable_rviz and self.debug_vis:
+                    feasible_space_points = []
+                    feasible_spaces = self.obs_dict_d86["feasible_spaces"]
+                    for idx, space in enumerate(feasible_spaces):
+                        if len(space) > 1:  # 确保space中至少有两个点可以连接
+                            # 为每个feasible_space创建一个唯一的namespace
+                            namespace = f'feasible_space_{idx}'
+                            for i in range(len(space)):
+                                p = (space[i] * np.cos(self.obs_dict_d86["laser_convex"][2][i]), space[i] * np.sin(self.obs_dict_d86["laser_convex"][2][i]))
+                                # 将space中的点转换为期望的格式
+                                feasible_space_points.append(p)
+                            # 发布连线
+                            # self.publish_marker(feasible_space_points, Marker.POINTS, 1.0, 1.0 - idx * 0.1, 0.0, namespace, 0.05 , 0.8)
+
+                # # 计算每个点到原点(0, 0)的欧氏距离
+                # distances = np.linalg.norm(action_points, axis=1)
+                # # 找出所有距离大于或等于8的点的索引
+                # indices = np.where(distances >= 2.2)[0]
+                # if len(indices) > 0:
+                #     print("以下action_points点离原点(0,0)的距离大于或等于8：")
+                #     for idx in indices:
+                #         print(f"点{idx + 1}: {action_points[idx]}，距离: {distances[idx]:.2f}")
+                #     print("============================================")
+                #     # save obs_dict file
+                #     np.save("/home/dmz/Documents/obs_dict.npy",self.obs_dict_d86)
+                #     initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
+
+                # 确保点的数量足够
+                if action_points.shape[0] < 3:
+                    raise ValueError("至少需要3个点来进行2次B-Spline拟合")
+
+                # 确保点的维度正确（这里我们假设是二维点，即n=2）
+                if action_points.ndim != 2 or action_points.shape[1] != 2:
+                    raise ValueError("点的格式应为(m, 2)，其中m是点的数量")
+                
+                # 检查数据点是否包含NaN或无穷值
+                if np.isnan(action_points).any() or np.isinf(action_points).any():
+                    print("数据点包含NaN或无穷值: ", action_points)
+                    raise ValueError("数据点包含NaN或无穷值")
+
+                try:
+                    '''
+                    action_points.T: 这里 action_points 应该是一个形状为 (N, 2) 的数组，其中 N 表示点的数量，2 表示每个点的 x 和 y 坐标。.T 是 NumPy 数组的转置操作，用于将数组的形状从 (N, 2) 转置为 (2, N)，满足 splprep 输入参数的要求，即每一行代表一个维度。
+                    s=s: 平滑因子 s 控制样条曲线的平滑程度。较小的 s 值会使得曲线尽可能地经过所有给定的点（即更少的平滑），而较大的 s 值会使曲线更加平滑，即使它不完全经过所有点。如果 s 设置为 0，样条曲线会经过所有的点（插值条件）。
+                    per=False: 指定生成的样条曲线是否为周期性的。如果设置为 True，那么样条曲线的开始和结束将在空间中形成闭环。
+                    k=2: 样条的次数。这个参数决定了样条曲线的平滑程度和弯曲能力。k=2 表示使用二次样条。
+                        如果数据点之间的关系接近直线，使用线性样条（k=1）可能更合适。
+                        如果需要一定的曲线弯曲能力但又不希望太复杂，可以选择二次样条（k=2）。
+                        对于需要高度平滑曲线的应用，如道路或轨迹设计，三次样条（k=3）是常用的选择
+                    der=0 参数表示我们要计算的是曲线上的点，而不是其导数。
+                    '''
+                    dt = self._step_size
+                    tck, u = splprep(action_points.T, s=s, per=False, k=k)
+                    u_new = np.linspace(u.min(), u.max(), 10)
+                    x_new, y_new = splev(u_new, tck, der=0)
+                    dx_new, dy_new = splev(u_new, tck, der=1)  # 获取曲线上点的一阶导数（即切线）
+                    # 计算每个点处的切线角度
+                    theta_new = np.arctan2(dy_new, dx_new)
+                    # 将角度从-π到π转换到0到2π
+                    theta_new_mod = np.where(theta_new < 0, theta_new + 2 * np.pi, theta_new)
+                    # 构建xref
+                    Xref = np.vstack((x_new, y_new, theta_new_mod)).T
+                    # 计算速度和角速度作为uref
+                    v = np.sqrt(np.diff(x_new)**2 + np.diff(y_new)**2) / dt
+                    w = np.diff(theta_new_mod) / dt
+                    # 处理角度差周期性
+                    w = np.mod(w + np.pi, 2 * np.pi) - np.pi
+
+                    # 构建uref
+                    Uref = np.vstack((v, w)).T
+
+                    if self.enable_rviz:
+                        self.publish_spline_rviz(x_new, y_new)
+
+                    # # 合并 x_new 和 y_new 为一个二维数组
+                    # spline_points = np.vstack((x_new, y_new)).T  # T 是转置操作，将行向量转换为列向量
+                    # # 计算每个点到原点(0, 0)的欧氏距离
+                    # distances = np.linalg.norm(spline_points, axis=1)
+                    # # 找出所有距离大于或等于8的点的索引
+                    # indices = np.where(distances >= 8)[0]
+                    # if len(indices) > 0:
+                    #     print("以下spline曲线上的点离原点(0,0)的距离大于或等于8：")
+                    #     time.sleep(5)
+                    #     for idx in indices:
+                    #         print(f"点{idx + 1}: {spline_points[idx]}，距离: {distances[idx]:.2f}")
+                    return Xref, Uref
+                except Exception as e:
+                    print("b-spline拟合过程中发生错误:", e)
+                    rospy.logerr("b-spline拟合过程中发生错误")
+                    return None
+        return None
+        
     def add_perturbation_to_duplicates(self, action_points):
+        """
+        Adds perturbation to duplicate points in the action points.
+        To avoid duplicate points in the action points
+        """
         perturbed_points = []
         seen = {}  # 用于记录每个点出现的次数
         for point in action_points:
@@ -416,7 +563,9 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         feasible_spaces = []
         
         # 最大线速度
-        max_linear_speed = 0.7 * 1.5  # m/s
+        max_linear_speed = 0.7  # m/s
+
+        speed_factor = 1.5
 
         # 根据self.action_points_num计算时间间隔的索引
         time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
@@ -424,7 +573,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         for index in time_intervals:
             # 计算每个时间间隔的可行距离
             time_step = index * self._step_size
-            feasible_dist = max_linear_speed * time_step
+            feasible_dist = max_linear_speed* speed_factor * time_step
 
             # 初始化当前时间间隔的可行空间
             current_feasible_space = []
@@ -532,22 +681,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                                     w * w + x * x - y * y - z * z)
 
         return euler
-    
-    def worldva2robotva(self, wvax,wvay,now_wyaw):
-        '''
-        wvax: 世界坐标系下的x方向速度
-        wvay: 世界坐标系下的y方向速度
-        now_wyaw: 机器人当前在世界坐标系中的朝向，用弧度表示
-        '''
-        # 算出速度向量的欧几里得长度（即速度的大小）。这相当于速度向量的模。
-        va =np.hypot(wvax,wvay)
-        # 角度是相对于世界坐标系的x轴的，arctan2函数能够返回一个介于-π到π之间的角度。
-        vayaw = np.arctan2(wvay,wvax)
-        # 减去机器人的当前朝向now_wyaw从速度向量的方向中，我们得到速度向量相对于机器人当前朝向的角度。
-        # 使用cos计算这个角度在机器人局部坐标系x轴上的投影，然后乘以速度的大小va，得到局部坐标系中x方向的速度分量。
-        vax = np.cos(vayaw - now_wyaw)*va
-        vay = np.sin(vayaw - now_wyaw)*va
-        return vax,vay
+
 
     def calc_polar_action_points(self,start,action,whcich):
         """
@@ -557,7 +691,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         theta = self.NormalizeAngleTo2Pi(2*np.pi*action[0] + start[2])
         thetas = []
         # # debug
-        # pts_world = []
+        pts_world = []
         convex_scans_limit_range = self.obs_dict_d86["feasible_spaces"][whcich]
         limit_range_from_start = []
         
@@ -569,7 +703,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
             # add dis from start to p
             limit_range_from_start.append(np.hypot(p[0] - start[0], p[1] - start[1]))
 
-            # # debug
+            # # # debug
             # p_world = self.robotpt2worldpt(p)
             # pts_world.append(p_world)
 
@@ -616,11 +750,12 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 next = i
 
         # 处理找不到 prev 或 next 的情况（例如，当 theta 大于所有值或小于所有值时）
-        if prev is None: prev = next - 1
-        if next is None: next = (prev + 1) % len(thetas)
         if prev is None and next is None:
-            prev, next = 0, 1
-            rospy.logerr("prev and next are all None, set to 0 and 1")
+            rospy.logerr("prev and next are all None,return None")
+            return None
+        elif prev is None: prev = next - 1
+        elif next is None: next = (prev + 1) % len(thetas)
+        elif prev == next: next = (prev + 1) % len(thetas)
 
         # start: 机器人的当前位置坐标(x, y)。
         # 第二个参数是一个由start点和theta角定义的向量的终点坐标。
@@ -645,21 +780,54 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
             # 可视化从start点出发的线段
             line_start = p11
             line_end = p12
-            self.publish_marker([line_start, line_end], Marker.LINE_STRIP, 0.0, 1.0, 0.0, 'start_line', 0.1, 0.5)
+            self.publish_marker([line_start, line_end], Marker.LINE_STRIP, 0.0, 1.0, 0.0, 'start_line', 0.1, 0.4)
 
             # 可视化连接prev和next的线段
             line_prev = p21
             line_next = p22
-            self.publish_marker([line_prev, line_next], Marker.LINE_STRIP, 0.0, 0.0, 1.0, 'prev_next_line', 0.1, 1.0)
+            self.publish_marker([line_prev, line_next], Marker.LINE_STRIP, 0.0, 0.5, 1.0, 'prev_next_line', 0.1, 1.0)
 
         # refer polar action point distance
         dist = np.hypot(crossp[0] - start[0], crossp[1] - start[1]) * action[1]
 
 
         action_point = (start[0] + dist * np.cos(theta), start[1] + dist * np.sin(theta))
-        polar_point = (np.arctan2(action_point[1],action_point[0]),np.hypot(action_point[1],action_point[0]))
+        # polar_point = (np.arctan2(action_point[1],action_point[0]),np.hypot(action_point[1],action_point[0]))
 
-        return  action_point,polar_point
+        return  action_point
+    
+
+    def update_action_points(self):
+
+        # 重新确定选取点的数量，取最小值为10或剩余点的数量
+        num_points_to_select_from = min(10, len(self.mpc_xref_traj))
+        
+        # 如果剩余点不足self.action_points_num个，则选取一个点复制多次
+        if len(self.mpc_xref_traj) < self.action_points_num:
+            selected_indices = [0] * self.action_points_num
+        else:
+            # 计算要选取的点的索引
+            selected_indices = np.linspace(0, num_points_to_select_from - 1, num=self.action_points_num, dtype=int)
+        
+        # 从mpc_xref_traj中选取对应的点
+        action_points = self.mpc_xref_traj[selected_indices]
+
+        rx_world, ry_world = self._robot_pose.x, self._robot_pose.y
+        
+        # 查找离机器人最近的点
+        distances = np.sqrt((self.mpc_xref_traj[:,0] - rx_world)**2 + (self.mpc_xref_traj[:,1] - ry_world)**2)
+        nearest_point_index = np.argmin(distances)
+        nearest_point_distance = distances[nearest_point_index]
+
+        # 如果最近的点离机器人的距离小于0.3，去掉该点及其之前的所有点
+        if nearest_point_distance < 0.2:
+            self.mpc_xref_traj = self.mpc_xref_traj[nearest_point_index + 1:]
+        
+        # add robot pose to the first of action_points
+        action_points = np.insert(action_points, 0, [rx_world, ry_world], axis=0)
+        
+        return action_points
+
     
     def NormalizeAngleTo2Pi(self, d_theta):# 0-2pi
         d_theta_normalize = d_theta
@@ -697,13 +865,12 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
 
         参数:
         - point_robot_frame: 机器人坐标系中的点，格式为(x, y)元组。
-        - obs_dict_d86: 包含机器人全局位置和朝向信息的字典。
 
         返回:
         - 转换后的点在全局坐标系中的位置，格式为(x, y)元组。
         """
         # 从 obs_dict_d86 字典中提取机器人的全局位置和朝向
-        robot_pose = self.obs_dict_d86["robot_world_pose"]
+        robot_pose = self._robot_pose # type Pose2d
         robot_x, robot_y, robot_theta = robot_pose.x, robot_pose.y, robot_pose.theta
         
         # 机器人坐标系中的点
@@ -714,16 +881,49 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         world_y = robot_y + (point_x * np.sin(robot_theta) + point_y * np.cos(robot_theta))
         
         return (world_x, world_y)
+    
+    @staticmethod
+    def worldva2robotva(wvax,wvay,now_wyaw):
+        va =np.hypot(wvax,wvay)
+        vayaw = np.arctan2(wvay,wvax)
+        vax = np.cos(vayaw - now_wyaw)*va
+        vay = np.sin(vayaw - now_wyaw)*va
+        return vax,vay
+
+    @staticmethod
+    def worldp2robotp(point_in_world,robot_pose_in_world):
+        wx,wy = point_in_world
+        dist = np.hypot(wx - robot_pose_in_world[0],wy - robot_pose_in_world[1])
+        p_theta_world = np.arctan2(wy - robot_pose_in_world[1],wx - robot_pose_in_world[0])
+        return  dist*np.cos(p_theta_world - robot_pose_in_world[2]) ,dist*np.sin(p_theta_world - robot_pose_in_world[2])
+
+    @staticmethod
+    def robotp2worldp(point_in_robort,robot_pose_in_world):
+        rx,ry= point_in_robort
+        dist = np.hypot(rx,ry)
+        p_theta_world = robot_pose_in_world[2] + np.arctan2(ry,rx)
+        return robot_pose_in_world[0] + dist*np.cos(p_theta_world) ,robot_pose_in_world[1] + dist*np.sin(p_theta_world)
+
+    @staticmethod
+    def robotva2worldva(rvax,rvay,now_wyaw):
+        va =np.hypot(rvax,rvay)
+        vayaw = np.arctan2(rvay,rvax)
+        vax = np.cos(vayaw + now_wyaw)*va
+        vay = np.sin(vayaw + now_wyaw)*va
+        return vax,vay
 
     
     def publish_spline_rviz(self, x_new, y_new):
         # 曲线可视化
         marker_line = Marker()
-        marker_line.header.frame_id = "sim_1/robot"
-        marker_line.type = Marker.LINE_STRIP
+        if self.mpc_test_map_frame:
+            marker_line.header.frame_id = "map"
+        else:
+            marker_line.header.frame_id = "sim_1/robot"
+        marker_line.type = Marker.LINE_LIST
         marker_line.action = Marker.ADD
         marker_line.scale.x = 0.1  # 线宽
-        marker_line.color.a = 0.8  # 不透明度
+        marker_line.color.a = 1.0  # 不透明度
         marker_line.color.r = 0.0
         marker_line.color.g = 0.0
         marker_line.color.b = 1.0  # 蓝色曲线
@@ -739,7 +939,10 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
     def publish_points_rviz(self, action_points):
         # 动作点可视化
         marker_points = Marker()
-        marker_points.header.frame_id = "sim_1/robot"
+        if self.mpc_test_map_frame:
+            marker_points.header.frame_id = "map"
+        else:
+            marker_points.header.frame_id = "sim_1/robot"
         marker_points.type = Marker.POINTS
         marker_points.action = Marker.ADD
         marker_points.scale.x = 0.15 # 点大小
@@ -759,7 +962,10 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
 
     def publish_marker(self, points, marker_type, r, g, b, namespace='visualization', scale=0.1, trans = 1.0):
         marker = Marker()
-        marker.header.frame_id = "sim_1/robot"
+        if self.mpc_test_map_frame:
+            marker.header.frame_id = "map"
+        else:
+            marker.header.frame_id = "sim_1/robot"
         marker.ns = namespace
         marker.type = marker_type
         marker.action = Marker.ADD
@@ -770,6 +976,12 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         marker.color.r = r
         marker.color.g = g
         marker.color.b = b
+        """
+        LINE_STRIP将一系列点连接成一串连续的线段。如果你有点A、B、C，则LINE_STRIP会绘制线段AB和线段BC。每个点（除了第一个点）都会与前一个点连接起来，形成一条连续的线路。这种方式适合绘制路径或者连续的线条。
+        示例: 给定点序列 [A, B, C, D]，LINE_STRIP会绘制线段 AB, BC, CD。
+        LINE_LIST将点对视为独立的线段。这意味着每两个点形成一条线段，点之间不共享。如果你有点A、B、C、D，则LINE_LIST会绘制线段AB和线段CD。点是成对解释的，每对点定义一条线段。
+        示例: 给定点序列 [A, B, C, D]，LINE_LIST会绘制线段 AB, CD。
+        """
 
         if marker_type == Marker.LINE_STRIP or marker_type == Marker.LINE_LIST:
             # 对于线段，points是线段的端点列表
