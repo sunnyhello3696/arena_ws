@@ -266,7 +266,7 @@ class ConvexExtractor_2d_cgd(RosnavBaseExtractor):
         self.convex_map_side = int(math.sqrt(self._convex_map_size))
 
         self._num_stacks = observation_space.shape[0] if stacked_obs else 1
-        super(ConvexExtractor_2d,self).__init__(
+        super(ConvexExtractor_2d_cgd,self).__init__(
             observation_space=observation_space,
             observation_space_manager=observation_space_manager,
             features_dim=features_dim,

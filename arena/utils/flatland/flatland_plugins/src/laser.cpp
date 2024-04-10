@@ -156,7 +156,7 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
     // convex publisher
     bool is_collision = process_scan_msg(laser_scan_,scans_xy);
 
-    if(galaxy_xyin_360out(res, scans_xy,1000,0,0,15.0))
+    if(galaxy_xyin_360out(res, scans_xy,120,0,0,15.0))
     {
       g2dres.success.data = true;
       // g2dres.scans = laser_scan_.ranges;

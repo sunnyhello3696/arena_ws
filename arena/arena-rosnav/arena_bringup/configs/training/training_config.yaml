@@ -1,9 +1,9 @@
 ### General
 # in debug_mode no agent directories will be created and no models will be saved
 # further no wandb logging and fake (simulated) multiprocessing for traceback
-debug_mode: false
+debug_mode: true
 # number of parallel environments
-n_envs: 16
+n_envs: 1
 # gpu yes or no
 no_gpu: false
 
@@ -16,7 +16,7 @@ tm_modules: "staged"
 n_timesteps: 40000000
 max_num_moves_per_eps: 300
 goal_radius: 0.8
-safety_distance: 0.35
+safety_distance: 0.5
 
 ### Training Monitoring
 monitoring:
@@ -39,10 +39,10 @@ callbacks:
     # max number of steps per episode
     max_num_moves_per_eps: 300
     # number of evaluation episodes
-    n_eval_episodes: 30
+    n_eval_episodes: 25
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 8000
+    eval_freq: 1
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -50,7 +50,7 @@ callbacks:
   training_curriculum:
     # file for the robot's learning curriculum
     training_curriculum_file: "default.yaml"
-    curr_stage: 3
+    curr_stage: 2
     threshold_type: "succ"
     upper_threshold: 0.85
     lower_threshold: 0.60
@@ -67,7 +67,7 @@ rl_agent:
   # architecture_name: "RosnavResNet_3"
   architecture_name: "AGENT_68"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: "burger_AGENT_68_2024_04_02__22_11_20"
+  resume: "burger_AGENT_68_2024_04_02__22_11_20-1" # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
   # resume: "burger"
   checkpoint: "best_model" # gonna be ignored if resume is not null
 
