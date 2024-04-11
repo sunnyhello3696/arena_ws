@@ -266,6 +266,8 @@ def init_callbacks(
         upper_threshold=curriculum_cfg["upper_threshold"],
         lower_threshold=curriculum_cfg["lower_threshold"],
         activated="staged" in config["tm_modules"],
+        best_model_save_path=None if config["debug_mode"] else paths["model"],
+        # best_model_save_path="/home/dmz/Downloads",
         verbose=1,
     )
 

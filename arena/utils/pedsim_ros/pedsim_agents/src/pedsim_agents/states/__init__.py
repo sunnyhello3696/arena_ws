@@ -113,7 +113,11 @@ class Agent(StatechartProvider):
 
         # self._destination != None and self._destination length is 3
         if self._destination is not None and len(self._destination) == 3:
-            in_data.agents[i].destination.x, in_data.agents[i].destination.y, in_data.agents[i].destination.z = self._destination
+            try:
+                in_data.agents[i].destination.x, in_data.agents[i].destination.y, in_data.agents[i].destination.z = self._destination
+            except ValueError as e:
+                # 处理异常，例如打印日志或赋予备选值
+                print(f"not enough values to unpack: {e}")
 
     def post(self, in_data: InData, work_data: WorkData, i: int):
         work_data.social_state[i] = self._animation

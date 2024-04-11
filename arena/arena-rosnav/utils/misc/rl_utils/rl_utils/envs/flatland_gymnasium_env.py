@@ -41,6 +41,8 @@ import math
 from rl_utils.utils.observation_collector.constants import OBS_DICT_KEYS, TOPICS
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
+from geometry_msgs.msg import PoseWithCovarianceStamped
+
 
 def get_ns_idx(ns: str):
     try:
@@ -136,6 +138,9 @@ class FlatlandEnv(gymnasium.Env):
         self.clock_sub = rospy.Subscriber(self.ns.oldname("clock"), Clock, self.clock_cb)
         self.clock_time = None
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
+
+        # self.ref_actions = np.empty((0,2),dtype=np.float32)
+        # self.ref_states = np.empty((0,3),dtype=np.float32)
 
         # 如果配置中的debug_mode=False，则trigger_init=True；debug_mode=True，不启用（False）。
         if not trigger_init:
@@ -378,6 +383,18 @@ class FlatlandEnv(gymnasium.Env):
 
         obs_dict = self.observation_collector.get_observations()
         info_dict = {}
+
+        # # save self.ref_actions and self.ref_states to csv file
+        # # save self.ref_actions
+        # with open("/home/chen/Documents/mpc_test_traj/ref_actions_2.csv", "w") as f:
+        #     np.savetxt(f, self.ref_actions, delimiter=",", fmt="%.3f")
+        # with open("/home/chen/Documents/mpc_test_traj/ref_states_12.csv", "w") as f:
+        #     np.savetxt(f, self.ref_states, delimiter=",", fmt="%.3f")
+        # # empty self.ref_actions and self.ref_states
+        # self.ref_actions = np.empty((0,2),dtype=np.float32)
+        # self.ref_states = np.empty((0,3),dtype=np.float32)
+        # initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
+
         return (
             self._encode_observation(obs_dict),
             info_dict,

@@ -6,6 +6,14 @@ import time
 from typing import List
 from std_msgs.msg import Bool
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+from typing import Any, Callable, Dict, List, Optional, Union
+import os
+from stable_baselines3.common.vec_env import (
+    DummyVecEnv,
+    VecEnv,
+    sync_envs_normalization,
+    VecNormalize,
+)
 
 # src/arena/arena-rosnav/training/tools/model_utils.py
 class InitiateNewTrainStage(BaseCallback):
@@ -27,11 +35,14 @@ class InitiateNewTrainStage(BaseCallback):
         upper_threshold: float = 0,
         lower_threshold: float = 0,
         activated: bool = False,
+        best_model_save_path: Optional[str] = None,
         verbose=0,
     ):
         super(InitiateNewTrainStage, self).__init__(verbose=verbose)
         self.n_envs = n_envs
         self.threshhold_type = treshhold_type
+        self.best_model_save_path = best_model_save_path
+        self.curr_stage = -1
 
         assert self.threshhold_type in {
             "rew",
@@ -122,6 +133,7 @@ class InitiateNewTrainStage(BaseCallback):
                 self.threshhold_type == "succ"
                 and EvalObject.last_success_rate >= self.upper_threshold
             ):
+                best_success_rate = EvalObject.last_success_rate
                 if not rospy.get_param("/last_state_reached", False):
                     EvalObject.best_mean_reward = -np.inf
                     EvalObject.last_success_rate = -np.inf
@@ -130,8 +142,18 @@ class InitiateNewTrainStage(BaseCallback):
                     pub.publish(self._trigger)
                     if i == 0:
                         self.log_curr_stage(EvalObject.logger)
+                try:
+                    if self.best_model_save_path is not None:
+                        stage_save_path = os.path.join(self.best_model_save_path, f"stage_{self.curr_stage}_{best_success_rate:.2f}_{EvalObject.num_timesteps}")  # 创建阶段目录
+                        os.makedirs(stage_save_path, exist_ok=True)  # 确保目录存在
+                        EvalObject.model.save(os.path.join(stage_save_path, "best_model"))
+                        # if isinstance(EvalObject.train_env, VecNormalize):
+                        EvalObject.train_env.save(os.path.join(stage_save_path, "vec_normalize_best_model.pkl"))
+                        print(f"Model and VecNormalize saved in {stage_save_path}")
+                except Exception as e:
+                    print(f"Error saving model and VecNormalize stage_{self.curr_stage}_{best_success_rate:.2f}_{EvalObject.num_timesteps}: {e}")
 
     def log_curr_stage(self, logger):
         time.sleep(1)
-        curr_stage = rospy.get_param("/curr_stage", -1)
-        logger.record("train_stage/stage_idx", curr_stage)
+        self.curr_stage = rospy.get_param("/curr_stage", -1)
+        logger.record("train_stage/stage_idx", self.curr_stage)

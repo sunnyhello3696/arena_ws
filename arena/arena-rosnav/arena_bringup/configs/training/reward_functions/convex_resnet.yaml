@@ -1,29 +1,29 @@
 goal_reached:
-  reward: 24
+  reward: 30
 
 safe_distance:
-  reward: -0.35
+  reward: -0.15
 
 safe_distance_exp:
-  reward: -0.24
+  reward: -0.35
   w_factor: 1.7
-  punish_dist: 1.25
+  punish_dist: 1.4
 
 fixed_per_step:
-  reward: -0.04
+  reward: -0.02
 
 # Don't add if action range [0,1] or output points
 no_movement:
-  reward: -0.02
+  reward: -0.05
   _on_safe_dist_violation: true
 
 approach_goal:
-  pos_factor: 0.1
+  pos_factor: 0.3
   neg_factor: 0.5
   _on_safe_dist_violation: true
 
 collision:
-  reward: -22
+  reward: -18
 
 # # Don't add if action range [0,1] or output points
 # distance_travelled:
@@ -43,7 +43,7 @@ collision:
 #   _on_safe_dist_violation: false
 
 reverse_drive:
-  reward: -0.045
+  reward: -0.18
   _on_safe_dist_violation: true
 
 # # Request modify if action range [0,1] or output points
@@ -66,7 +66,7 @@ reverse_drive:
 
 abrupt_velocity_change:
   vel_factors:
-    "0": 0.25
-    "1": 0.00
-    "2": 0.02
+    "0": 0.4
+    "1": 0.0
+    "2": 0.2
   _on_safe_dist_violation: true
