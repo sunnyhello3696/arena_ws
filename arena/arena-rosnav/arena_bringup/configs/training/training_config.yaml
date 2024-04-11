@@ -39,7 +39,7 @@ callbacks:
     # max number of steps per episode
     max_num_moves_per_eps: 300
     # number of evaluation episodes
-    n_eval_episodes: 25
+    n_eval_episodes: 30
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
     eval_freq: 8000

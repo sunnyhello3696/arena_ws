@@ -5,8 +5,9 @@ import numpy as np
 # import cvxopt
 import cvxpy as cp
 import rospy
+from qpsolvers import solve_qp
 
-class ConvexUnicycleMPC(object):
+class ConvexUnicycleMPC_qpsolver(object):
 
    def __init__(self, T, N, xmin, xmax, umin, umax, Q, QN, R):
       """Constructor
@@ -193,79 +194,34 @@ class ConvexUnicycleMPC(object):
       return Bbar
 
    def update(self, xk):
-      """Update model with current xstate, compute control input u(k)
+    if not self.init:
+        return False, np.zeros((2,1))
+    
+    if self.k >= self.Kf:
+        return True, np.zeros((2,1))
 
-      Solve MPC problem as a QP problem for trajectory tracking
-      QP Problem: min 0.5 * u^T * H * u + f^T * u^T
-                  subject to: G * u <= w
+    xerr = (xk.reshape(1, self.n) - self.xref[self.k, :]).reshape(self.n, 1)
+    Abar = self.Abar(self.k)
+    Bbar = self.Bbar(self.k)
 
-                  where u = u(k) - uref(k)
-      
-      Args:
-         xk: current state x(k) as numpy array of size (1,3), do NOT subtract xref(k)
+    # 构造 QP 参数
+    P = 2 * Bbar.T.dot(self.Qbar).dot(Bbar) + self.Rbar  # 二次项矩阵
+    q = 2 * Bbar.T.dot(self.Qbar).dot(Abar).dot(xerr)   # 线性项向量
+    G = np.concatenate((np.identity(self.m * self.N), -np.identity(self.m * self.N)))  # 不等式约束矩阵
+    h = np.concatenate([(self.umax - self.uref[self.k:self.k + self.N, :]).flatten(), 
+                        (-self.umin + self.uref[self.k:self.k + self.N, :]).flatten()])  # 不等式约束向量
 
-      Returns (multiple arguments):
-         Boolean indicating problem was solved
-         Control input u(k) = uerr + uref(k) to apply to the system as numpy (2,1) array (Note: uref has been added back)
-      """
-      if not self.init:
-         return False, np.zeros((2,1))
-      
-      if self.k >= self.Kf:
-         return True, np.zeros((2,1))
+    # 由于 quadprog 需要半正定矩阵，确保 P 是半正定的
+    P = (P + P.T) / 2
 
-      xerr = (xk.reshape(1,self.n) - self.xref[self.k,:]).reshape(self.n,1)
-      Abar = self.Abar(self.k)
-      Bbar = self.Bbar(self.k)
+    # 使用 qpsolvers 的 solve_qp 函数求解 QP 问题
+    u_star = solve_qp(P, q.flatten(), G, h, solver="quadprog")
 
-      # QP matrices
-      # Recall, np.dot is normal matrix multiplication
-      H = 2 * Bbar.T @ self.Qbar @ Bbar + self.Rbar
-      f = 2 * Bbar.T @ self.Qbar @ Abar @ xerr # Size (mN, 1)
-
-      # # G matrix
-      # ImN = np.identity(self.m * self.N)
-      # G = np.concatenate((ImN, -ImN, Bbar, -Bbar)) # Size (2mN + 2nN, mN)
-
-      # G matrix and W Vector
-      # Here, only control input constraints are considered.
-      ImN = np.identity(self.m * self.N)
-      G = np.concatenate((ImN, -ImN)) # Size (2mN, mN)
-
-      # W Vector
-      w1 = (self.umax - self.uref[self.k:self.k + self.N, :]).flatten().reshape(-1,1) # Flatten into 2D col vector
-      w2 = (-self.umin + self.uref[self.k:self.k + self.N, :]).flatten().reshape(-1,1)
-      # w3 = (self.xmax - self.xref[self.k:self.k + self.N, :]).flatten().reshape(-1,1) - Abar.dot(xerr)
-      # w4 = (-self.xmin + self.xref[self.k:self.k + self.N, :]).flatten().reshape(-1,1) + Abar.dot(xerr)
-
-      # w3 = np.tile(self.xmax.reshape(-1,1), (self.N, 1)) - Abar.dot(xerr)
-      # w4 = np.tile(-self.xmin.reshape(-1,1), (self.N, 1)) + Abar.dot(xerr)
-      # w = np.concatenate([w1, w2, w3, w4]) # Size (2mN + 2nN, 1)
-
-      w = np.concatenate([w1, w2]) # Size (2mN, 1)
-
-      # # Setup and solve QP problem
-      # H = cvxopt.matrix(Hk)
-      # f = cvxopt.matrix(fk)
-      # G = cvxopt.matrix(Gk)
-      # w = cvxopt.matrix(wk)
-
-      # cvxopt.solvers.options['show_progress'] = False
-      # u = cvxopt.solvers.qp(H, f, G, w)
-      # self.k = self.k + 1
-      # return u[0:self.m] + self.uref[self.k-1, :].reshape(2,1)
-
-      # Solve with cvxpy
-      u = cp.Variable((self.m * self.N, 1))
-      prob = cp.Problem(cp.Minimize(0.5*cp.quad_form(u, H) + f.T * u), [G * u <= w])
-      prob.solve(solver=cp.SCS,verbose=False)
-      # prob.solve(solver=cp.OSQP,verbose=True)
-      self.k = self.k + 1
-
-      if prob.status not in ["infeasible", "unbounded"]:
-         return True, u[0:self.m, 0].value.reshape(-1,1) + self.uref[self.k-1, :].reshape(-1,1)
-      else:
-         print("MPC solver: %s" %(prob.status))
-         rospy.logwarn("MPC solver: %s" %(prob.status))
-         return False, np.zeros((2,1))
+    if u_star is not None:
+        self.k = self.k + 1
+        return True, u_star[:self.m].reshape(-1,1) + self.uref[self.k-1, :].reshape(-1,1)
+    else:
+        print("MPC solver: infeasible")
+        rospy.logwarn("MPC solver: infeasible")
+        return False, np.zeros((2,1))
       
