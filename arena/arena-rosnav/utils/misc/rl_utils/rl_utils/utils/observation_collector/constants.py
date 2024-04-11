@@ -33,6 +33,7 @@ class OBS_DICT_KEYS:
     GOAL_LOCATION = "goal_location"
     DISTANCE_TO_GOAL = "distance_to_goal"
     LAST_ACTION = "last_action"
+    LAST_ACTION = "last_action_points"
     GLOBAL_PLAN = "global_plan"
     DONE = "is_done"
     LASER_CONVEX = "laser_convex"

@@ -13,9 +13,9 @@ fixed_per_step:
   reward: -0.015
 
 # # Don't add if action range [0,1] or output points
-# no_movement:
-#   reward: -0.015
-#   _on_safe_dist_violation: true
+no_movement:
+  reward: -0.015
+  _on_safe_dist_violation: true
 
 approach_goal:
   pos_factor: 0.4
@@ -42,9 +42,9 @@ collision:
 #   reward_factor: 0.1
 #   _on_safe_dist_violation: false
 
-# reverse_drive:
-#   reward: -0.03
-#   _on_safe_dist_violation: true
+reverse_drive:
+  reward: -0.03
+  _on_safe_dist_violation: true
 
 # # Request modify if action range [0,1] or output points
 # abrupt_velocity_change:

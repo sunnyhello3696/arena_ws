@@ -90,11 +90,11 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self._last_action_points = None
 
         self.debug_vis = True
-        self.mpc_mapframe_test_traj = False
+        self.mpc_mapframe_test_traj = True
         if self.mpc_mapframe_test_traj:
             self.mpc_xref_traj = genfromtxt("/home/dmz/Documents/mpc_test_traj/ref_states_2.csv", delimiter=',')
             self.mpc_xref_traj = self.mpc_xref_traj[:,:2] # x,y
-            initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
+            # initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
 
         self.enable_rviz = False
         if rospy.get_param("/debug_mode", False):
@@ -312,22 +312,31 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                             (netout_scale_factors[sf_index], netout_scale_factors[sf_index + 1]),
                             i  # 传递feasible_spaces索引
                         )
-                        action_points.append(one_action_point)            
+                        action_points.append(one_action_point)
+                
+                # if goal in convex, the last action point set to goal
+                goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
+                convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
+                if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
+                    # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
+                    action_points.pop()
+                    action_points.append(goal_robot_frame)
+
                 
                 action_points = np.array(action_points, dtype=np.float32)
 
                 if self.mpc_mapframe_test_traj:
-                    # use mpc_test_traj
-                    self.publish_marker(self.mpc_xref_traj, Marker.LINE_STRIP, 0.0, 1.0, 0.0, "mpc_xref_traj", 0.2 , 0.8)
-                    action_points = self.update_action_points()
+                    # # use mpc_test_traj
+                    # self.publish_marker(self.mpc_xref_traj, Marker.LINE_STRIP, 0.0, 1.0, 0.0, "mpc_xref_traj", 0.2 , 0.8)
+                    # action_points = self.update_action_points()
 
-                    # # use world frame
-                    # action_points_world = []
-                    # for pt in action_points:
-                    #     pt_w = self.robotpt2worldpt((pt[0],pt[1]))
-                    #     action_points_world.append(pt_w)
-                    # action_points_world = np.array(action_points_world)
-                    # action_points = action_points_world
+                    # use world frame
+                    action_points_world = []
+                    for pt in action_points:
+                        pt_w = self.robotpt2worldpt((pt[0],pt[1]))
+                        action_points_world.append(pt_w)
+                    action_points_world = np.array(action_points_world)
+                    action_points = action_points_world
                 
                 # if nan or none in action_points
                 if np.isnan(action_points).any() or np.any(action_points == None):
@@ -880,6 +889,15 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         vax = np.cos(vayaw + now_wyaw)*va
         vay = np.sin(vayaw + now_wyaw)*va
         return vax,vay
+    
+    @staticmethod
+    def is_in_convex(point,convex):
+        # convex为顺时针
+        for i in range(1,len(convex)):
+            cross = convex[i-1][0]*convex[i][1] - convex[i-1][1]*convex[i][0] +  (convex[i][0] - convex[i-1][0])*point[1]+ (convex[i-1][1] - convex[i][1])*point[0]
+            if cross > 0:
+                return False
+        return True
 
     
     def publish_spline_rviz(self, x_new, y_new):
