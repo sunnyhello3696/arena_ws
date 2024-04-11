@@ -245,7 +245,7 @@ class AGENT_66(BaseAgent):
 #     activation_fn = nn.ReLU
 
 @AgentFactory.register("AGENT_89")
-class AGENT_66(BaseAgent):
+class AGENT_89(BaseAgent):
     type = PolicyType.CNN
     space_encoder_class = ConvexMPCEncoder
 
