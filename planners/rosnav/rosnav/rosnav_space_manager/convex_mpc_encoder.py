@@ -94,7 +94,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         if self.mpc_mapframe_test_traj:
             self.mpc_xref_traj = genfromtxt("/home/dmz/Documents/mpc_test_traj/ref_states_2.csv", delimiter=',')
             self.mpc_xref_traj = self.mpc_xref_traj[:,:2] # x,y
-            initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
+            # initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
 
         self.enable_rviz = False
         if rospy.get_param("/debug_mode", False):
@@ -216,24 +216,14 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         R = np.array(cfg['mpc']['R1']).astype(np.float32)
         # self.mpc = ConvexUnicycleMPC(T, N, xmin, xmax, umin, umax, Q, QN, R)
         self.mpc = ConvexUnicycleMPC_qpsolver(T, N, xmin, xmax, umin, umax, Q, QN, R)
-        
 
-    def decode_action(self, action, action_obs_dict: Dict[str, Any]) -> np.ndarray:
-        """
-        Decodes the action.
-
-        Args:
-            action: The action to decode.
-
-        Returns:
-            np.ndarray: The decoded action.
-        """
+    def process_action(self, action, action_obs_dict: Dict[str, Any]):
         if self.is_normalize_points and self.action_points_num > 0:
-            X_U_ref = self.generate_ref_X_and_U(action,action_obs_dict,k=2,s=5.0)
-            if X_U_ref is not None:
+            X_U_Pts_ref = self.generate_ref_X_and_U(action,action_obs_dict,k=2,s=5.0)
+            if X_U_Pts_ref is not None:
                 # xref: Entire reference trajectory from x0 to xf as numpy array of size (Kf+1, 3), where each row is (xref [m], yref [m], theta_ref[rad])
                 # uref: Entire reference input from ur0 to urf as numpy array of size (Kf, 2), where each row is (vref [m/s], ang_vel_ref [rad/s])
-                x_ref,u_ref = X_U_ref
+                x_ref,u_ref,action_points_robot_frame = X_U_Pts_ref
                 self.mpc.set_ref_trajectory(x_ref, u_ref)
 
                 if self.mpc_mapframe_test_traj:
@@ -246,7 +236,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     v = u[0]
                     w = u[1]
                     # print("mpc output",[v,0.0,w])
-                    return np.array([v,0.0,w], dtype=np.float32)
+                    return np.array([v,0.0,w], dtype=np.float32), action_points_robot_frame 
                 else:
                     start_pos = np.array([0.,0.,0.])
                     status, u = self.mpc.update(start_pos)
@@ -254,11 +244,23 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     v = u[0]
                     w = u[1]
                     # print("mpc output",[v,0.0,w])
-                    return np.array([v,0.0,w], dtype=np.float32)
+                    return np.array([v,0.0,w], dtype=np.float32), action_points_robot_frame
             else:
-                return np.array([0.0, 0.0, 0.0], dtype=np.float32)
+                return np.array([0.0, 0.0, 0.0], dtype=np.float32), np.zeros((self.action_points_num, 2), dtype=np.float32)
         else:
-            return self._action_space_manager.decode_action(action)
+            raise ValueError("Convex MPC action is not supported in non-convex MPC encoder.")
+
+    def decode_action(self, action) -> np.ndarray:
+        """
+        Decodes the action.
+
+        Args:
+            action: The action to decode.
+
+        Returns:
+            np.ndarray: The decoded action.
+        """
+        return self._action_space_manager.decode_action(action)
         
     def generate_ref_X_and_U(self,action,action_obs_dict: Dict[str, Any], k=2, s=5.0):
 
@@ -273,7 +275,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
             rospy.logerr("action should be in [0,1].")
             return None
 
-        action_points = [] # base下
+        action_points = []
+        action_points_robot = []
         netout_scale_factors = self._action_space_manager.decode_action(action)
         # angle dis
         netout_scale_factors = np.clip(netout_scale_factors, 0.0, 1.0)
@@ -302,6 +305,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                         0
                     )
                     action_points.append(one_action_point)
+                    action_points_robot.append(one_action_point)
 
                 # 对于后续的动作点，基于前一个动作点的位置和方向进行计算
                 for i in range(1, self.action_points_num):
@@ -312,22 +316,33 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                             (netout_scale_factors[sf_index], netout_scale_factors[sf_index + 1]),
                             i  # 传递feasible_spaces索引
                         )
-                        action_points.append(one_action_point)            
+                        action_points.append(one_action_point)
+                        action_points_robot.append(one_action_point)
+                
+                # if goal in convex, the last action point set to goal
+                goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
+                convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
+                if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
+                    # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
+                    action_points.pop()
+                    action_points.append(goal_robot_frame)
+
                 
                 action_points = np.array(action_points, dtype=np.float32)
+                action_points_robot = np.array(action_points_robot, dtype=np.float32) # 保存机器人坐标系下的动作点
 
                 if self.mpc_mapframe_test_traj:
-                    # use mpc_test_traj
-                    self.publish_marker(self.mpc_xref_traj, Marker.LINE_STRIP, 0.0, 1.0, 0.0, "mpc_xref_traj", 0.2 , 0.8)
-                    action_points = self.update_action_points()
+                    # # replace action_points with mpc_xref_traj
+                    # self.publish_marker(self.mpc_xref_traj, Marker.LINE_STRIP, 0.0, 1.0, 0.0, "mpc_xref_traj", 0.2 , 0.8)
+                    # action_points = self.update_action_points()
 
-                    # # use world frame
-                    # action_points_world = []
-                    # for pt in action_points:
-                    #     pt_w = self.robotpt2worldpt((pt[0],pt[1]))
-                    #     action_points_world.append(pt_w)
-                    # action_points_world = np.array(action_points_world)
-                    # action_points = action_points_world
+                    # convert action_points to world frame
+                    action_points_world = []
+                    for pt in action_points:
+                        pt_w = self.robotpt2worldpt((pt[0],pt[1]))
+                        action_points_world.append(pt_w)
+                    action_points_world = np.array(action_points_world)
+                    action_points = action_points_world
                 
                 # if nan or none in action_points
                 if np.isnan(action_points).any() or np.any(action_points == None):
@@ -432,7 +447,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     #     time.sleep(5)
                     #     for idx in indices:
                     #         print(f"点{idx + 1}: {spline_points[idx]}，距离: {distances[idx]:.2f}")
-                    return Xref, Uref
+                    return Xref, Uref, action_points_robot
                 except Exception as e:
                     print("b-spline拟合过程中发生错误:", e)
                     rospy.logerr("b-spline拟合过程中发生错误")
@@ -880,6 +895,15 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         vax = np.cos(vayaw + now_wyaw)*va
         vay = np.sin(vayaw + now_wyaw)*va
         return vax,vay
+    
+    @staticmethod
+    def is_in_convex(point,convex):
+        # convex为顺时针
+        for i in range(1,len(convex)):
+            cross = convex[i-1][0]*convex[i][1] - convex[i-1][1]*convex[i][0] +  (convex[i][0] - convex[i-1][0])*point[1]+ (convex[i-1][1] - convex[i][1])*point[0]
+            if cross > 0:
+                return False
+        return True
 
     
     def publish_spline_rviz(self, x_new, y_new):

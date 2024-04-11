@@ -335,6 +335,112 @@ class ConvexExtractor_2d_cgd(RosnavBaseExtractor):
         return self.fc(extracted_features)
     
 
+class ConvexExtractor_2d_with_ActPts(RosnavBaseExtractor):
+
+    def __init__(
+        self,
+        observation_space: gym.spaces.Box,
+        observation_space_manager: ObservationSpaceManager,
+        features_dim: int = 256,
+        stacked_obs: bool = False,
+        *args,
+        **kwargs
+    ) -> None:
+        
+        if stacked_obs :
+            print("ConvexExtractor_2d init with stacked_obs")
+            rospy.loginfo("ConvexExtractor_2d init with stacked_obs")
+        else:
+            print("ConvexExtractor_2d init without stacked_obs")
+            rospy.loginfo("ConvexExtractor_2d init without stacked_obs")
+        
+        self._goal_size, self._last_action_size,self._convex_map_size,self._last_action_points_size = (
+            # observation_space_manager[SPACE_INDEX.LASER].shape[0],
+            observation_space_manager[SPACE_INDEX.GOAL].shape[0],
+            observation_space_manager[SPACE_INDEX.LAST_ACTION].shape[0],
+            observation_space_manager[SPACE_INDEX.CONVEX].shape[0],
+            observation_space_manager[SPACE_INDEX.LAST_ACTION_POINTS].shape[0],
+        )
+
+        print("_goal_size: ",self._goal_size)
+        print("_last_action_size: ",self._last_action_size)
+        print("_convex_map_size: ",self._convex_map_size)
+        print("_last_action_points_size: ",self._last_action_points_size)
+
+        self.convex_map_side = int(math.sqrt(self._convex_map_size))
+
+        self._num_stacks = observation_space.shape[0] if stacked_obs else 1
+        super(ConvexExtractor_2d_with_ActPts,self).__init__(
+            observation_space=observation_space,
+            observation_space_manager=observation_space_manager,
+            features_dim=features_dim,
+            stacked_obs=stacked_obs,
+        )
+
+    def _setup_network(self):
+        # self.cnn = nn.Sequential(
+        #     nn.Conv1d(self._num_stacks, 32, 5, 2),
+        #     nn.ReLU(),
+        #     nn.Flatten(),
+        # )
+        self.cnn = nn.Sequential(
+            nn.Conv2d(self._num_stacks, 32, kernel_size=8, stride=4, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
+
+        # Compute shape by doing one forward pass
+        with th.no_grad():
+            # desired_shape = (1, self._num_stacks, self._convex_map_size)
+            desired_shape = (1, self._num_stacks, self.convex_map_side, self.convex_map_side)
+            tensor_forward = th.randn(desired_shape)
+            n_flatten = self.cnn(tensor_forward).shape[-1]
+
+        self.fc = nn.Sequential(
+            nn.Linear(
+                n_flatten
+                + (self._goal_size + self._last_action_size + self._last_action_points_size) * self._num_stacks,
+                self._features_dim,
+            ), 
+            nn.ReLU(),
+        )
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        _robot_state_size = self._goal_size + self._last_action_size + self._last_action_points_size
+        
+        if not self._stacked_obs:
+            # For non-stacked observations
+            convex_map_flat = observations[:, :-_robot_state_size]
+            robot_state = observations[:, -_robot_state_size:]
+
+            # Reshape convex_map_flat to [batch_size, num_channels, height, width]
+            convex_map_reshaped = convex_map_flat.view(-1, self._num_stacks, self.convex_map_side, self.convex_map_side)
+            
+            # # 保存第一个批次的convex_map图像
+            # self.save_convex_map(convex_map_reshaped, batch_idx=0)
+            # self.print_partial_data(robot_state[0], name="Robot State", num_elements=5)
+
+            
+            cnn_features = self.cnn(convex_map_reshaped)
+            extracted_features = th.cat((cnn_features, robot_state), dim=1)
+        else:
+            # For stacked observations
+            convex_map_flat = observations[:, :, :-_robot_state_size]
+            robot_state = observations[:, :, -_robot_state_size:].flatten(start_dim=1, end_dim=2)
+
+            # Assuming each stack is concatenated along the last dimension, we need to split them and stack along a new dimension
+            convex_map_reshaped = convex_map_flat.view(-1, self._num_stacks, self.convex_map_side, self.convex_map_side)
+
+            cnn_features = self.cnn(convex_map_reshaped)
+            extracted_features = th.cat((cnn_features, robot_state), dim=1)
+
+        return self.fc(extracted_features)
+    
+
 
     # 假设这个方法在您的类中
     def save_convex_map(self, convex_map, batch_idx=0, save_path='/home/dmz/Pictures/convex_map'):

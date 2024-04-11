@@ -65,7 +65,7 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_88"
+  architecture_name: "AGENT_89"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
   resume: null # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
   # resume: "burger"
@@ -96,7 +96,7 @@ rl_agent:
   action_space:
     normalize_points: 
       enabled: true # normalize points_num action points to [0, 1] and no continuous and discrete action space
-      action_points_num: 3
+      action_points_num: 2
     discrete: false
     custom_discretization: # only used if discrete is true, otherwise ignored
       enabled: true

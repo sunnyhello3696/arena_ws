@@ -42,9 +42,9 @@ collision:
 #   reward_factor: 0.1
 #   _on_safe_dist_violation: false
 
-# reverse_drive:
-#   reward: -0.03
-#   _on_safe_dist_violation: true
+reverse_drive:
+  reward: -0.03
+  _on_safe_dist_violation: true
 
 # # Request modify if action range [0,1] or output points
 # abrupt_velocity_change:

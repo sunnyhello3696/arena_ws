@@ -3,6 +3,9 @@ from enum import Enum
 from ..observation_space.spaces.base.goal_space import GoalSpace
 from ..observation_space.spaces.base.laser_space import LaserScanSpace
 from ..observation_space.spaces.base.last_action_space import LastActionSpace
+from ..observation_space.spaces.base.last_action_points_space import (
+    LastActionPointsSpace,
+)
 from ..observation_space.spaces.feature_maps.pedestrian_location_space import (
     PedestrianLocationSpace,
 )
@@ -29,6 +32,7 @@ class SPACE_INDEX(Enum):
     LASER = LaserScanSpace
     GOAL = GoalSpace
     LAST_ACTION = LastActionSpace
+    LAST_ACTION_POINTS = LastActionPointsSpace
     CONVEX = ConvexSpace
 
     STACKED_LASER_MAP = StackedLaserMapSpace
