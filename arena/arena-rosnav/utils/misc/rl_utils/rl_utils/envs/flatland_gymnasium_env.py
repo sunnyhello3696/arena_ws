@@ -127,6 +127,10 @@ class FlatlandEnv(gymnasium.Env):
         self._max_steps_per_episode = max_steps_per_episode
 
         self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        if self.is_normalize_points:
+            self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
+        else:
+            self._last_action_points = None
 
         self.enable_rviz = rospy.get_param("/if_viz", False)
         self.clock_sub = rospy.Subscriber(self.ns.oldname("clock"), Clock, self.clock_cb)
@@ -136,6 +140,8 @@ class FlatlandEnv(gymnasium.Env):
         # 如果配置中的debug_mode=False，则trigger_init=True；debug_mode=True，不启用（False）。
         if not trigger_init:
             self.init()
+
+        # time.sleep(5)
 
     def init(self):
         """
@@ -208,8 +214,8 @@ class FlatlandEnv(gymnasium.Env):
 
         self.agent_action_pub.publish(action_msg)
 
-    def _decode_action(self, action: np.ndarray, action_obs_dict) -> np.ndarray:
-        return self.model_space_encoder.decode_action(action, action_obs_dict)
+    def _decode_action(self, action: np.ndarray) -> np.ndarray:
+        return self.model_space_encoder.decode_action(action)
 
     def _encode_observation(self, observation, *args, **kwargs):
 
@@ -262,26 +268,47 @@ class FlatlandEnv(gymnasium.Env):
         """
 
         # print("=============================namespaces: ", self.ns)
-        action_obs_dict = self.observation_collector.get_observations(
-            last_action=self._last_action
-        )
+        if not self.is_normalize_points:
+            decoded_action = self._decode_action(action)
+            self._pub_action(decoded_action)
 
-        decoded_action = self._decode_action(action , action_obs_dict)
-        self._pub_action(decoded_action)
+            if self._is_train_mode:
+                self.call_service_takeSimStep()
 
-        if self._is_train_mode:
-            self.call_service_takeSimStep()
+            obs_dict = self.observation_collector.get_observations(
+                last_action=self._last_action
+            )
+            self._last_action = decoded_action
 
-        obs_dict = self.observation_collector.get_observations(
-            last_action=self._last_action
-        )
-        self._last_action = decoded_action
+            # calculate reward
+            reward, reward_info = self.reward_calculator.get_reward(
+                action=decoded_action,
+                **obs_dict,
+            )
+        else:
+            action_obs_dict = self.observation_collector.get_observations(
+                last_action=self._last_action,
+                last_action_points= self._last_action_points
+            )
+            decoded_action_scale_factors = self._decode_action(action)
+            decoded_action, action_points_robot = self.model_space_encoder.process_action(decoded_action_scale_factors, action_obs_dict)
+            self._pub_action(decoded_action)
+            
+            if self._is_train_mode:
+                self.call_service_takeSimStep()
 
-        # calculate reward
-        reward, reward_info = self.reward_calculator.get_reward(
-            action=decoded_action,
-            **obs_dict,
-        )
+            obs_dict = self.observation_collector.get_observations(
+                last_action=self._last_action,
+                last_action_points= self._last_action_points
+            )
+            self._last_action = decoded_action
+            self._last_action_points = action_points_robot
+
+            # calculate reward
+            reward, reward_info = self.reward_calculator.get_reward(
+                action=decoded_action,
+                **obs_dict,
+            )
 
         self._steps_curr_episode += 1
         # print(f"Step: {self._steps_curr_episode}, Reward: {reward}")
@@ -342,6 +369,8 @@ class FlatlandEnv(gymnasium.Env):
         self._steps_curr_episode = 0
 
         self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        if self.is_normalize_points:
+            self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
 
         if self._is_train_mode:
             self.agent_action_pub.publish(Twist())

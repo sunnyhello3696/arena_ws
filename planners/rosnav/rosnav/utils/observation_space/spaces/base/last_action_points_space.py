@@ -1,4 +1,5 @@
 from typing import Tuple
+import rospy
 
 import numpy as np
 from gymnasium import spaces
@@ -39,33 +40,14 @@ class LastActionPointsSpace(BaseObservationSpace):
             A tuple of gym spaces representing the last action points space.
         """
         if not self._normalize_points:
-            _spaces = (
-                spaces.Box(
-                    low=self._min_linear_vel,
-                    high=self._max_linear_vel,
-                    shape=(1,),
-                    dtype=np.float32,
-                ),
-                spaces.Box(
-                    low=self._min_translational_vel,
-                    high=self._max_translational_vel,
-                    shape=(1,),
-                    dtype=np.float32,
-                ),
-                spaces.Box(
-                    low=self._min_angular_vel,
-                    high=self._max_angular_vel,
-                    shape=(1,),
-                    dtype=np.float32,
-                ),
-            )
+            rospy.logerr("Non-normalized action points are not supported yet.")
+            raise NotImplementedError("Non-normalized action points are not supported yet.")
         else:
             _spaces = []
             for i in range(self._action_points_num):
-                _spaces.append(
-                    spaces.Box(low=0, high=self._max_dist, shape=(1,), dtype=np.float32),
-                    spaces.Box(low=-np.pi, high=np.pi, shape=(1,), dtype=np.float32),
-                )
+                # 分别为每个维度添加空间
+                _spaces.append(spaces.Box(low=0, high=self._max_dist, shape=(1,), dtype=np.float32))
+                _spaces.append(spaces.Box(low=-np.pi, high=np.pi, shape=(1,), dtype=np.float32))
         return stack_spaces(*_spaces)
 
     def encode_observation(self, observation: dict, *args, **kwargs) -> ndarray:

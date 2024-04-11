@@ -170,7 +170,7 @@ class RosnavSpaceManager:
         encoded_obs = self._encoder.encode_observation(observation, **kwargs)
         return encoded_obs
 
-    def decode_action(self, action , action_obs_dict=None):
+    def decode_action(self, action):
         """
         Decodes the given action using the space encoder.
         Args:
@@ -178,4 +178,14 @@ class RosnavSpaceManager:
         Returns:
             object: The decoded action.
         """
-        return self._encoder.decode_action(action ,action_obs_dict)
+        return self._encoder.decode_action(action)
+    
+    def process_action(self, action, action_obs_dict: Dict[str, Any]):
+        """
+        Process the action.
+
+        Args:
+            action: The action to process.
+            action_obs_dict (Dict[str, Any]): The action observation dictionary.
+        """
+        return self._encoder.process_action(action, action_obs_dict)

@@ -17,7 +17,7 @@ from .feature_extractors import *
 
 from rosnav.rosnav_space_manager.convex_encoder import ConvexEncoder
 from rosnav.rosnav_space_manager.convex_mpc_encoder import ConvexMPCEncoder
-from rosnav.model.feature_extractors.convex import ConvexExtractor_1d,ConvexExtractor_2d
+from rosnav.model.feature_extractors.convex import ConvexExtractor_1d,ConvexExtractor_2d,ConvexExtractor_2d_with_ActPts
 
 
 
@@ -244,7 +244,26 @@ class AGENT_66(BaseAgent):
 #     net_arch = dict(pi=[64, 64, 64], vf=[64, 64, 64])
 #     activation_fn = nn.ReLU
 
+@AgentFactory.register("AGENT_89")
+class AGENT_66(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexMPCEncoder
 
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+        SPACE_INDEX.LAST_ACTION_POINTS,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+    }
+    features_extractor_class = ConvexExtractor_2d_with_ActPts
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[256, 128, 64], vf=[128, 64, 64])
+    activation_fn = nn.ReLU
 
 @AgentFactory.register("BarnResNet")
 class BarnResNet(BaseAgent):

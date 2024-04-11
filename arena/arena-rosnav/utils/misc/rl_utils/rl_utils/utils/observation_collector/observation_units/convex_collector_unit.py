@@ -84,6 +84,7 @@ class ConvexCollectorUnit(CollectorUnit):
         self.action_points_num = rospy.get_param_cached("action_points_num", 0)
 
         self._init_last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        self._init_last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
 
         self._robot_state = Odometry()
         self._robot_pose = Pose2D()
@@ -193,6 +194,14 @@ class ConvexCollectorUnit(CollectorUnit):
             last_action = kwargs.get("last_action")
         else:
             last_action = self._init_last_action
+
+        if kwargs.get("last_action_points") is not None:
+            last_action_points = kwargs.get("last_action_points")
+        else:
+            last_action_points = self._init_last_action_points
+
+        dist_angle_last_action_points_arr = self.process_last_action_points(last_action_points)
+        
         obs_dict.update(
             {
                 OBS_DICT_KEYS.LASER: self._laser,
@@ -207,6 +216,7 @@ class ConvexCollectorUnit(CollectorUnit):
                 OBS_DICT_KEYS.LAST_ACTION: last_action,
                 OBS_DICT_KEYS.LASER_CONVEX: self._laser_convex,
                 OBS_DICT_KEYS.ROBOT_STATE: self._robot_state,
+                OBS_DICT_KEYS.LAST_ACTION_POINTS: dist_angle_last_action_points_arr,
             }
         )
 
@@ -315,3 +325,22 @@ class ConvexCollectorUnit(CollectorUnit):
             Pose2D: Processed robot pose data.
         """
         return pose3d_to_pose2d(pose)
+    
+    def process_last_action_points(self, last_action_points: np.ndarray) -> np.ndarray:
+        """
+        Process the last action points.
+
+        Args:
+            last_action_points (np.ndarray): Last action points. shape: (num_points, 2)
+
+        Returns:
+            np.ndarray: Processed last action points.
+        """
+        dist_angle_last_action_points_arr = []
+        for point in last_action_points:
+            dist_angle_last_action_points_arr.append(np.linalg.norm(point))
+            dist_angle_last_action_points_arr.append(np.arctan2(point[1], point[0]))
+
+        # reshape to 1D array
+        dist_angle_last_action_points_arr = np.array(dist_angle_last_action_points_arr).flatten()
+        return dist_angle_last_action_points_arr

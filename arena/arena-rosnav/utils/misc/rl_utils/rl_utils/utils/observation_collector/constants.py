@@ -33,11 +33,11 @@ class OBS_DICT_KEYS:
     GOAL_LOCATION = "goal_location"
     DISTANCE_TO_GOAL = "distance_to_goal"
     LAST_ACTION = "last_action"
-    LAST_ACTION = "last_action_points"
     GLOBAL_PLAN = "global_plan"
     DONE = "is_done"
     LASER_CONVEX = "laser_convex"
     ROBOT_STATE = "robot_state"
+    LAST_ACTION_POINTS = "last_action_points"
 
     # why not have SEMANTIC = SemanticAttribute ?
     class SEMANTIC(enum.Enum):
