@@ -89,11 +89,11 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self._robot_vel = None
         self._last_action_points = None
 
-        self.debug_vis = False
-        self.mpc_mapframe_test_traj = False
-        if self.mpc_mapframe_test_traj:
-            self.mpc_xref_traj = genfromtxt("/home/dmz/Documents/mpc_test_traj/ref_states_2.csv", delimiter=',')
-            self.mpc_xref_traj = self.mpc_xref_traj[:,:2] # x,y
+        self.debug_vis = True
+        self.mpc_mapframe_test_traj = True
+        # if self.mpc_mapframe_test_traj:
+            # self.mpc_xref_traj = genfromtxt("/home/dmz/Documents/mpc_test_traj/ref_states_2.csv", delimiter=',')
+            # self.mpc_xref_traj = self.mpc_xref_traj[:,:2] # x,y
             # initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
 
         self.enable_rviz = False
@@ -206,6 +206,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         # print("cfg:",cfg)
         T = cfg['mpc']['T']
         N = int(cfg['mpc']['N'])
+        self.k = int(cfg['mpc']['k'])
+        self.if_add_robot_pt = bool(cfg['mpc']['if_add_robot_pt'])
         xmin = np.array(cfg['mpc']['xmin1']).astype(np.float32)
         xmax = np.array(cfg['mpc']['xmax1']).astype(np.float32)
         umin = np.array(cfg['mpc']['umin1']).astype(np.float32)
@@ -219,7 +221,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
 
     def process_action(self, action, action_obs_dict: Dict[str, Any]):
         if self.is_normalize_points and self.action_points_num > 0:
-            X_U_Pts_ref = self.generate_ref_X_and_U(action,action_obs_dict,k=2,s=5.0)
+            X_U_Pts_ref = self.generate_ref_X_and_U(action,action_obs_dict,k=self.k,s=5.0)
             if X_U_Pts_ref is not None:
                 # xref: Entire reference trajectory from x0 to xf as numpy array of size (Kf+1, 3), where each row is (xref [m], yref [m], theta_ref[rad])
                 # uref: Entire reference input from ur0 to urf as numpy array of size (Kf, 2), where each row is (vref [m/s], ang_vel_ref [rad/s])
@@ -296,7 +298,26 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 # theta = np.arctan2(rvy, rvx)  # 第一个动作点的方向
                 
                 # connect robot present pose to the first action point
-                action_points.append((0.,0.))
+                if self.if_add_robot_pt:
+                    action_points.append((0.,0.))
+                    # print("add robot point to action points.")
+
+                # if goal in convex, the angle of the first action point set to goal
+                goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
+                convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
+                if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
+                    goal_theta = np.arctan2(goal_robot_frame[1],goal_robot_frame[0])
+                    # convert goal_theta to 0-2pi with numpy
+                    goal_theta = np.where(goal_theta < 0, goal_theta + 2 * np.pi, goal_theta)
+                    goal_theta_scale = goal_theta/(2*np.pi) # goal theta scale 0-1
+                    # print("goal_in_convex, goal_theta:",goal_theta,"goal_theta_scale:",goal_theta_scale)
+                    for i in range(len(netout_scale_factors)):
+                        if i == 0:
+                            netout_scale_factors[i] = goal_theta_scale
+                        elif i % 2 == 0:
+                            netout_scale_factors[i] = 0.0
+                        # elif i % 2 == 1:
+                        #     netout_scale_factors[i] = 1.0
                 
                 if len(netout_scale_factors) >= 2:
                     one_action_point = self.calc_polar_action_points(
@@ -319,13 +340,13 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                         action_points.append(one_action_point)
                         action_points_robot.append(one_action_point)
                 
-                # if goal in convex, the last action point set to goal
-                goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
-                convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
-                if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
-                    # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
-                    action_points.pop()
-                    action_points.append(goal_robot_frame)
+                # # if goal in convex, the last action point set to goal
+                # goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
+                # convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
+                # if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
+                #     # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
+                #     action_points.pop()
+                #     action_points.append(goal_robot_frame)
 
                 
                 action_points = np.array(action_points, dtype=np.float32)
@@ -374,7 +395,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                                 # 将space中的点转换为期望的格式
                                 feasible_space_points.append(p)
                             # 发布连线
-                            # self.publish_marker(feasible_space_points, Marker.POINTS, 1.0, 1.0 - idx * 0.1, 0.0, namespace, 0.05 , 0.8)
+                            self.publish_marker(feasible_space_points, Marker.POINTS, 1.0, 1.0 - idx * 0.1, 0.0, namespace, 0.05 , 0.8)
 
                 # # 计算每个点到原点(0, 0)的欧氏距离
                 # distances = np.linalg.norm(action_points, axis=1)
@@ -390,8 +411,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 #     initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
 
                 # 确保点的数量足够
-                if action_points.shape[0] < 3:
-                    raise ValueError("至少需要3个点来进行2次B-Spline拟合")
+                if action_points.shape[0] < k + 1:
+                    raise ValueError("动作点的数量不足以进行样条插值")
 
                 # 确保点的维度正确（这里我们假设是二维点，即n=2）
                 if action_points.ndim != 2 or action_points.shape[1] != 2:
@@ -955,10 +976,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
 
     def publish_marker(self, points, marker_type, r, g, b, namespace='visualization', scale=0.1, trans = 1.0):
         marker = Marker()
-        if self.mpc_mapframe_test_traj:
-            marker.header.frame_id = "map"
-        else:
-            marker.header.frame_id = "sim_1/robot"
+        marker.header.frame_id = "sim_1/robot"
         marker.ns = namespace
         marker.type = marker_type
         marker.action = Marker.ADD

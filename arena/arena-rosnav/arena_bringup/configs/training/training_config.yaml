@@ -1,11 +1,11 @@
 ### General
 # in debug_mode no agent directories will be created and no models will be saved
 # further no wandb logging and fake (simulated) multiprocessing for traceback
-debug_mode: false
+debug_mode: true
 # number of parallel environments
-n_envs: 16
+n_envs: 1
 # gpu yes or no
-no_gpu: false
+no_gpu: true
 
 ### General Training
 tm_robots: "random"

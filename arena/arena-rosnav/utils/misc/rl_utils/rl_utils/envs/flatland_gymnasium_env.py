@@ -129,6 +129,7 @@ class FlatlandEnv(gymnasium.Env):
         self._max_steps_per_episode = max_steps_per_episode
 
         self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        self._obs_dict = None
         if self.is_normalize_points:
             self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
         else:
@@ -291,12 +292,8 @@ class FlatlandEnv(gymnasium.Env):
                 **obs_dict,
             )
         else:
-            action_obs_dict = self.observation_collector.get_observations(
-                last_action=self._last_action,
-                last_action_points= self._last_action_points
-            )
             decoded_action_scale_factors = self._decode_action(action)
-            decoded_action, action_points_robot = self.model_space_encoder.process_action(decoded_action_scale_factors, action_obs_dict)
+            decoded_action, action_points_robot = self.model_space_encoder.process_action(decoded_action_scale_factors, self._obs_dict)
             self._pub_action(decoded_action)
             
             if self._is_train_mode:
@@ -306,6 +303,7 @@ class FlatlandEnv(gymnasium.Env):
                 last_action=self._last_action,
                 last_action_points= self._last_action_points
             )
+            self._obs_dict = obs_dict
             self._last_action = decoded_action
             self._last_action_points = action_points_robot
 
@@ -376,6 +374,7 @@ class FlatlandEnv(gymnasium.Env):
         self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
         if self.is_normalize_points:
             self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
+        self._obs_dict = None
 
         if self._is_train_mode:
             self.agent_action_pub.publish(Twist())
