@@ -316,8 +316,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                             netout_scale_factors[i] = goal_theta_scale
                         elif i % 2 == 0:
                             netout_scale_factors[i] = 0.0
-                        # elif i % 2 == 1:
-                        #     netout_scale_factors[i] = 1.0
+                        elif i % 2 == 1:
+                            netout_scale_factors[i] = 1.0
                 
                 if len(netout_scale_factors) >= 2:
                     one_action_point = self.calc_polar_action_points(
@@ -568,9 +568,9 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         feasible_spaces = []
         
         # 最大线速度
-        max_linear_speed = 0.7  # m/s
+        max_linear_speed = 0.8  # m/s
 
-        speed_factor = 1.5
+        speed_factor = 1.0
 
         # 根据self.action_points_num计算时间间隔的索引
         time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
