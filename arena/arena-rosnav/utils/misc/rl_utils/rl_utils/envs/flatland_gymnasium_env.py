@@ -310,6 +310,7 @@ class FlatlandEnv(gymnasium.Env):
             # calculate reward
             reward, reward_info = self.reward_calculator.get_reward(
                 action=decoded_action,
+                action_points= action_points_robot,
                 **obs_dict,
             )
 

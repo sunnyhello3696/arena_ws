@@ -51,7 +51,10 @@ class ConvexEncoder(BaseSpaceEncoder):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
-        super().__init__(**action_space_kwargs, **observation_kwargs, **kwargs)
+        merged_kwargs = {}
+        merged_kwargs.update(action_space_kwargs)
+        merged_kwargs.update(observation_kwargs)
+        super().__init__(**merged_kwargs, **kwargs)
         self._observation_list = observation_list
         self._observation_kwargs = observation_kwargs
         self.setup_action_space(action_space_kwargs)

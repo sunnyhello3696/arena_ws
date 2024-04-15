@@ -192,6 +192,19 @@ class ConvexUnicycleMPC_qpsolver(object):
             i = q * self.n
             Bbar[i:i+self.n, j:j+self.m] = self.Akjl(k, self.N-q, r+1) @ Bkr
       return Bbar
+   
+   @staticmethod
+   def angle_difference(target, current):
+      """
+      Calculate the minimum difference between two angles.
+      1. 差异计算：首先计算目标角度与当前角度之间的差值。
+      2. 归一化：将计算得到的差值加上 \(\pi\)，这样做是为了将差值转换到一个正值域中（从 \(0\) 到 \(2\pi\))。
+      3. 模运算：通过对 \(2\pi\) 进行模运算，将这个值限制在 \(0\) 到 \(2\pi\) 范围内。
+      4. 调整：最后，从结果中减去 \(\pi\)，将差值范围调整到 \(-\pi\) 到 \(\pi\)，这代表了从当前角度到目标角度的最短路径。
+      """
+      diff = current - target
+      diff = (diff + np.pi) % (2 * np.pi) - np.pi
+      return diff
 
    def update(self, xk):
     if not self.init:
@@ -200,7 +213,14 @@ class ConvexUnicycleMPC_qpsolver(object):
     if self.k >= self.Kf:
         return True, np.zeros((2,1))
 
-    xerr = (xk.reshape(1, self.n) - self.xref[self.k, :]).reshape(self.n, 1)
+    xerr = np.zeros_like(xk)
+    for i in range(self.n):
+        if i == 2:  # index 2 corresponds to the angle theta
+            xerr[i] = self.angle_difference(self.xref[self.k, i], xk[i])
+        else:
+            xerr[i] = xk[i] - self.xref[self.k, i]
+    
+    xerr = xerr.reshape(self.n, 1)
     Abar = self.Abar(self.k)
     Bbar = self.Bbar(self.k)
 

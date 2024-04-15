@@ -818,6 +818,85 @@ class RewardTwoFactorVelocityDifference(RewardUnit):
             self._sum_reward = 0
 
 
+@RewardUnitFactory.register("action_points_change")
+class RewardActionPointsChange(RewardUnit):
+    """
+    A reward unit that penalizes changes in action points.
+    Calculates the difference between consecutive action points in terms of Euclidean distance,
+    and applies a linear penalty based on these differences.
+
+    Args:
+        reward_function (RewardFunction): The reward function to be used.
+        penalty_factor (float, optional): The factor that scales the linear penalty. Defaults to 1.0.
+        *args: Variable length argument list.
+        **kwargs: Arbitrary keyword arguments.
+
+    Attributes:
+        last_action (numpy.ndarray): The last action taken in terms of action points.
+        penalty_factor (float): The factor that scales the penalty.
+
+    Methods:
+        __call__(self, action: np.ndarray, *args, **kwargs): Calculates the reward based on the action points change.
+        reset(self): Resets the last action to None.
+    """
+
+    @check_params
+    def __init__(
+        self,
+        reward_function: RewardFunction,
+        penalty_factor: float = 1.0,
+        *args,
+        **kwargs,
+    ) -> None:
+        super().__init__(reward_function, *args, **kwargs)
+        self.last_action_points = None
+        self.penalty_factor = penalty_factor
+        self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
+        self.action_points_num = rospy.get_param_cached("action_points_num", 0)
+
+    def check_parameters(self, *args, **kwargs):
+        """
+        Checks if the reward value is positive and issues a warning if it is.
+        """
+        if not self.is_normalize_points:
+            rospy.logerr("RewardActionPointsChange only use at Action points mode")
+            raise ValueError("RewardActionPointsChange only use at Action points mode")
+        
+        if self.is_normalize_points and self.action_points_num == 0:
+            rospy.logerr("Action points num is 0")
+            raise ValueError("Action points num is 0")
+
+    def __call__(self, action_points: np.ndarray, *args, **kwargs):
+        """
+        Calculates and adds the reward based on the given action points.
+
+        Args:
+            action (np.ndarray): The current action points.
+
+        Returns:
+            None
+        """
+        if action_points is None:
+            rospy.logerr("RewardActionPointsChange Action points is None")
+            raise ValueError("RewardActionPointsChange Action points is None")
+        if self.last_action_points is not None:
+            # Calculate the Euclidean distance between consecutive action points
+            distances = np.linalg.norm(action_points - self.last_action_points, axis=1)
+            # Apply linear penalty
+            penalty = np.sum(distances) * self.penalty_factor
+            self.add_reward(-penalty)
+            if if_show_reward:
+                self._sum_reward += -penalty
+        self.last_action_points = action_points.copy()  # Store the current action for next comparison
+
+    def reset(self):
+        self.last_action_points = None
+        if if_show_reward:
+            print("ActionPointsChange reward:", self._sum_reward)
+            print("====================================")
+            self._sum_reward = 0
+
+
 @RewardUnitFactory.register("active_heading_direction")
 class RewardActiveHeadingDirection(RewardUnit):
     """

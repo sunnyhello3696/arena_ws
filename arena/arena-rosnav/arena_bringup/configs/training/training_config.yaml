@@ -16,7 +16,7 @@ tm_modules: "staged"
 n_timesteps: 40000000
 max_num_moves_per_eps: 300
 goal_radius: 1.0
-safety_distance: 0.5
+safety_distance: 0.4
 
 ### Training Monitoring
 monitoring:
@@ -42,7 +42,7 @@ callbacks:
     n_eval_episodes: 30
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 8000
+    eval_freq: 10000
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation

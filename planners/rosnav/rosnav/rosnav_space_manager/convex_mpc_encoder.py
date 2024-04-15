@@ -208,6 +208,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         N = int(cfg['mpc']['N'])
         self.k = int(cfg['mpc']['k'])
         self.if_add_robot_pt = bool(cfg['mpc']['if_add_robot_pt'])
+        self._feasible_position_speed_factor = float(cfg['mpc']['feasible_position_speed_factor'])
         xmin = np.array(cfg['mpc']['xmin1']).astype(np.float32)
         xmax = np.array(cfg['mpc']['xmax1']).astype(np.float32)
         umin = np.array(cfg['mpc']['umin1']).astype(np.float32)
@@ -227,11 +228,10 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 # uref: Entire reference input from ur0 to urf as numpy array of size (Kf, 2), where each row is (vref [m/s], ang_vel_ref [rad/s])
                 x_ref,u_ref,action_points_robot_frame = X_U_Pts_ref
                 self.mpc.set_ref_trajectory(x_ref, u_ref)
-
                 if self.mpc_mapframe_test_traj:
                     rx_w = self._robot_pose.x
                     ry_w = self._robot_pose.y
-                    rtheta_w = self.NormalizeAngleTo2Pi(self._robot_pose.theta)
+                    rtheta_w = self._robot_pose.theta
                     start_pos = np.array([rx_w,ry_w,rtheta_w])
                     status, u = self.mpc.update(start_pos)
                     u = u.flatten()
@@ -316,8 +316,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                             netout_scale_factors[i] = goal_theta_scale
                         elif i % 2 == 0:
                             netout_scale_factors[i] = 0.0
-                        elif i % 2 == 1:
-                            netout_scale_factors[i] = 1.0
+                        # elif i % 2 == 1:
+                        #     netout_scale_factors[i] = 1.0
                 
                 if len(netout_scale_factors) >= 2:
                     one_action_point = self.calc_polar_action_points(
@@ -440,17 +440,14 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     x_new, y_new = splev(u_new, tck, der=0)
                     dx_new, dy_new = splev(u_new, tck, der=1)  # 获取曲线上点的一阶导数（即切线）
                     # 计算每个点处的切线角度
-                    theta_new = np.arctan2(dy_new, dx_new)
-                    # 将角度从-π到π转换到0到2π
-                    theta_new_mod = np.where(theta_new < 0, theta_new + 2 * np.pi, theta_new)
+                    theta_new_mod = np.arctan2(dy_new, dx_new)
                     # 构建xref
                     Xref = np.vstack((x_new, y_new, theta_new_mod)).T
                     # 计算速度和角速度作为uref
                     v = np.sqrt(np.diff(x_new)**2 + np.diff(y_new)**2) / dt
                     w = np.diff(theta_new_mod) / dt
-                    # 处理角度差周期性
-                    w = np.mod(w + np.pi, 2 * np.pi) - np.pi
-
+                    # normalize w to [-pi,pi] 模运算
+                    w = (w + np.pi) % (2 * np.pi) - np.pi
                     # 构建uref
                     Uref = np.vstack((v, w)).T
 
@@ -570,7 +567,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         # 最大线速度
         max_linear_speed = 0.8  # m/s
 
-        speed_factor = 1.0
+        speed_factor = self._feasible_position_speed_factor
 
         # 根据self.action_points_num计算时间间隔的索引
         time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
