@@ -59,7 +59,6 @@ class ConvexSpace(BaseObservationSpace):
             print(f"enable_rviz: {self.enable_rviz}")
 
         print("ConvexSpace init")
-        print(f"convex_map_size: {self.map_size}")
         rospy.loginfo("ConvexSpace init")
 
     @property

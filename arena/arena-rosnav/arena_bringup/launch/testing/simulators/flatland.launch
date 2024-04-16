@@ -34,7 +34,6 @@
     <!-- start_rviz -->
     <include file="$(find arena_bringup)/launch/utils/rviz.launch">
       <arg name="show_rviz" value="$(eval arg('visualization') == 'rviz' and arg('show_rviz') == true)" />
-      <arg name="rviz_file" value="$(arg rviz_file)" />
     </include>
   </group>
 

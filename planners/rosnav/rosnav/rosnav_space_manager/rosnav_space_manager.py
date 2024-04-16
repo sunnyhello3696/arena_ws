@@ -1,6 +1,9 @@
-from typing import Dict, List, Union, Any
+from typing import Any, Dict, List, Union
 
 import rospy
+from rosnav.rosnav_space_manager.encoder_wrapper.feature_map_recorder import (
+    FeatureMapRecorderWrapper,
+)
 from rosnav.utils.observation_space.spaces.base_observation_space import (
     BaseObservationSpace,
 )
@@ -10,7 +13,6 @@ from rosnav.utils.observation_space.spaces.feature_maps.base_feature_map_space i
 
 from .default_encoder import DefaultEncoder
 from .encoder_factory import BaseSpaceEncoderFactory
-
 from .encoder_wrapper.reduced_laser_wrapper import ReducedLaserWrapper
 
 """
@@ -68,6 +70,7 @@ class RosnavSpaceManager:
         self._ped_max_speed_x = 5.0
         self._ped_min_speed_y = -5.0
         self._ped_max_speed_y = 5.0
+        self._social_state_num = 99
 
         self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
         self.action_points_num = rospy.get_param_cached("action_points_num", 0)
@@ -94,10 +97,10 @@ class RosnavSpaceManager:
 
         # 240314: min and max linear and angular velocities of Burger
         _observation_kwargs = {
-            "min_linear_vel": -2.2,
-            "max_linear_vel": 2.2,
-            "min_angular_vel": -2.84,
-            "max_angular_vel": 2.84,
+            "min_linear_vel": -0.7,
+            "max_linear_vel": 0.7,
+            "min_angular_vel": -2.23,
+            "max_angular_vel": 2.23,
             "laser_num_beams": self._laser_num_beams,
             "laser_max_range": self._laser_max_range,
             "num_ped_types": self._num_ped_types,
@@ -107,32 +110,24 @@ class RosnavSpaceManager:
             "max_speed_y": self._ped_max_speed_y,
             "normalize_points": self.is_normalize_points,
             "action_points_num": self.action_points_num,
+            "social_state_num": self._social_state_num,
             **observation_space_kwargs,
         }
-        
-        # _observation_kwargs = {
-        #     "min_linear_vel": -2.0,
-        #     "max_linear_vel": 2.0,
-        #     "min_angular_vel": -4.0,
-        #     "max_angular_vel": 4.0,
-        #     "laser_num_beams": self._laser_num_beams,
-        #     "laser_max_range": self._laser_max_range,
-        #     "num_ped_types": self._num_ped_types,
-        #     "min_speed_x": self._ped_min_speed_x,
-        #     "max_speed_x": self._ped_max_speed_x,
-        #     "min_speed_y": self._ped_min_speed_y,
-        #     "max_speed_y": self._ped_max_speed_y,
-        #     **observation_space_kwargs,
-        # }
 
         self._encoder = space_encoder_class(
             action_space_kwargs=_action_space_kwargs,
             observation_list=observation_spaces,
             observation_kwargs=_observation_kwargs,
+            stacked_observation = self._stacked,
         )
 
         if rospy.get_param("laser/reduce_num_beams"):
             self._encoder = ReducedLaserWrapper(self._encoder, self._laser_num_beams)
+
+        if rospy.get_param("record_feature_maps", False):
+            self._encoder = FeatureMapRecorderWrapper(
+                encoder=self._encoder, save_every_x_obs=4
+            )
 
     @property
     def observation_space_manager(self):

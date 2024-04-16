@@ -42,8 +42,8 @@
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
 
-#include <pedsim_msgs/SemanticDatum.h>
-#include <pedsim_msgs/SemanticData.h>
+#include <crowdsim_msgs/SemanticDatum.h>
+#include <crowdsim_msgs/SemanticData.h>
 
 #include <nav_msgs/OccupancyGrid.h>
 
@@ -55,7 +55,7 @@
 namespace costmap_2d
 {
 
-typedef std::vector<pedsim_msgs::SemanticDatum> SemanticObservation;
+typedef std::vector<crowdsim_msgs::SemanticDatum> SemanticObservation;
 
 class SemanticBuffer{
 public:
@@ -90,7 +90,7 @@ public:
 
 private:
 
-  void callback(const pedsim_msgs::SemanticDataConstPtr& semanticData){
+  void callback(const crowdsim_msgs::SemanticDataConstPtr& semanticData){
     stamp = semanticData->header.stamp;
     data = semanticData->points;
     type = semanticData->type;

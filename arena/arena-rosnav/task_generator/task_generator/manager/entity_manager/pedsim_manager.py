@@ -41,13 +41,6 @@ from task_generator.utils import Utils, rosparam_get
 
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
-# TODO retrieve this from pedsim registry
-def _get_ped_type() -> str:
-    return Config.General.RNG.choice(
-        ["human/adult", "human/elder"],
-        p=[0.8, 0.2]
-    )
-
 # TODO structure these together
 def process_SDF(name: str, base_model: Model) -> Model:
     base_desc = SDFUtil.parse(sdf=base_model.description)
@@ -376,7 +369,7 @@ class PedsimManager(EntityManager):
             msg.type = obstacle.extra.get("type")
             msg.yaml_file = obstacle.model.get(ModelType.YAML).path
 
-            msg.type = _get_ped_type()
+            msg.type = "adult"
             msg.number_of_peds = 1
             msg.vmax = Pedsim.VMAX(obstacle.extra.get("vmax", 1.0))
             msg.start_up_mode = Pedsim.START_UP_MODE(
@@ -450,8 +443,6 @@ class PedsimManager(EntityManager):
             msg.waypoint_mode = Pedsim.WAYPOINT_MODE(
                 obstacle.extra.get("waypoint_mode", 0) # can be loop (0) or random (1)
             )
-            # TODO ^ get rid of all that shit and fully switch to the below
-            msg.configuration = json.dumps({})
 
             msg.waypoints = [
                 geometry_msgs.Point(*waypoint) for waypoint in obstacle.waypoints

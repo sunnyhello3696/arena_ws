@@ -19,23 +19,23 @@ from flatland_msgs.msg import Galaxy2D
 
 class ConvexCollectorUnit(CollectorUnit):
     """
-    A class for collecting basic navigation information such as robot state, sensor data, subgoal.
+    A class for collecting basic navigation information such as robot state, sensor data, goal.
 
     Attributes:
         _robot_state (Odometry): Current robot state.
         _robot_pose (Pose2D): Current robot pose.
         _laser (np.ndarray): Current laser scan data.
         _full_range_laser (np.ndarray): Current full range laser scan data. (For detecting collision in blind spot)
-        _subgoal (Pose2D): Episode's subgoal pose.
+        _goal (Pose2D): Episode's goal pose.
 
         _scan_sub (rospy.Subscriber): Subscriber for laser scan data.
         _full_scan_sub (rospy.Subscriber): Subscriber for full range laser scan data.
         _robot_state_sub (rospy.Subscriber): Subscriber for robot state data.
-        _subgoal_sub (rospy.Subscriber): Subscriber for subgoal data.
+        _goal_sub (rospy.Subscriber): Subscriber for goal data.
 
         _received_odom (bool): Flag indicating if robot state data has been received.
         _received_scan (bool): Flag indicating if laser scan data has been received.
-        _received_subgoal (bool): Flag indicating if subgoal data has been received.
+        _received_goal (bool): Flag indicating if goal data has been received.
 
         _first_reset (bool): Flag indicating if it is the first reset.
     """
@@ -45,7 +45,7 @@ class ConvexCollectorUnit(CollectorUnit):
     _robot_pose: Pose2D
     _laser: np.ndarray
     _full_range_laser: np.ndarray
-    _subgoal: Pose2D
+    _goal: Pose2D
     _laser_convex:Galaxy2D
     # std_msgs/Bool success
     # float32[] scans
@@ -57,18 +57,25 @@ class ConvexCollectorUnit(CollectorUnit):
     _scan_sub: rospy.Subscriber
     _full_scan_sub: rospy.Subscriber
     _robot_state_sub: rospy.Subscriber
-    _subgoal_sub: rospy.Subscriber
+    _goal_sub: rospy.Subscriber
     _laser_convex_sub: rospy.Subscriber
 
     # Received Flags
     _received_odom: bool
     _received_scan: bool
-    _received_subgoal: bool
+    _received_goal: bool
     _received_laser_convex: bool
 
     _first_reset: bool
 
-    def __init__(self, ns: Namespace, observation_manager) -> None:
+    def __init__(
+        self,
+        ns: Namespace,
+        observation_manager,
+        subgoal_mode: bool = False,
+        *args,
+        **kwargs
+    ) -> None:
         """
         Initialize the ConvexCollectorUnit.
 
@@ -90,19 +97,22 @@ class ConvexCollectorUnit(CollectorUnit):
         self._robot_pose = Pose2D()
         self._laser = np.array([])
         self._full_range_laser = np.array([])
-        self._subgoal = Pose2D()
+        self._goal = Pose2D()
+        self._goal_msg = PoseStamped()
         self._laser_convex = Galaxy2D()
         self._laser_convex_sub: rospy.Subscriber = None
 
         self._scan_sub: rospy.Subscriber = None
         self._full_scan_sub: rospy.Subscriber = None
         self._robot_state_sub: rospy.Subscriber = None
-        self._subgoal_sub: rospy.Subscriber = None
+        self._goal_sub: rospy.Subscriber = None
         self._received_laser_convex = False
 
         self._received_odom = False
         self._received_scan = False
-        self._received_subgoal = False
+        self._received_goal = False
+
+        self._subgoal_mode = subgoal_mode
 
         self._first_reset = True
 
@@ -132,10 +142,14 @@ class ConvexCollectorUnit(CollectorUnit):
             self._cb_robot_state,
             tcp_nodelay=True,
         )
-        self._subgoal_sub = rospy.Subscriber(
-            self._ns(TOPICS.GOAL),
+        self._goal_sub = rospy.Subscriber(
+            (
+                self._ns(TOPICS.GOAL)
+                if not self._subgoal_mode
+                else self._ns(TOPICS.SUBGOAL)
+            ),
             PoseStamped,
-            self._cb_subgoal,
+            self._cb_goal,
             tcp_nodelay=True,
         )
         self._laser_convex_sub = rospy.Subscriber(
@@ -160,13 +174,13 @@ class ConvexCollectorUnit(CollectorUnit):
         #     return
 
         # for _ in range(int(MAX_WAIT / SLEEP)):
-        #     if self._received_odom and self._received_scan and self._received_subgoal:
+        #     if self._received_odom and self._received_scan and self._received_goal:
         #         return
 
         #     sleep(SLEEP)
 
         # raise TimeoutError(
-        #     f"Couldn't retrieve data for: {false_params(odom=self._received_odom, laser=self._received_scan, subgoal=self._received_subgoal)}"
+        #     f"Couldn't retrieve data for: {false_params(odom=self._received_odom, laser=self._received_scan, goal=self._received_goal)}"
         # )
 
     def get_observations(
@@ -185,7 +199,7 @@ class ConvexCollectorUnit(CollectorUnit):
 
         goal_in_robot_frame = SemanticAggregateUnit.get_relative_pos_to_robot(
             self._robot_pose,
-            np.array([[self._subgoal.x, self._subgoal.y, 1]]),
+            np.array([[self._goal.x, self._goal.y, 1]]),
         ).squeeze(0)
 
         dist_to_goal = np.linalg.norm(goal_in_robot_frame)
@@ -206,11 +220,12 @@ class ConvexCollectorUnit(CollectorUnit):
             {
                 OBS_DICT_KEYS.LASER: self._laser,
                 OBS_DICT_KEYS.ROBOT_POSE: self._robot_pose,
+                OBS_DICT_KEYS.GOAL: self._goal_msg,
                 OBS_DICT_KEYS.GOAL_DIST_ANGLE: (
                     dist_to_goal,
                     angle_to_goal,
                 ),
-                OBS_DICT_KEYS.GOAL_LOCATION: (self._subgoal.x, self._subgoal.y),
+                OBS_DICT_KEYS.GOAL_LOCATION: (self._goal.x, self._goal.y),
                 OBS_DICT_KEYS.GOAL_LOCATION_IN_ROBOT_FRAME: goal_in_robot_frame,
                 OBS_DICT_KEYS.DISTANCE_TO_GOAL: dist_to_goal,
                 OBS_DICT_KEYS.LAST_ACTION: last_action,
@@ -260,15 +275,16 @@ class ConvexCollectorUnit(CollectorUnit):
         self._robot_state = robot_state_msg
         self._robot_pose = pose3d_to_pose2d(self._robot_state.pose.pose)
 
-    def _cb_subgoal(self, subgoal_msg: PoseStamped):
+    def _cb_goal(self, goal_msg: PoseStamped):
         """
-        Callback function for receiving subgoal data.
+        Callback function for receiving goal data.
 
         Args:
-            subgoal_msg (PoseStamped): Subgoal message.
+            goal_msg (PoseStamped): Goal message.
         """
-        self._received_subgoal = True
-        self._subgoal = pose3d_to_pose2d(subgoal_msg.pose)
+        self._received_goal = True
+        self._goal_msg = goal_msg
+        self._goal = pose3d_to_pose2d(goal_msg.pose)
 
     def _cb_laser_convex(self, laser_convex_msg: Galaxy2D):
         """

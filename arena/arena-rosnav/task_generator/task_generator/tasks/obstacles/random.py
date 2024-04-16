@@ -58,7 +58,7 @@ class TM_Random(TM_Obstacles):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        
+
         # Client允许运行时更改ROS节点的参数，而无需停止和重新启动节点
         # 当参数配置name发生变化时，动态重新配置客户端将自动调用回调函数
         dynamic_reconfigure.client.Client(

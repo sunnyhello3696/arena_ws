@@ -2,6 +2,7 @@ import contextlib
 import json
 import os
 import sys
+import argparse
 
 import numpy as np
 import rospkg
@@ -34,22 +35,6 @@ from tools.ros_param_distributor import (
 )
 from std_msgs.msg import Int16
 
-from rl_utils.utils.observation_collector.observation_units.convex_collector_unit import (
-    ConvexCollectorUnit,
-)
-from rl_utils.utils.observation_collector.observation_units.globalplan_collector_unit import (
-    GlobalplanCollectorUnit,
-)
-from rl_utils.utils.observation_collector.observation_units.semantic_ped_unit import (
-    SemanticAggregateUnit,
-)
-import tf2_ros
-from geometry_msgs.msg import TransformStamped
-from rosgraph_msgs.msg import Clock
-import math
-import argparse
-
-
 
 sys.modules["rl_agent"] = sys.modules["rosnav"]
 sys.modules["rl_utils.rl_utils.utils"] = sys.modules["rosnav.utils"]
@@ -64,21 +49,21 @@ class RosnavNode:
     DEFAULT_INFOS = [{}]
     DEFAULT_EPS_START = np.array([True])
 
-    def __init__(self, ns: Namespace = ""):
+    def __init__(self, ns: Namespace = None):
         """
         Initialize the RosnavNode class.
 
         Args:
             ns (Namespace, optional): The namespace for the node. Defaults to "".
         """
-        self.ns = Namespace(ns)
-        self.enable_rviz = rospy.get_param("/if_viz", False)
+        self.ns = Namespace(ns) if ns else Namespace(rospy.get_namespace()[:-1])
+        # self.ns = Namespace(ns) if ns else Namespace("/jackal")
+
+        rospy.loginfo(f"Starting Rosnav-Node on {self.ns}")
 
         # Agent name and path
-        self.agent_name = rospy.get_param("agent_name","burger") # burger
-        self.model_name = "burger_AGENT_66_2024_03_27__21_27_56"
-        self.agent_path = RosnavNode._get_model_path(self.model_name)
-        print("agent_path: ", self.agent_path)
+        self.agent_name = rospy.get_param("agent_name")
+        self.agent_path = RosnavNode._get_model_path(self.agent_name)
 
         assert os.path.isdir(
             self.agent_path
@@ -86,13 +71,6 @@ class RosnavNode:
 
         # Load hyperparams
         self._hyperparams = RosnavNode._load_hyperparams(self.agent_path)
-
-        # 检查 'rl_agent' 是否在 self._hyperparams 中，并且是否含有 'resume' 键
-        if "rl_agent" in self._hyperparams and "resume" in self._hyperparams["rl_agent"]:
-            # 如果 'resume' 的值为 None，则将其替换为一个空字符串 ""
-            if self._hyperparams["rl_agent"]["resume"] is None:
-                self._hyperparams["rl_agent"]["resume"] = ""
-
         rospy.set_param("rl_agent", self._hyperparams["rl_agent"])
 
         self._setup_action_space(self._hyperparams)
@@ -104,14 +82,17 @@ class RosnavNode:
         agent: BaseAgent = AgentFactory.instantiate(architecture_name)
         observation_spaces: List[BaseObservationSpace] = agent.observation_spaces
         observation_spaces_kwargs = agent.observation_space_kwargs
-        space_encoder_class = agent.space_encoder_class
+
+        rospy.loginfo("[RosnavNode] Setup action space and model settings.")
 
         # Load observation normalization and frame stacking
         self._load_env_wrappers(self._hyperparams, agent)
 
+        rospy.loginfo("[RosnavNode] Loaded environment wrappers.")
+
         # Set RosnavSpaceEncoder as Middleware
         self._encoder = RosnavSpaceManager(
-            space_encoder_class=space_encoder_class,
+            space_encoder_class=DefaultEncoder,
             observation_spaces=observation_spaces,
             observation_space_kwargs=observation_spaces_kwargs,
             action_space_kwargs=None,
@@ -124,19 +105,15 @@ class RosnavNode:
             agent_path=self.agent_path,
         )
 
-        # self._observation_manager = ObservationManager(self.ns)
+        obs_unit_kwargs = {
+            "subgoal_mode": self._hyperparams["rl_agent"].get("subgoal_mode", False)
+        }
         self._observation_manager = ObservationManager(
-            ns=self.ns,
-            obs_structur=[
-                # BaseCollectorUnit,
-                ConvexCollectorUnit,
-                GlobalplanCollectorUnit,
-                SemanticAggregateUnit,
-            ],
+            Namespace(self.ns), obs_unit_kwargs=obs_unit_kwargs
         )
 
+        rospy.loginfo("[RosnavNode] Loaded model and ObsManager.")
 
-        print("service name: ", self.ns("rosnav/get_action"))
         self._get_next_action_srv = rospy.Service(
             self.ns("rosnav/get_action"), GetAction, self._handle_next_action_srv
         )
@@ -147,10 +124,10 @@ class RosnavNode:
         self.state = None
         self._last_action = [0, 0, 0]
         self._reset_state = True
-        self.clock_sub = rospy.Subscriber(self.ns("clock"), Clock, self.clock_cb)
-        self.clock_time = None
-        self.tf_broadcaster = tf2_ros.TransformBroadcaster()
-        print("RosnavNode initialized")
+        self._is_reset = False
+
+        while not rospy.is_shutdown():
+            rospy.spin()
 
     def _setup_action_space(self, hyperparams: dict):
         is_action_space_discrete = (
@@ -175,7 +152,7 @@ class RosnavNode:
             None
         """
         # Load observation normalization and frame stacking
-        self._normalized_mode = hyperparams["rl_agent"]["normalize"]
+        self._normalized_mode = hyperparams["rl_agent"]["normalize"]["enabled"]
         self._reduced_laser_mode = (
             hyperparams["rl_agent"]["laser"]["reduce_num_beams"]["enabled"]
             if "laser" in hyperparams["rl_agent"]
@@ -197,10 +174,14 @@ class RosnavNode:
 
         if self._normalized_mode:
             self._vec_normalize = RosnavNode._get_vec_normalize(
-                agent_description, self.agent_path, self._hyperparams, self._vec_stacked
+                agent_description,
+                self.agent_path,
+                self._hyperparams,
+                self._vec_stacked,
+                ns=self.ns,
             )
 
-    def _encode_observation(self, observation: Dict[str, Any]):
+    def _encode_observation(self, observation: Dict[str, Any], *args, **kwargs):
         """
         Encodes the given observation using the encoder.
 
@@ -210,37 +191,7 @@ class RosnavNode:
         Returns:
             The encoded observation.
         """
-        if self.enable_rviz and self.clock_time is not None:
-            
-            _robot_pose = observation[OBS_DICT_KEYS.ROBOT_POSE]  # observation_space_manager.py
-            # 创建 TransformStamped 消息
-            t = TransformStamped()
-            # 填充消息
-            t.header.stamp = self.clock_time
-            t.header.frame_id = "map"
-            t.child_frame_id = self.ns.oldname("robot")
-            t.transform.translation.x = _robot_pose.x
-            t.transform.translation.y = _robot_pose.y
-            t.transform.translation.z = 0.0  # 因为是2D，所以z坐标为0
-            # 计算四元数（仅围绕Z轴旋转）
-            cy = math.cos(_robot_pose.theta * 0.5)
-            sy = math.sin(_robot_pose.theta * 0.5)
-            cr = 1  # 绕X轴旋转的余弦值为1（没有旋转）
-            sr = 0  # 绕X轴旋转的正弦值为0（没有旋转）
-            cp = 1  # 绕Y轴旋转的余弦值为1（没有旋转）
-            sp = 0  # 绕Y轴旋转的正弦值为0（没有旋转）
-            qw = cr * cp * cy + sr * sp * sy
-            qx = sr * cp * cy - cr * sp * sy
-            qy = cr * sp * cy + sr * cp * sy
-            qz = cr * cp * sy - sr * sp * cy
-            # 设置四元数
-            t.transform.rotation.x = qx
-            t.transform.rotation.y = qy
-            t.transform.rotation.z = qz
-            t.transform.rotation.w = qw
-            # 发布 tf
-            self.tf_broadcaster.sendTransform(t)
-        return self._encoder.encode_observation(observation)
+        return self._encoder.encode_observation(observation, **kwargs)
 
     def _get_observation(self):
         """
@@ -260,7 +211,9 @@ class RosnavNode:
         Returns:
             The decoded action to be taken.
         """
-        observation = self._encode_observation(self._get_observation())
+        observation = self._encode_observation(
+            self._get_observation(), is_done=self._is_reset
+        )
 
         if self._stacked_mode:
             observation, _ = self._stacked_obs_container.update(
@@ -293,10 +246,6 @@ class RosnavNode:
         action, self.state = self._agent.predict(**predict_dict)
 
         decoded_action = self._encoder.decode_action(action)
-        
-        print("=======================")
-        print("action: ", action)
-        print("decoded_action: ", decoded_action)
 
         self._last_action = decoded_action
 
@@ -349,7 +298,9 @@ class RosnavNode:
         self.state = None
 
         if self._stacked_mode:
-            observation = self._encode_observation(self._get_observation())
+            observation = self._encode_observation(
+                self._get_observation(), is_done=True
+            )
             self._stacked_obs_container.reset(observation)
 
     def _get_model(self, architecture_name: str, checkpoint_name: str, agent_path: str):
@@ -373,9 +324,6 @@ class RosnavNode:
         else:
             self._recurrent_arch = True
             return RecurrentPPO.load(model_path).policy
-        
-    def clock_cb(self,clock_msg: Clock):
-        self.clock_time = clock_msg.clock
 
     @staticmethod
     def _get_model_path(model_name):
@@ -397,7 +345,11 @@ class RosnavNode:
 
     @staticmethod
     def _get_vec_normalize(
-        agent_description: BaseAgent, agent_path: str, hyperparams: dict, venv=None
+        agent_description: BaseAgent,
+        agent_path: str,
+        hyperparams: dict,
+        venv=None,
+        ns: Namespace = "",
     ):
         """
         Get the vector normalizer for the RL agent.
@@ -412,13 +364,18 @@ class RosnavNode:
             object: Vector normalizer for the RL agent.
         """
         if venv is None:
-            venv = make_mock_env(agent_description)
+            venv = make_mock_env(ns, agent_description)
+        rospy.loginfo("[RosnavNode] Loaded mock env.")
         checkpoint = hyperparams["rl_agent"]["checkpoint"]
         vec_normalize_path = os.path.join(agent_path, f"vec_normalize_{checkpoint}.pkl")
-        return load_vec_normalize(vec_normalize_path, hyperparams["rl_agent"], venv)
+        return load_vec_normalize(vec_normalize_path, venv)
 
     @staticmethod
-    def _get_vec_stacked(agent_description: BaseAgent, hyperparams: dict):
+    def _get_vec_stacked(
+        agent_description: BaseAgent,
+        hyperparams: dict,
+        ns: Namespace = "",
+    ):
         """
         Returns a vectorized environment with frame stacking.
 
@@ -429,23 +386,22 @@ class RosnavNode:
         Returns:
             Vectorized environment with frame stacking.
         """
-        venv = make_mock_env(agent_description)
+        venv = make_mock_env(ns, agent_description)
         return wrap_vec_framestack(
             venv, hyperparams["rl_agent"]["frame_stacking"]["stack_size"]
         )
-    
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-ns", "--namespace", type=str)
+    parser.add_argument("-ns", "--namespace", type=str, default=None)
 
     return parser.parse_known_args()[0]
 
+
 if __name__ == "__main__":
     rospy.init_node("rosnav_node")
-    print("rosnav_node started")
     args = parse_args()
-    node = RosnavNode(ns=args.namespace)
 
-    while not rospy.is_shutdown():
-        rospy.spin()
+    RosnavNode(ns=args.namespace)

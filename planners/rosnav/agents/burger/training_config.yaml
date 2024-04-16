@@ -1,20 +1,20 @@
-agent_name: burger_AGENT_68_2024_04_02__22_11_20-1
+agent_name: burger_AGENT_66_2024_03_26__19_36_25
 callbacks:
   periodic_eval:
     eval_freq: 8000
-    max_num_moves_per_eps: 300
-    n_eval_episodes: 25
+    max_num_moves_per_eps: 400
+    n_eval_episodes: 30
   stop_training:
-    threshold: 0.9
+    threshold: 0.95
     threshold_type: succ
   training_curriculum:
     curr_stage: 0
-    lower_threshold: 0.6
+    lower_threshold: 0.65
     threshold_type: succ
     training_curriculum_file: default.yaml
-    upper_threshold: 0.85
+    upper_threshold: 0.9
 debug_mode: false
-goal_radius: 0.8
+goal_radius: 0.25
 max_num_moves_per_eps: 300
 monitoring:
   cmd_line_logging:
@@ -25,7 +25,7 @@ monitoring:
       enabled: true
   eval_log: true
   use_wandb: true
-n_envs: 16
+n_envs: 10
 n_timesteps: 40000000
 no_gpu: false
 rl_agent:
@@ -35,11 +35,11 @@ rl_agent:
       buckets_linear_vel: 8
       enabled: true
     discrete: false
-  architecture_name: AGENT_68
+  architecture_name: AGENT_66
   checkpoint: best_model
   frame_stacking:
     enabled: true
-    stack_size: 3
+    stack_size: 4
   laser:
     full_range_laser: false
     reduce_num_beams:
@@ -55,27 +55,27 @@ rl_agent:
     enabled: true
     settings:
       clip_obs: 30.0
-      clip_reward: 30.0
+      clip_reward: 40.0
       gamma: 0.99
       norm_obs: true
-      norm_reward: false
+      norm_reward: true
   ppo:
-    batch_size: 10240
+    batch_size: 20480
     clip_range: 0.25
     ent_coef: 0.005
     gae_lambda: 0.95
     gamma: 0.99
     learning_rate: 0.0005
-    m_batch_size: 1024
+    m_batch_size: 512
     max_grad_norm: 0.5
     n_epochs: 3
-    n_steps: 640
+    n_steps: 2048
     vf_coef: 0.22
   resume: null
   reward_fnc: convex_e2e
   space_encoder: RobotSpecificEncoder
 robot: burger
-safety_distance: 0.5
+safety_distance: 0.4
 tm_modules: staged
 tm_obstacles: random
 tm_robots: random

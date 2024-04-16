@@ -124,7 +124,7 @@ namespace polite_inter
         return true;
     }
 
-    void PoliteInter::semanticCallback(const pedsim_msgs::SemanticData::ConstPtr &message)
+    void PoliteInter::semanticCallback(const crowdsim_msgs::SemanticData::ConstPtr &message)
     // turns our semantic layer data into points we can use to calculate distance
     {
         boost::unique_lock<boost::mutex> lock(plan_mtx_);
@@ -167,7 +167,7 @@ namespace polite_inter
     {
         this->name = name;
         std::string node_namespace_ = ros::this_node::getNamespace();
-        std::string semantic_layer = "/pedsim_agents/semantic/pedestrian";
+        std::string semantic_layer = "/crowdsim_agents/semantic/pedestrian";
         nh_ = ros::NodeHandle("~");
         subscriber_ = nh_.subscribe(semantic_layer, 1, &PoliteInter::semanticCallback, this);
         dangerPublisher = nh_.advertise<std_msgs::String>("Danger", 10);

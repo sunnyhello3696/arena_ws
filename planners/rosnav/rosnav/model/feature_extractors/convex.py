@@ -170,6 +170,11 @@ class ConvexExtractor_2d(RosnavBaseExtractor):
         )
 
     def _setup_network(self):
+        # self.cnn = nn.Sequential(
+        #     nn.Conv1d(self._num_stacks, 32, 5, 2),
+        #     nn.ReLU(),
+        #     nn.Flatten(),
+        # )
         self.cnn = nn.Sequential(
             nn.Conv2d(self._num_stacks, 32, kernel_size=8, stride=4, padding=0),
             nn.ReLU(),
@@ -182,6 +187,7 @@ class ConvexExtractor_2d(RosnavBaseExtractor):
 
         # Compute shape by doing one forward pass
         with th.no_grad():
+            # desired_shape = (1, self._num_stacks, self._convex_map_size)
             desired_shape = (1, self._num_stacks, self.convex_map_side, self.convex_map_side)
             tensor_forward = th.randn(desired_shape)
             n_flatten = self.cnn(tensor_forward).shape[-1]
@@ -299,7 +305,6 @@ class ConvexExtractor_2d_cgd(RosnavBaseExtractor):
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         _robot_state_size = self._goal_size + self._last_action_size
-        print("self._num_stacks: ",self._num_stacks)
         
         if not self._stacked_obs:
             # For non-stacked observations

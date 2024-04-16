@@ -242,7 +242,7 @@ boost::any SemanticLayer::dump(LayerType& type) {
 
   for(const auto& observation : observation_buffers_){
     
-    auto container = pedsim_msgs::SemanticData();
+    auto container = crowdsim_msgs::SemanticData();
     
     container.points = observation->getData();
     container.type = observation->getType();

@@ -28,7 +28,8 @@ class RosnavActionNode:
             ns (str, optional):
                 Simulation specific ROS namespace. Defaults to None.
         """
-        self.ns = Namespace(ns)
+        self.ns = Namespace(ns) if ns else Namespace(rospy.get_namespace()[:-1])
+        rospy.loginfo(f"Starting Rosnav-Action-Node on {self.ns}")
 
         self._action_pub = rospy.Publisher(f"{self.ns}/cmd_vel", Twist, queue_size=1)
         rospy.wait_for_service(f"{self.ns}/rosnav/get_action")
@@ -38,9 +39,6 @@ class RosnavActionNode:
 
         frequency = rospy.get_param("action_frequency", ACTION_FREQUENCY)
         self._rate = rospy.Rate(frequency)
-
-        rospy.loginfo(f"Action node initialized with frequency {frequency} Hz")
-        print(f"Action node initialized with frequency {frequency} Hz")
 
         while not rospy.is_shutdown():
             self._get_and_publish_next_action()
@@ -68,15 +66,13 @@ class RosnavActionNode:
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-ns", "--namespace", type=str)
+    parser.add_argument("-ns", "--namespace", type=str, default="")
 
     return parser.parse_known_args()[0]
 
 
 if __name__ == "__main__":
     rospy.init_node(f"RosnavActionNode", anonymous=True)
-    rospy.loginfo("Starting DRL agent node")
-    print("Starting DRL agent node")
 
     args = parse_args()
 

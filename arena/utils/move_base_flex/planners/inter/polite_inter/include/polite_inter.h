@@ -125,7 +125,7 @@ namespace polite_inter
         std::vector<double> detectedAngles;
 
         void reconfigure(polite_inter::PoliteInterConfig &config, uint32_t level);
-        void semanticCallback(const pedsim_msgs::SemanticData::ConstPtr& message);
+        void semanticCallback(const crowdsim_msgs::SemanticData::ConstPtr& message);
         void laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
         //void pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
         void setMaxVelocityThread();

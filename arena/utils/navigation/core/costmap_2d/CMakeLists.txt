@@ -21,7 +21,7 @@ find_package(catkin REQUIRED
             tf2_sensor_msgs
             visualization_msgs
             voxel_grid
-            pedsim_msgs
+            crowdsim_msgs
         )
 
 find_package(Eigen3 REQUIRED)
@@ -56,7 +56,7 @@ generate_messages(
         geometry_msgs
         map_msgs
         nav_msgs
-        pedsim_msgs
+        crowdsim_msgs
 )
 
 # dynamic reconfigure
@@ -89,7 +89,7 @@ catkin_package(
         tf2_ros
         visualization_msgs
         voxel_grid
-        pedsim_msgs
+        crowdsim_msgs
     DEPENDS
         EIGEN3
         Boost

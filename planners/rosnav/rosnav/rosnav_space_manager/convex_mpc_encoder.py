@@ -68,14 +68,10 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
+        super().__init__(action_space_kwargs,observation_list,observation_kwargs, **kwargs)
         merged_kwargs = {}
         merged_kwargs.update(action_space_kwargs)
         merged_kwargs.update(observation_kwargs)
-        super().__init__(**merged_kwargs, **kwargs)
-        self._observation_list = observation_list
-        self._observation_kwargs = observation_kwargs
-        self.setup_action_space(action_space_kwargs)
-        self.setup_observation_space(observation_list, observation_kwargs)
         self.is_normalize_points = merged_kwargs.get("normalize_points", False)
         self.action_points_num = merged_kwargs.get("action_points_num", 0)
         if self.is_normalize_points and self.action_points_num > 0:
@@ -85,6 +81,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self._max_vertex_num = rospy.get_param_cached("/max_vertex_num", 120)
         self.obs_dict_d86 = None
         self.laser_num_beams = 360
+        self._laser_max_range = merged_kwargs.get("laser_max_range", 8.0)
         self._robot_pose = None
         self._robot_vel = None
         self._last_action_points = None
@@ -106,96 +103,6 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         rospy.loginfo("ConvexMPCEncoder init")
 
         # time.sleep(10)
-
-    @property
-    def observation_space(self) -> spaces.Space:
-        """
-        Gets the observation space.
-
-        Returns:
-            spaces.Space: The observation space.
-        """
-        return self._observation_space_manager.observation_space
-
-    @property
-    def action_space(self) -> spaces.Space:
-        """
-        Gets the action space.
-
-        Returns:
-            spaces.Space: The action space.
-        """
-        return self._action_space_manager.action_space
-
-    @property
-    def action_space_manager(self):
-        """
-        Gets the action space manager.
-
-        Returns:
-            ActionSpaceManager: The action space manager.
-        """
-        return self._action_space_manager
-
-    @property
-    def observation_space_manager(self):
-        """
-        Gets the observation space manager.
-
-        Returns:
-            ObservationSpaceManager: The observation space manager.
-        """
-        return self._observation_space_manager
-
-    @property
-    def observation_list(self):
-        """
-        Gets the list of observation spaces.
-
-        Returns:
-            List[SPACE_INDEX]: The list of observation spaces.
-        """
-        return self._observation_list
-
-    @property
-    def observation_kwargs(self):
-        """
-        Gets the keyword arguments for configuring the observation space manager.
-
-        Returns:
-            dict: The keyword arguments for configuring the observation space manager.
-        """
-        return self._observation_kwargs
-
-    def setup_action_space(self, action_space_kwargs: dict):
-        """
-        Sets up the action space manager.
-
-        Args:
-            action_space_kwargs (dict): Keyword arguments for configuring the action space manager.
-        """
-        self._action_space_manager = ActionSpaceManager(**action_space_kwargs)
-
-    def setup_observation_space(
-        self,
-        observation_list: List[SPACE_INDEX] = None,
-        observation_kwargs: dict = None,
-    ):
-        """
-        Sets up the observation space manager.
-
-        Args:
-            observation_list (List[SPACE_INDEX], optional): List of observation spaces to include. Defaults to None.
-            observation_kwargs (dict, optional): Keyword arguments for configuring the observation space manager. Defaults to None.
-        """
-        if not observation_list:
-            observation_list = self.DEFAULT_OBS_LIST
-
-        self._observation_space_manager = ObservationSpaceManager(
-            observation_list,
-            space_kwargs=observation_kwargs,
-            frame_stacking=self._stacked,
-        )
 
     def setup_mpc_cotroller(self):
         cfg_file_path = rospy.get_param("/mpc_config_path")
@@ -251,18 +158,6 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 return np.array([0.0, 0.0, 0.0], dtype=np.float32), np.zeros((self.action_points_num, 2), dtype=np.float32)
         else:
             raise ValueError("Convex MPC action is not supported in non-convex MPC encoder.")
-
-    def decode_action(self, action) -> np.ndarray:
-        """
-        Decodes the action.
-
-        Args:
-            action: The action to decode.
-
-        Returns:
-            np.ndarray: The decoded action.
-        """
-        return self._action_space_manager.decode_action(action)
         
     def generate_ref_X_and_U(self,action,action_obs_dict: Dict[str, Any], k=2, s=5.0):
 
@@ -302,22 +197,22 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     action_points.append((0.,0.))
                     # print("add robot point to action points.")
 
-                # # if goal in convex, the angle of the first action point set to goal
-                # goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
-                # convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
-                # if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
-                #     goal_theta = np.arctan2(goal_robot_frame[1],goal_robot_frame[0])
-                #     # convert goal_theta to 0-2pi with numpy
-                #     goal_theta = np.where(goal_theta < 0, goal_theta + 2 * np.pi, goal_theta)
-                #     goal_theta_scale = goal_theta/(2*np.pi) # goal theta scale 0-1
-                #     # print("goal_in_convex, goal_theta:",goal_theta,"goal_theta_scale:",goal_theta_scale)
-                #     for i in range(len(netout_scale_factors)):
-                #         if i == 0:
-                #             netout_scale_factors[i] = goal_theta_scale
-                #         elif i % 2 == 0:
-                #             netout_scale_factors[i] = 0.0
-                #         # elif i % 2 == 1:
-                #         #     netout_scale_factors[i] = 1.0
+                # if goal in convex, the angle of the first action point set to goal
+                goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
+                convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
+                if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
+                    goal_theta = np.arctan2(goal_robot_frame[1],goal_robot_frame[0])
+                    # convert goal_theta to 0-2pi with numpy
+                    goal_theta = np.where(goal_theta < 0, goal_theta + 2 * np.pi, goal_theta)
+                    goal_theta_scale = goal_theta/(2*np.pi) # goal theta scale 0-1
+                    # print("goal_in_convex, goal_theta:",goal_theta,"goal_theta_scale:",goal_theta_scale)
+                    for i in range(len(netout_scale_factors)):
+                        if i == 0:
+                            netout_scale_factors[i] = goal_theta_scale
+                        elif i % 2 == 0:
+                            netout_scale_factors[i] = 0.0
+                        # elif i % 2 == 1:
+                        #     netout_scale_factors[i] = 1.0
                 
                 if len(netout_scale_factors) >= 2:
                     one_action_point = self.calc_polar_action_points(
@@ -340,13 +235,13 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                         action_points.append(one_action_point)
                         action_points_robot.append(one_action_point)
                 
-                # if goal in convex, the last action point set to goal
-                goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
-                convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
-                if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
-                    # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
-                    action_points.pop()
-                    action_points.append(goal_robot_frame)
+                # # if goal in convex, the last action point set to goal
+                # goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
+                # convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
+                # if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
+                #     # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
+                #     action_points.pop()
+                #     action_points.append(goal_robot_frame)
 
                 
                 action_points = np.array(action_points, dtype=np.float32)
@@ -490,19 +385,6 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 perturbed_points.append(point)
                 seen[point_tuple] = 1
         return np.array(perturbed_points, dtype=np.float32)
-
-
-    def encode_observation(self, observation, *args, **kwargs) -> np.ndarray:
-        """
-        Encodes the observation.
-
-        Args:
-            observation: The observation to encode.
-
-        Returns:
-            np.ndarray: The encoded observation.
-        """
-        return self._observation_space_manager.encode_observation(observation, **kwargs)
 
     def get_observations_d86(self, action_obs_dict: Dict[str, Any]):
         msg_galaxy2d: Galaxy2D= action_obs_dict["laser_convex"]

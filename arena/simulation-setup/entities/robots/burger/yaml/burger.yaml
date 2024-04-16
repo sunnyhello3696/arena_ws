@@ -31,10 +31,9 @@ plugins:
     body: base_footprint
     broadcast_tf: true
     origin: [0.0, 0.0, 0.0]
-    # # burger
-    # range: 3.5
-    # originBot\turtlebot2
-    range: 8.0
+    # range: 3
+    #arena
+    range: 3.5
     # angle: {min: -3.12413936, max: 3.14159265359, increment: 0.01745}
     # shifted for arena
     # angle: {min: 0, max: 6.28319, increment: 0.01745330555}

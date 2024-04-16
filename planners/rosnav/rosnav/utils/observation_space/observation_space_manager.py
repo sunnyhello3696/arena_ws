@@ -40,7 +40,8 @@ class ObservationSpaceManager:
         flatten: bool = True,
     ) -> None:
         self._spacelist = space_list
-        self._space_kwargs = space_kwargs # is the combination of custom_sb3_policy.py and rosnav_space_manager.py
+        # is the combination of custom_sb3_policy.py and rosnav_space_manager.py -> _observation_kwargs
+        self._space_kwargs = space_kwargs
         self._frame_stacking = frame_stacking
         self._flatten = flatten
 
@@ -127,7 +128,7 @@ class ObservationSpaceManager:
         for space in space_list:
             self.add_observation_space(space)
 
-    def encode_observation(self, observation: dict, *args, **kwargs):
+    def encode_observation(self, observation: dict, *args, **kwargs) -> np.ndarray:
         """
         Encode an observation into a numpy array.
 

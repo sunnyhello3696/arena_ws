@@ -108,7 +108,7 @@ namespace aggressive_inter
          * @param new_max_vel_x new max velocity in x direction, has to be greater than penality_epsilon (defined in teb_local_planner_params)
         */
         void reconfigure(aggressive_inter::AggressiveInterConfig &config, uint32_t level);
-        void semanticCallback(const pedsim_msgs::SemanticData::ConstPtr& message);
+        void semanticCallback(const crowdsim_msgs::SemanticData::ConstPtr& message);
         void setMaxVelocityThread();
     };
 }

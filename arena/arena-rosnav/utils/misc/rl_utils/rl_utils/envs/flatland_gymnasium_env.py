@@ -98,6 +98,9 @@ class FlatlandEnv(gymnasium.Env):
         reward_fnc: str,
         max_steps_per_episode=100,
         trigger_init: bool = False,
+        obs_unit_kwargs=None,
+        reward_fnc_kwargs=None,
+        task_generator_kwargs=None,
         *args,
         **kwargs,
     ):
@@ -122,13 +125,17 @@ class FlatlandEnv(gymnasium.Env):
         self.action_points_num = rospy.get_param_cached("action_points_num", 0)
 
         self._reward_fnc = reward_fnc
-        self._kwargs = kwargs
+        self._reward_fnc_kwargs = reward_fnc_kwargs if reward_fnc_kwargs else {}
+        self._obs_unit_kwargs = obs_unit_kwargs if obs_unit_kwargs else {}
+        self._task_generator_kwargs = (
+            task_generator_kwargs if task_generator_kwargs else {}
+        )
 
         self._steps_curr_episode = 0
         self._episode = 0
         self._max_steps_per_episode = max_steps_per_episode
-
         self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+
         self._obs_dict = None
         if self.is_normalize_points:
             self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
@@ -163,7 +170,9 @@ class FlatlandEnv(gymnasium.Env):
         )
 
         if self._is_train_mode:
-            self._setup_env_for_training(self._reward_fnc, **self._kwargs)
+            self._setup_env_for_training(
+                self._reward_fnc, **self._task_generator_kwargs
+            )
 
         # observation collector
         self.observation_collector = ObservationManager(
@@ -174,6 +183,7 @@ class FlatlandEnv(gymnasium.Env):
                 # GlobalplanCollectorUnit,
                 # SemanticAggregateUnit,
             ],
+            obs_unit_kwargs=self._obs_unit_kwargs,
         )
         return True
 
@@ -190,13 +200,15 @@ class FlatlandEnv(gymnasium.Env):
         task_generator = TaskGenerator(self.ns.simulation_ns)
         self.task = task_generator._get_predefined_task(**kwargs)
 
+         # goal_radius 由training_config.yaml传入
         # reward calculator
         self.reward_calculator = RewardFunction(
             rew_func_name=reward_fnc,
             holonomic=self.model_space_encoder._is_holonomic,
-            robot_radius=self.task.robot_managers[0]._robot_radius, # 由training_config.yaml传入
-            safe_dist=self.task.robot_managers[0].safe_distance, 
+            robot_radius=self.task.robot_managers[0]._robot_radius,
+            safe_dist=self.task.robot_managers[0].safe_distance,
             goal_radius=rosparam_get(float, "goal_radius", 0.3),
+            **self._reward_fnc_kwargs,
         )
 
         self.agent_action_pub = rospy.Publisher(self.ns("cmd_vel"), Twist, queue_size=1)
@@ -255,11 +267,8 @@ class FlatlandEnv(gymnasium.Env):
             t.transform.rotation.w = qw
             # 发布 tf
             self.tf_broadcaster.sendTransform(t)
-
-
-        observation = self.model_space_encoder.encode_observation(observation, **kwargs)
         
-        return observation
+        return self.model_space_encoder.encode_observation(observation, **kwargs)
 
     def step(self, action: np.ndarray):
         """
@@ -315,7 +324,6 @@ class FlatlandEnv(gymnasium.Env):
             )
 
         self._steps_curr_episode += 1
-        # print(f"Step: {self._steps_curr_episode}, Reward: {reward}")
 
         # info
         info, done = self._determine_termination(
@@ -327,12 +335,9 @@ class FlatlandEnv(gymnasium.Env):
         for key in obs_dict.keys():
             if obs_dict[key] is None:
                 print(f"obs_dict[{key}] is None")
-        obs_encode_narray = self._encode_observation(obs_dict, is_done=done)
-        
-        # print("encoded observation shape: ", obs_encode_narray.shape)
 
         return (
-            obs_encode_narray,
+            self._encode_observation(obs_dict, is_done=done),
             reward,
             done,
             False,
@@ -362,39 +367,35 @@ class FlatlandEnv(gymnasium.Env):
 
         super().reset(seed=seed)
         self._episode += 1
-        self.agent_action_pub.publish(Twist())
+
+        # make sure all simulation components are ready before first episode
+        if self._episode <= 1:
+            for _ in range(6):
+                self.agent_action_pub.publish(Twist())
+                self.call_service_takeSimStep()
 
         first_map = self._episode <= 1 if "sim_1" in self.ns else False
+
         self.task.reset(
             first_map=first_map,
             reset_after_new_map=self._steps_curr_episode == 0,
         )
         self.reward_calculator.reset()
         self._steps_curr_episode = 0
-
-        self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        # linear x, linear y, angular z
+        self._last_action = np.array([0, 0, 0])
         if self.is_normalize_points:
             self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
         self._obs_dict = None
 
         if self._is_train_mode:
-            self.agent_action_pub.publish(Twist())
-            self.call_service_takeSimStep(t=0.1)
+            # extra step for planning serivce to provide global plan
+            for _ in range(2):
+                self.agent_action_pub.publish(Twist())
+                self.call_service_takeSimStep()
 
         obs_dict = self.observation_collector.get_observations()
         info_dict = {}
-
-        # # save self.ref_actions and self.ref_states to csv file
-        # # save self.ref_actions
-        # with open("/home/chen/Documents/mpc_test_traj/ref_actions_2.csv", "w") as f:
-        #     np.savetxt(f, self.ref_actions, delimiter=",", fmt="%.3f")
-        # with open("/home/chen/Documents/mpc_test_traj/ref_states_12.csv", "w") as f:
-        #     np.savetxt(f, self.ref_states, delimiter=",", fmt="%.3f")
-        # # empty self.ref_actions and self.ref_states
-        # self.ref_actions = np.empty((0,2),dtype=np.float32)
-        # self.ref_states = np.empty((0,3),dtype=np.float32)
-        # initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
-
         return (
             self._encode_observation(obs_dict),
             info_dict,

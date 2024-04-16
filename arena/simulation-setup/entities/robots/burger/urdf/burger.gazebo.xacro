@@ -117,10 +117,7 @@
         </scan>
         <range>
           <min>0.120000</min>
-          <!-- burger -->
-          <!-- <max>3.5</max> -->
-          <!-- originBot\turtlebot2 -->
-          <max>8.0</max>
+          <max>3.5</max>
           <resolution>0.015</resolution>
         </range>
         <noise>

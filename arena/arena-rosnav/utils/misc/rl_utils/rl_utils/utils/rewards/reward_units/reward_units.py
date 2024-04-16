@@ -130,11 +130,12 @@ class RewardSafeDistance(RewardUnit):
             violation_in_blind_spot = kwargs["full_laser_scan"].min() <= self._safe_dist
 
         if (
-            self.get_internal_state_info("safe_dist_breached") # set by safe_dist_breached()
+            self.get_internal_state_info("safe_dist_breached")
             or violation_in_blind_spot
         ):
             self.add_reward(self._reward)
             self.add_info(self.SAFE_DIST_VIOLATION_INFO)
+
             if if_show_reward:
                 self._sum_reward += self._reward
                 
@@ -709,6 +710,7 @@ class RewardAbruptVelocityChange(RewardUnit):
 class RewardRootVelocityDifference(RewardUnit):
     """
     A reward unit that calculates the difference in root velocity between consecutive actions.
+
     计算连续动作之间根速度的差异，并根据这种差异来计算奖励。
     这种方式鼓励算法生成动作序列，其中每个动作与前一个动作之间的速度差异最小化，从而促进平滑的运动转换。
     Args:
