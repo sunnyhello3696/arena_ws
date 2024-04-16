@@ -30,7 +30,7 @@ class GoalSpace(BaseObservationSpace):
 
     """
 
-    def __init__(self, goal_max_dist: float = 30, *args, **kwargs) -> None:
+    def __init__(self, goal_max_dist: float = 50, *args, **kwargs) -> None:
         self._max_dist = goal_max_dist
         super().__init__(*args, **kwargs)
 

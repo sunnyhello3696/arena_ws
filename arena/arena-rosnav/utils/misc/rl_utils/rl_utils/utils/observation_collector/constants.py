@@ -36,6 +36,8 @@ class OBS_DICT_KEYS:
     GLOBAL_PLAN = "global_plan"
     DONE = "is_done"
     LASER_CONVEX = "laser_convex"
+    ROBOT_STATE = "robot_state"
+    LAST_ACTION_POINTS = "last_action_points"
 
     # why not have SEMANTIC = SemanticAttribute ?
     class SEMANTIC(enum.Enum):

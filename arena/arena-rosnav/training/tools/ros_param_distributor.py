@@ -22,6 +22,11 @@ def populate_ros_params(params: dict, paths: dict):
         is_discrete,
     )
 
+    is_normalize_points = params["rl_agent"]["action_space"]["normalize_points"]["enabled"]
+    if is_normalize_points:
+        rospy.set_param("is_normalize_points", is_normalize_points)
+        rospy.set_param("action_points_num", params["rl_agent"]["action_space"]["normalize_points"]["action_points_num"])
+
     robot_name = rospy.get_param("model")
     rospy.set_param("goal_radius", params["goal_radius"])
     rospy.set_param(f"{robot_name}/safety_distance", params["safety_distance"])

@@ -187,8 +187,6 @@ class RewardFunction:
             laser_scan (np.ndarray): Array containing the laser data.
         """
         for reward_unit in self._reward_units:
-            if self.safe_dist_breached and not reward_unit.on_safe_dist_violation:
-                continue
             reward_unit(laser_scan=laser_scan, **kwargs)
 
     def get_reward(

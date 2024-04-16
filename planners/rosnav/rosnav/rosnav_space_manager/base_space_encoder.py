@@ -1,5 +1,6 @@
 import numpy as np
 from gymnasium import spaces
+from typing import Dict, List, Union, Any
 
 
 class BaseSpaceEncoder:
@@ -82,5 +83,15 @@ class BaseSpaceEncoder:
 
         Returns:
             np.ndarray: The encoded observation.
+        """
+        raise NotImplementedError()
+    
+    def process_action(self, action, action_obs_dict: Dict[str, Any]):
+        """
+        Process the action.
+
+        Args:
+            action: The action to process.
+            action_obs_dict (Dict[str, Any]): The action observation dictionary.
         """
         raise NotImplementedError()

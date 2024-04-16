@@ -46,7 +46,7 @@ class ConvexCollectorUnit(CollectorUnit):
     _laser: np.ndarray
     _full_range_laser: np.ndarray
     _subgoal: Pose2D
-    _laser_convex:np.ndarray
+    _laser_convex:Galaxy2D
     # std_msgs/Bool success
     # float32[] scans
     # geometry_msgs/Polygon convex_vertex
@@ -80,12 +80,18 @@ class ConvexCollectorUnit(CollectorUnit):
         self._laser_num_beams = rospy.get_param("laser/num_beams")
         self._enable_full_range_laser = rospy.get_param("laser/full_range_laser", False)
 
+        self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
+        self.action_points_num = rospy.get_param_cached("action_points_num", 0)
+
+        self._init_last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        self._init_last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
+
         self._robot_state = Odometry()
         self._robot_pose = Pose2D()
         self._laser = np.array([])
         self._full_range_laser = np.array([])
         self._subgoal = Pose2D()
-        self._laser_convex = np.array([])
+        self._laser_convex = Galaxy2D()
         self._laser_convex_sub: rospy.Subscriber = None
 
         self._scan_sub: rospy.Subscriber = None
@@ -184,7 +190,18 @@ class ConvexCollectorUnit(CollectorUnit):
 
         dist_to_goal = np.linalg.norm(goal_in_robot_frame)
         angle_to_goal = np.arctan2(goal_in_robot_frame[1], goal_in_robot_frame[0])
+        if kwargs.get("last_action") is not None:
+            last_action = kwargs.get("last_action")
+        else:
+            last_action = self._init_last_action
 
+        if kwargs.get("last_action_points") is not None:
+            last_action_points = kwargs.get("last_action_points")
+        else:
+            last_action_points = self._init_last_action_points
+
+        dist_angle_last_action_points_arr = self.process_last_action_points(last_action_points)
+        
         obs_dict.update(
             {
                 OBS_DICT_KEYS.LASER: self._laser,
@@ -196,10 +213,10 @@ class ConvexCollectorUnit(CollectorUnit):
                 OBS_DICT_KEYS.GOAL_LOCATION: (self._subgoal.x, self._subgoal.y),
                 OBS_DICT_KEYS.GOAL_LOCATION_IN_ROBOT_FRAME: goal_in_robot_frame,
                 OBS_DICT_KEYS.DISTANCE_TO_GOAL: dist_to_goal,
-                OBS_DICT_KEYS.LAST_ACTION: kwargs.get(
-                    "last_action", np.array([0, 0, 0])
-                ),
+                OBS_DICT_KEYS.LAST_ACTION: last_action,
                 OBS_DICT_KEYS.LASER_CONVEX: self._laser_convex,
+                OBS_DICT_KEYS.ROBOT_STATE: self._robot_state,
+                OBS_DICT_KEYS.LAST_ACTION_POINTS: dist_angle_last_action_points_arr,
             }
         )
 
@@ -260,20 +277,22 @@ class ConvexCollectorUnit(CollectorUnit):
         Args:
             laser_convex_msg (Galaxy2D): Laser convex message.
         """
+        # self._received_laser_convex = True
+        # is_convex_reliable = laser_convex_msg.success.data
+        # convex_vertex = laser_convex_msg.convex_vertex  # geometry_msgs/Polygon
+        # # convert to numpy array
+        # if is_convex_reliable:
+        #     convex_vertex = np.array(
+        #         [
+        #             [point.x, point.y]
+        #             for point in convex_vertex.points
+        #         ]
+        #     )
+        # else:
+        #     convex_vertex = np.array([])
+        # self._laser_convex = convex_vertex
         self._received_laser_convex = True
-        is_convex_reliable = laser_convex_msg.success.data
-        convex_vertex = laser_convex_msg.convex_vertex  # geometry_msgs/Polygon
-        # convert to numpy array
-        if is_convex_reliable:
-            convex_vertex = np.array(
-                [
-                    [point.x, point.y]
-                    for point in convex_vertex.points
-                ]
-            )
-        else:
-            convex_vertex = np.array([])
-        self._laser_convex = convex_vertex
+        self._laser_convex = laser_convex_msg
 
     @staticmethod
     def process_laser_msg(laser_msg: LaserScan, laser_num_beams: int) -> np.ndarray:
@@ -306,3 +325,22 @@ class ConvexCollectorUnit(CollectorUnit):
             Pose2D: Processed robot pose data.
         """
         return pose3d_to_pose2d(pose)
+    
+    def process_last_action_points(self, last_action_points: np.ndarray) -> np.ndarray:
+        """
+        Process the last action points.
+
+        Args:
+            last_action_points (np.ndarray): Last action points. shape: (num_points, 2)
+
+        Returns:
+            np.ndarray: Processed last action points.
+        """
+        dist_angle_last_action_points_arr = []
+        for point in last_action_points:
+            dist_angle_last_action_points_arr.append(np.linalg.norm(point))
+            dist_angle_last_action_points_arr.append(np.arctan2(point[1], point[0]))
+
+        # reshape to 1D array
+        dist_angle_last_action_points_arr = np.array(dist_angle_last_action_points_arr).flatten()
+        return dist_angle_last_action_points_arr

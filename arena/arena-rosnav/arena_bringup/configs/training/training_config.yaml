@@ -15,7 +15,7 @@ tm_modules: "staged"
 # number of simulation timesteps
 n_timesteps: 40000000
 max_num_moves_per_eps: 300
-goal_radius: 0.25
+goal_radius: 1.0
 safety_distance: 0.4
 
 ### Training Monitoring
@@ -37,12 +37,12 @@ callbacks:
   ### Periodic Eval
   periodic_eval:
     # max number of steps per episode
-    max_num_moves_per_eps: 400
+    max_num_moves_per_eps: 300
     # number of evaluation episodes
-    n_eval_episodes: 30
+    n_eval_episodes: 40
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 9000
+    eval_freq: 1
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -50,33 +50,33 @@ callbacks:
   training_curriculum:
     # file for the robot's learning curriculum
     training_curriculum_file: "default.yaml"
-    curr_stage: 0
+    curr_stage: 2
     threshold_type: "succ"
-    upper_threshold: 0.90
-    lower_threshold: 0.65
+    upper_threshold: 0.85
+    lower_threshold: 0.60
 
   ### Stop Training on Threshold
   # stops training when last stage reached and threshold satisfied
   stop_training:
     threshold_type: "succ"
-    threshold: 0.95
+    threshold: 0.90
 
 ### Agent Specs: Training Hyperparameter and Network Architecture
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_68"
+  architecture_name: "AGENT_89"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: null 
+  resume: "burger_AGENT_89_2024_04_15__12_48_36" # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
   # resume: "burger"
   checkpoint: "best_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
-    enabled: false
-    stack_size: 4
+    enabled: true
+    stack_size: 3
 
-  reward_fnc: "convex_e2e"
+  reward_fnc: "convex_points"
 
   normalize:
     enabled: true
@@ -84,7 +84,7 @@ rl_agent:
       norm_obs: true
       norm_reward: false # Whether to normalize rewards or not
       clip_obs: 30.0 # Max absolute value for observation
-      clip_reward: 40.0 # Max value absolute for discounted reward
+      clip_reward: 30.0 # Max value absolute for discounted reward
       gamma: 0.99 # discount factor
 
   laser:
@@ -94,6 +94,9 @@ rl_agent:
       num_beams: 200
 
   action_space:
+    normalize_points: 
+      enabled: true # normalize points_num action points to [0, 1] and no continuous and discrete action space
+      action_points_num: 2
     discrete: false
     custom_discretization: # only used if discrete is true, otherwise ignored
       enabled: true
@@ -111,7 +114,7 @@ rl_agent:
       final_value: 0.0001
 
   ppo:
-    batch_size: 20480
+    batch_size: 10240
     gamma: 0.99
     n_steps: 1200
     ent_coef: 0.005
@@ -119,6 +122,6 @@ rl_agent:
     vf_coef: 0.22
     max_grad_norm: 0.5
     gae_lambda: 0.95
-    m_batch_size: 512
+    m_batch_size: 1024
     n_epochs: 3
     clip_range: 0.25

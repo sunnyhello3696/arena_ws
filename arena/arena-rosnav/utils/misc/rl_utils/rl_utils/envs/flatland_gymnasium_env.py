@@ -39,6 +39,9 @@ from geometry_msgs.msg import TransformStamped
 from rosgraph_msgs.msg import Clock
 import math
 from rl_utils.utils.observation_collector.constants import OBS_DICT_KEYS, TOPICS
+from geometry_msgs.msg import PoseWithCovarianceStamped
+
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 
 def get_ns_idx(ns: str):
@@ -115,22 +118,36 @@ class FlatlandEnv(gymnasium.Env):
         self._is_train_mode = rospy.get_param_cached("/train_mode", default=True)
         self._step_size = rospy.get_param_cached("/step_size")
 
+        self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
+        self.action_points_num = rospy.get_param_cached("action_points_num", 0)
+
         self._reward_fnc = reward_fnc
         self._kwargs = kwargs
 
         self._steps_curr_episode = 0
         self._episode = 0
         self._max_steps_per_episode = max_steps_per_episode
+
         self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        self._obs_dict = None
+        if self.is_normalize_points:
+            self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
+        else:
+            self._last_action_points = None
 
         self.enable_rviz = rospy.get_param("/if_viz", False)
         self.clock_sub = rospy.Subscriber(self.ns.oldname("clock"), Clock, self.clock_cb)
         self.clock_time = None
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
 
+        # self.ref_actions = np.empty((0,2),dtype=np.float32)
+        # self.ref_states = np.empty((0,3),dtype=np.float32)
+
         # 如果配置中的debug_mode=False，则trigger_init=True；debug_mode=True，不启用（False）。
         if not trigger_init:
             self.init()
+
+        # time.sleep(5)
 
     def init(self):
         """
@@ -154,8 +171,8 @@ class FlatlandEnv(gymnasium.Env):
             obs_structur=[
                 # BaseCollectorUnit,
                 ConvexCollectorUnit,
-                GlobalplanCollectorUnit,
-                SemanticAggregateUnit,
+                # GlobalplanCollectorUnit,
+                # SemanticAggregateUnit,
             ],
         )
         return True
@@ -256,22 +273,46 @@ class FlatlandEnv(gymnasium.Env):
 
         """
 
-        decoded_action = self._decode_action(action)
-        self._pub_action(decoded_action)
+        # print("=============================namespaces: ", self.ns)
+        if not self.is_normalize_points:
+            decoded_action = self._decode_action(action)
+            self._pub_action(decoded_action)
 
-        if self._is_train_mode:
-            self.call_service_takeSimStep()
+            if self._is_train_mode:
+                self.call_service_takeSimStep()
 
-        obs_dict = self.observation_collector.get_observations(
-            last_action=self._last_action
-        )
-        self._last_action = decoded_action
+            obs_dict = self.observation_collector.get_observations(
+                last_action=self._last_action
+            )
+            self._last_action = decoded_action
 
-        # calculate reward
-        reward, reward_info = self.reward_calculator.get_reward(
-            action=decoded_action,
-            **obs_dict,
-        )
+            # calculate reward
+            reward, reward_info = self.reward_calculator.get_reward(
+                action=decoded_action,
+                **obs_dict,
+            )
+        else:
+            decoded_action_scale_factors = self._decode_action(action)
+            decoded_action, action_points_robot = self.model_space_encoder.process_action(decoded_action_scale_factors, self._obs_dict)
+            self._pub_action(decoded_action)
+            
+            if self._is_train_mode:
+                self.call_service_takeSimStep()
+
+            obs_dict = self.observation_collector.get_observations(
+                last_action=self._last_action,
+                last_action_points= self._last_action_points
+            )
+            self._obs_dict = obs_dict
+            self._last_action = decoded_action
+            self._last_action_points = action_points_robot
+
+            # calculate reward
+            reward, reward_info = self.reward_calculator.get_reward(
+                action=decoded_action,
+                action_points= action_points_robot,
+                **obs_dict,
+            )
 
         self._steps_curr_episode += 1
         # print(f"Step: {self._steps_curr_episode}, Reward: {reward}")
@@ -282,9 +323,16 @@ class FlatlandEnv(gymnasium.Env):
             curr_steps=self._steps_curr_episode,
             max_steps=self._max_steps_per_episode,
         )
+        # check obs_dict values is null
+        for key in obs_dict.keys():
+            if obs_dict[key] is None:
+                print(f"obs_dict[{key}] is None")
+        obs_encode_narray = self._encode_observation(obs_dict, is_done=done)
+        
+        # print("encoded observation shape: ", obs_encode_narray.shape)
 
         return (
-            self._encode_observation(obs_dict, is_done=done),
+            obs_encode_narray,
             reward,
             done,
             False,
@@ -323,7 +371,11 @@ class FlatlandEnv(gymnasium.Env):
         )
         self.reward_calculator.reset()
         self._steps_curr_episode = 0
-        self._last_action = np.array([0, 0, 0])
+
+        self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
+        if self.is_normalize_points:
+            self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
+        self._obs_dict = None
 
         if self._is_train_mode:
             self.agent_action_pub.publish(Twist())
@@ -331,6 +383,18 @@ class FlatlandEnv(gymnasium.Env):
 
         obs_dict = self.observation_collector.get_observations()
         info_dict = {}
+
+        # # save self.ref_actions and self.ref_states to csv file
+        # # save self.ref_actions
+        # with open("/home/chen/Documents/mpc_test_traj/ref_actions_2.csv", "w") as f:
+        #     np.savetxt(f, self.ref_actions, delimiter=",", fmt="%.3f")
+        # with open("/home/chen/Documents/mpc_test_traj/ref_states_12.csv", "w") as f:
+        #     np.savetxt(f, self.ref_states, delimiter=",", fmt="%.3f")
+        # # empty self.ref_actions and self.ref_states
+        # self.ref_actions = np.empty((0,2),dtype=np.float32)
+        # self.ref_states = np.empty((0,3),dtype=np.float32)
+        # initial_pose_msg = rospy.wait_for_message('/initialpose', PoseWithCovarianceStamped)
+
         return (
             self._encode_observation(obs_dict),
             info_dict,
