@@ -302,22 +302,22 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     action_points.append((0.,0.))
                     # print("add robot point to action points.")
 
-                # if goal in convex, the angle of the first action point set to goal
-                goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
-                convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
-                if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
-                    goal_theta = np.arctan2(goal_robot_frame[1],goal_robot_frame[0])
-                    # convert goal_theta to 0-2pi with numpy
-                    goal_theta = np.where(goal_theta < 0, goal_theta + 2 * np.pi, goal_theta)
-                    goal_theta_scale = goal_theta/(2*np.pi) # goal theta scale 0-1
-                    # print("goal_in_convex, goal_theta:",goal_theta,"goal_theta_scale:",goal_theta_scale)
-                    for i in range(len(netout_scale_factors)):
-                        if i == 0:
-                            netout_scale_factors[i] = goal_theta_scale
-                        elif i % 2 == 0:
-                            netout_scale_factors[i] = 0.0
-                        # elif i % 2 == 1:
-                        #     netout_scale_factors[i] = 1.0
+                # # if goal in convex, the angle of the first action point set to goal
+                # goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
+                # convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
+                # if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
+                #     goal_theta = np.arctan2(goal_robot_frame[1],goal_robot_frame[0])
+                #     # convert goal_theta to 0-2pi with numpy
+                #     goal_theta = np.where(goal_theta < 0, goal_theta + 2 * np.pi, goal_theta)
+                #     goal_theta_scale = goal_theta/(2*np.pi) # goal theta scale 0-1
+                #     # print("goal_in_convex, goal_theta:",goal_theta,"goal_theta_scale:",goal_theta_scale)
+                #     for i in range(len(netout_scale_factors)):
+                #         if i == 0:
+                #             netout_scale_factors[i] = goal_theta_scale
+                #         elif i % 2 == 0:
+                #             netout_scale_factors[i] = 0.0
+                #         # elif i % 2 == 1:
+                #         #     netout_scale_factors[i] = 1.0
                 
                 if len(netout_scale_factors) >= 2:
                     one_action_point = self.calc_polar_action_points(
@@ -340,13 +340,13 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                         action_points.append(one_action_point)
                         action_points_robot.append(one_action_point)
                 
-                # # if goal in convex, the last action point set to goal
-                # goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
-                # convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
-                # if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
-                #     # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
-                #     action_points.pop()
-                #     action_points.append(goal_robot_frame)
+                # if goal in convex, the last action point set to goal
+                goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
+                convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
+                if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
+                    # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
+                    action_points.pop()
+                    action_points.append(goal_robot_frame)
 
                 
                 action_points = np.array(action_points, dtype=np.float32)
