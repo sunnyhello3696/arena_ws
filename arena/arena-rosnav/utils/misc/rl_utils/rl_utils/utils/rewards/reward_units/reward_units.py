@@ -29,6 +29,8 @@ __all__ = [
     "RewardActiveHeadingDirection",
     "RewardSafeDistanceExp",
     "RewardFixedStep",
+    "RewardFollowTebplan",
+    "RewardActionPointsChange",
 ]
 
 if_show_reward = False
@@ -436,7 +438,6 @@ class RewardDistanceTravelled(RewardUnit):
             self._sum_reward = 0
 
 
-# not used in globalplan_collector_unit.py
 @RewardUnitFactory.register("approach_globalplan")
 class RewardApproachGlobalplan(GlobalplanRewardUnit):
     @check_params
@@ -502,7 +503,6 @@ class RewardApproachGlobalplan(GlobalplanRewardUnit):
         self.last_dist_to_path = None
 
 
-# not used in globalplan_collector_unit.py
 @RewardUnitFactory.register("follow_globalplan")
 class RewardFollowGlobalplan(GlobalplanRewardUnit):
     """
@@ -1204,3 +1204,129 @@ class RewardPedTypeVelocityConstraint(RewardUnit):
 
     def reset(self):
         pass
+
+from scipy.spatial import cKDTree
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
+@RewardUnitFactory.register("follow_tebplan")
+class RewardFollowTebplan(RewardUnit):
+    @check_params
+    def __init__(
+        self,
+        reward_function: "RewardFunction",
+        reward_factor: float = DEFAULTS.FOLLOW_GLOBALPLAN.REWARD_FACTOR,
+        _on_safe_dist_violation: bool = DEFAULTS.FOLLOW_GLOBALPLAN._ON_SAFE_DIST_VIOLATION,
+        *args, **kwargs,
+    ) -> None:
+        super().__init__(reward_function, _on_safe_dist_violation, *args, **kwargs)
+        self._reward_factor = reward_factor
+        self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
+        self.action_points_num = rospy.get_param_cached("action_points_num", 0)
+        self.marker_pub = rospy.Publisher('Tebplan_visualization_marker', Marker, queue_size=1)
+        self.empty_count = 0
+
+    def check_parameters(self, *args, **kwargs):
+        """
+        Checks if the reward value is positive and issues a warning if it is.
+        """
+        if not self.is_normalize_points:
+            rospy.logerr("RewardActionPointsChange only use at Action points mode")
+            raise ValueError("RewardActionPointsChange only use at Action points mode")
+        
+        if self.is_normalize_points and self.action_points_num == 0:
+            rospy.logerr("Action points num is 0")
+            raise ValueError("Action points num is 0")
+
+    def __call__(
+        self,
+        action_points_map: np.ndarray,
+        teb_plan: np.ndarray,
+        robot_pose,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+
+        if teb_plan.size == 0 or action_points_map.size == 0:
+            self.empty_count += 1
+            if self.empty_count > 500:
+                rospy.logerr("Empty teb_plan or action_points_map for 500 times")
+            return
+        self.empty_count = 0
+        
+        # check action_points_map and teb_plan shape
+        if action_points_map.shape[1] != 2 or teb_plan.shape[1] != 2:
+            rospy.logerr("Invalid shape of action_points_map or teb_plan")
+            raise ValueError("Invalid shape of action_points_map or teb_plan")
+
+        # self._kdtree = cKDTree(teb_plan)
+        # _, nearest_idx = self._kdtree.query([robot_pose.x, robot_pose.y], k=1)
+        # teb_plan = teb_plan[nearest_idx:]  # use only the part of the plan from nearest point to end
+        try:
+            # 反转TEB轨迹
+            reversed_teb_plan = teb_plan[::-1]
+            # 创建KD树用于查询
+            kd_tree = cKDTree(reversed_teb_plan)
+            # 查询机器人当前位置最近的点
+            _, nearest_idx = kd_tree.query([robot_pose.x, robot_pose.y], k=1)
+            # 计算原始轨迹中的索引
+            original_idx = len(teb_plan) - 1 - nearest_idx
+            # 裁剪原始轨迹从最近点到末尾
+            teb_plan = teb_plan[original_idx:]
+
+            # Assuming robot_pose is an object with attributes x and y
+            robot_start = np.array([robot_pose.x, robot_pose.y])
+
+            # Compute distances efficiently
+            distances = np.linalg.norm(np.diff(action_points_map, axis=0, prepend=[robot_start]), axis=1)
+            # np.cumsum 函数计算给定数组的累积和,每个元素 accumulated_distances[i] 存储的是从机器人初始位置到动作点 action_points_map[i] 的总距离
+            accumulated_distances = np.cumsum(distances)
+
+            # Efficiently find corresponding points in the trimmed TEB plan
+            teb_distances = np.linalg.norm(np.diff(teb_plan, axis=0, prepend=[robot_start]), axis=1)
+            teb_accumulated = np.cumsum(teb_distances)
+
+            # Efficiently map action points to closest TEB points
+            idx = np.searchsorted(teb_accumulated, accumulated_distances)
+            idx = np.clip(idx, 0, len(teb_plan) - 1)  # Ensure indices are within bounds
+
+            # Compute the distance-based penalty as reward using vectorized operations
+            distances_to_teb = np.linalg.norm(action_points_map - teb_plan[idx], axis=1)
+            reward = -np.sum(distances_to_teb) * self._reward_factor
+
+            self.add_reward(reward)
+            if if_show_reward:
+                self._sum_reward += reward
+
+            # corresponding_teb_points = teb_plan[idx]
+            # self.publish_markers(corresponding_teb_points)
+        except Exception as e:
+            rospy.logerr(f"Error in RewardFollowTebplan: {e}")
+    
+    def reset(self):
+        if if_show_reward:
+            print("FollowTebplan reward:", self._sum_reward)
+            print("==================================================")
+            self._sum_reward = 0
+
+    def publish_markers(self, points):
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = "teb_points"
+        marker.id = 0
+        marker.type = Marker.POINTS
+        marker.action = Marker.ADD
+        marker.pose.orientation.w = 1
+        marker.scale.x = 0.2  # 点的大小
+        marker.scale.y = 0.2
+        marker.color.a = 1.0  # Don't forget to set the alpha!
+        marker.color.r = 0.0
+        marker.color.g = 0.5
+        marker.color.b = 0.5
+        for p in points:
+            pt = Point()
+            pt.x = p[0]
+            pt.y = p[1]
+            pt.z = 0
+            marker.points.append(pt)
+        self.marker_pub.publish(marker)

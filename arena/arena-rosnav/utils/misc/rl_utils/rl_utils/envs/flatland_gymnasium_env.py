@@ -32,6 +32,9 @@ from task_generator.utils import rosparam_get
 from rl_utils.utils.observation_collector.observation_units.convex_collector_unit import (
     ConvexCollectorUnit,
 )
+from rl_utils.utils.observation_collector.observation_units.tebplan_collector_unit import (
+    TebplanCollectorUnit,
+)
 from sensor_msgs.msg import Image  # Assuming conversion to Image message for rviz
 # import ros_numpy
 import tf2_ros
@@ -40,8 +43,8 @@ from rosgraph_msgs.msg import Clock
 import math
 from rl_utils.utils.observation_collector.constants import OBS_DICT_KEYS, TOPICS
 from geometry_msgs.msg import PoseWithCovarianceStamped
-
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
 
 
 def get_ns_idx(ns: str):
@@ -139,6 +142,7 @@ class FlatlandEnv(gymnasium.Env):
         self._obs_dict = None
         if self.is_normalize_points:
             self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
+            self.action_points_pub = rospy.Publisher(self.ns.oldname("action_points"), Marker, queue_size=1)
         else:
             self._last_action_points = None
 
@@ -180,6 +184,7 @@ class FlatlandEnv(gymnasium.Env):
             obs_structur=[
                 # BaseCollectorUnit,
                 ConvexCollectorUnit,
+                TebplanCollectorUnit,
                 # GlobalplanCollectorUnit,
                 # SemanticAggregateUnit,
             ],
@@ -304,6 +309,13 @@ class FlatlandEnv(gymnasium.Env):
             decoded_action_scale_factors = self._decode_action(action)
             decoded_action, action_points_robot = self.model_space_encoder.process_action(decoded_action_scale_factors, self._obs_dict)
             self._pub_action(decoded_action)
+
+            # publish map frame action points to rviz 
+            action_points_map = []
+            for pt in action_points_robot:
+                action_points_map.append(self.model_space_encoder._encoder.robotpt2worldpt(pt))
+            self.publish_points_rviz(action_points_map)
+            action_points_map = np.array(action_points_map, dtype=np.float32)
             
             if self._is_train_mode:
                 self.call_service_takeSimStep()
@@ -320,6 +332,7 @@ class FlatlandEnv(gymnasium.Env):
             reward, reward_info = self.reward_calculator.get_reward(
                 action=decoded_action,
                 action_points= action_points_robot,
+                action_points_map= action_points_map,
                 **obs_dict,
             )
 
@@ -334,6 +347,7 @@ class FlatlandEnv(gymnasium.Env):
         # check obs_dict values is null
         for key in obs_dict.keys():
             if obs_dict[key] is None:
+                rospy.logwarn(f"obs_dict[{key}] is None")
                 print(f"obs_dict[{key}] is None")
 
         return (
@@ -449,3 +463,24 @@ class FlatlandEnv(gymnasium.Env):
     
     def clock_cb(self,clock_msg: Clock):
         self.clock_time = clock_msg.clock
+
+    def publish_points_rviz(self, action_points):
+        # 动作点可视化
+        marker_points = Marker()
+        marker_points.header.frame_id = "map"
+        marker_points.type = Marker.POINTS
+        marker_points.action = Marker.ADD
+        marker_points.scale.x = 0.15 # 点大小
+        marker_points.scale.y = 0.15
+        marker_points.color.a = 1.0  # 不透明度
+        marker_points.color.r = 1.0  # 红色点
+        marker_points.color.g = 0.0
+        marker_points.color.b = 0.0
+
+        for point in action_points:
+            p = Point()
+            p.x = point[0]
+            p.y = point[1]
+            p.z = 0
+            marker_points.points.append(p)
+        self.action_points_pub.publish(marker_points)

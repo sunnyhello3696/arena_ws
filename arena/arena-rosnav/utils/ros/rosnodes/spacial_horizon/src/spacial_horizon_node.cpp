@@ -23,7 +23,7 @@ void SpacialHorizon::init(ros::NodeHandle &nh)
         // if not in train mode, create timers
         ROS_INFO_STREAM("Spacial Horizon: Creating Global Plan Timer");
         update_global_plan_timer = nh.createTimer(
-            ros::Duration(0.1), &SpacialHorizon::getGlobalPath, this
+            ros::Duration(0.2), &SpacialHorizon::getGlobalPath, this
         );
     }
     subgoal_timer = nh.createTimer(
@@ -69,6 +69,7 @@ void SpacialHorizon::odomCallback(const nav_msgs::OdometryConstPtr &msg)
     has_odom = true;
 }
 
+// 接收新的导航目标位置，如果已接收到里程计数据，则计算从当前位置到目标位置的全局路径。
 void SpacialHorizon::goalCallback(const geometry_msgs::PoseStampedPtr &msg)
 {
     ROS_INFO_STREAM("[Spacial Horizon] Received new goal");
@@ -103,19 +104,22 @@ void SpacialHorizon::goalCallback(const geometry_msgs::PoseStampedPtr &msg)
  * @brief Retrieves the subgoal for the SpacialHorizon object.
  *
  * This function retrieves the subgoal, which is a 2D vector, for the SpacialHorizon object.
- *
+ * 计算距离当前位置一定范围内的子目标，确保该子目标在规划范围内，并在满足特定容差条件下更新。
  * @param subgoal A reference to an Eigen::Vector2d object where the subgoal will be stored.
  * @return bool Returns true if the subgoal was successfully retrieved, false otherwise.
  */
 bool SpacialHorizon::getSubgoal(Eigen::Vector2d &subgoal)
 {   
+    // 计算当前位置到目标位置的距离
     double dist_to_goal = (odom_pos - end_pos).norm();
 
+    // 如果当前位置到目标位置的距离小于或等于goal_tolerance（目标容差），说明机器人已足够接近最终目标。此时，函数返回 false，表示不需要进一步计算子目标。
     if (dist_to_goal <= goal_tolerance)
     {
         return false;
     }
 
+    // 如果距离小于planning_horizon（规划范围），则直接将最终目标位置end_pos作为子目标
     if (dist_to_goal < planning_horizon)
     {
         subgoal = end_pos;
@@ -123,6 +127,8 @@ bool SpacialHorizon::getSubgoal(Eigen::Vector2d &subgoal)
         return true;
     }
 
+    // 检查每个点与当前位置的距离是否在planning_horizon加减subgoal_tolerance（子目标容差）的范围内。
+    // 如果找到这样的点，该点就设置为子目标subgoal，函数返回 true 表示成功找到子目标。
     for (size_t i = 0; i < global_plan.response.plan.poses.size(); i++)
     {
         Eigen::Vector2d wp_pt =
@@ -143,6 +149,8 @@ bool SpacialHorizon::getSubgoal(Eigen::Vector2d &subgoal)
     return false;
 }
 
+// 定时调用以检查和更新子目标。
+// 根据当前位置、目标位置和全局路径数据，计算下一个子目标。如果机器人与计划中的子目标距离过大，则重新计算全局路径和子目标。
 void SpacialHorizon::updateSubgoalCallback(const ros::TimerEvent &e)
 {
     if (disable_intermediate_planner){
@@ -192,6 +200,8 @@ void SpacialHorizon::getGlobalPath(const ros::TimerEvent &e) {
     getGlobalPath();
 }
 
+// 向全局路径规划服务请求路径，根据当前位置和目标位置生成路径请求。
+// 发布计算出的全局路径供其他节点使用。
 /* Get global plan from move_base */
 void SpacialHorizon::getGlobalPath()
 {

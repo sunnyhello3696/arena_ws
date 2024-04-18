@@ -186,12 +186,27 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
       sensor_msgs::LaserScan scan_vis = laser_scan_;
       scan_vis.header.stamp = timekeeper.GetSimTime();
       // frame_id= nh_ + /robot
-      scan_vis.header.frame_id = "sim_1/robot";
+
+      std::string result = "sim_1/robot";
+      // 找到第一个 '/' 的位置 from topic_
+      size_t start = topic_.find_first_of('/');
+      if (start != std::string::npos) {
+          // 找到第二个 '/' 的位置
+          size_t end = topic_.find('/', start + 1);
+          if (end != std::string::npos) {
+              // 提取从第一个 '/' 到第二个 '/' 之间的字符串（不包括这两个 '/'）
+              std::string first_part = topic_.substr(start + 1, end - start - 1);
+              // 组成新的字符串
+              result = first_part + "/robot";
+          }
+      }
+
+      scan_vis.header.frame_id = result;
       scan_vis_publisher_.publish(scan_vis);
 
       geometry_msgs::PolygonStamped polygon_Stamped;
       polygon_Stamped.header.stamp = timekeeper.GetSimTime();
-      polygon_Stamped.header.frame_id = "sim_1/robot";
+      polygon_Stamped.header.frame_id = result;
       polygon_Stamped.polygon = std::get<0>(res);
       convex_polygon_vis_publisher_.publish(polygon_Stamped);
     }

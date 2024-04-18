@@ -17,6 +17,7 @@ class TOPICS:
     LASER_CONVEX = "galaxy2d_convex"
 
     GLOBALPLAN = "global_plan"
+    TEBPLAN = "move_base_flex/TebLocalPlannerROS/local_plan"
 
     PEDSIM_STATES = "pedsim_simulator/simulated_agents"
     PEDSIM_SEMANTIC = "crowdsim_agents/semantic"
@@ -37,6 +38,7 @@ class OBS_DICT_KEYS:
     DISTANCE_TO_GOAL = "distance_to_goal"
     LAST_ACTION = "last_action"
     GLOBAL_PLAN = "global_plan"
+    TEB_PLAN = "teb_plan"
     DONE = "is_done"
     LASER_CONVEX = "laser_convex"
     ROBOT_STATE = "robot_state"

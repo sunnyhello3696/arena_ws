@@ -82,11 +82,11 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self.obs_dict_d86 = None
         self.laser_num_beams = 360
         self._laser_max_range = merged_kwargs.get("laser_max_range", 8.0)
-        self._robot_pose = None
+        self._robot_pose = Pose2D()
         self._robot_vel = None
         self._last_action_points = None
 
-        self.debug_vis = True
+        self.debug_vis = False
         self.mpc_mapframe_test_traj = True
         # if self.mpc_mapframe_test_traj:
             # self.mpc_xref_traj = genfromtxt("/home/dmz/Documents/mpc_test_traj/ref_states_2.csv", delimiter=',')
@@ -447,7 +447,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         feasible_spaces = []
         
         # 最大线速度
-        max_linear_speed = 0.8  # m/s
+        max_linear_speed = 0.7  # m/s
 
         speed_factor = self._feasible_position_speed_factor
 
@@ -812,7 +812,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         if self.mpc_mapframe_test_traj:
             marker_line.header.frame_id = "map"
         else:
-            marker_line.header.frame_id = "sim_1/robot"
+            marker_line.header.frame_id = "eval_sim/robot"
         marker_line.type = Marker.LINE_LIST
         marker_line.action = Marker.ADD
         marker_line.scale.x = 0.1  # 线宽
@@ -835,7 +835,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         if self.mpc_mapframe_test_traj:
             marker_points.header.frame_id = "map"
         else:
-            marker_points.header.frame_id = "sim_1/robot"
+            marker_points.header.frame_id = "eval_sim/robot"
         marker_points.type = Marker.POINTS
         marker_points.action = Marker.ADD
         marker_points.scale.x = 0.15 # 点大小
@@ -855,7 +855,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
 
     def publish_marker(self, points, marker_type, r, g, b, namespace='visualization', scale=0.1, trans = 1.0):
         marker = Marker()
-        marker.header.frame_id = "sim_1/robot"
+        marker.header.frame_id = "eval_sim/robot"
         marker.ns = namespace
         marker.type = marker_type
         marker.action = Marker.ADD

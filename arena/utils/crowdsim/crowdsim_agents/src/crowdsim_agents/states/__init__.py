@@ -116,9 +116,12 @@ class Agent(StatechartProvider):
 
         for event in (*events, "tick"):
             self._statemachine.queue(event).execute_once()
+        try:
+            if self._destination is not None and len(self._destination) == 3:
+                in_data.agents[i].destination.x, in_data.agents[i].destination.y, in_data.agents[i].destination.z = self._destination
 
-        if self._destination is not None:
-            in_data.agents[i].destination.x, in_data.agents[i].destination.y, in_data.agents[i].destination.z = self._destination
+        except Exception as e:
+            rospy.logerr(f"Error setting destination: {e}")
 
     def post(self, in_data: utils.InData, work_data: utils.WorkData, i: int):
         work_data.social_state[i] = self._animation

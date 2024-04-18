@@ -4,7 +4,7 @@
   <param name="SIMULATOR" value="flatland" />
   <param name="local_planner" value="rosnav" />
 
-  <param name="if_viz" value="true" />
+  <param name="if_viz" value="false" />
   <param name="max_vertex_num" value="120" />
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
   <arg name="model" default="burger"      doc="model type [burger, jackal, ridgeback, agvota, rto, rto_real]"/>
