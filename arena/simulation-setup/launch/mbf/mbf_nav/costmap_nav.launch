@@ -10,6 +10,9 @@
     <arg name="inter_planner" />
     <arg name="local_planner" />
 
+    <!-- <arg name="start_move_base" default="true" /> -->
+    <arg name="start_move_base" default="false" />
+
     <arg name="agent_name" default="$(arg model)" if="$(eval arg('local_planner') == 'rosnav')" />
 
     <include file="$(find arena_simulation_setup)/launch/mbf/planners/local/mbf_$(arg local_planner).launch">
@@ -29,7 +32,7 @@
     </include>
 
     <!-- move_base -->
-    <group>
+    <group if="$(arg start_move_base)">
 
         <!--
             to disable cmd_vel masking, add
@@ -89,22 +92,24 @@
         </node>
     </group>
 
-    <node name="move_base_legacy_relay" pkg="mbf_costmap_nav" type="move_base_legacy_relay.py">
+    <group if="$(arg start_move_base)">
+        <node name="move_base_legacy_relay" pkg="mbf_costmap_nav" type="move_base_legacy_relay.py">
 
-        <remap from="~base_global_planner" to="move_base_flex/base_global_planner" />
-        <remap from="~base_local_planner" to="move_base_flex/base_local_planner" />
+            <remap from="~base_global_planner" to="move_base_flex/base_global_planner" />
+            <remap from="~base_local_planner" to="move_base_flex/base_local_planner" />
 
-        <!-- TODO rewrite relay to not overwrite existing params -->
-        <rosparam file="$(find arena_simulation_setup)/configs/mbf/move_base_params.yaml"
-            command="load" subst_value="True" />
-        <rosparam
-            file="$(find arena_simulation_setup)/entities/robots/$(arg model)/configs/mbf/move_base_params.yaml"
-            command="load" subst_value="True"
-            if="$(eval arg('model') != '')"
-        />
+            <!-- TODO rewrite relay to not overwrite existing params -->
+            <rosparam file="$(find arena_simulation_setup)/configs/mbf/move_base_params.yaml"
+                command="load" subst_value="True" />
+            <rosparam
+                file="$(find arena_simulation_setup)/entities/robots/$(arg model)/configs/mbf/move_base_params.yaml"
+                command="load" subst_value="True"
+                if="$(eval arg('model') != '')"
+            />
 
-        <remap from="/clock" to="/$(arg namespace)/clock" if="$(eval local_planner == 'rosnav' and train_mode == true)"/>
-    </node>
+            <remap from="/clock" to="/$(arg namespace)/clock" if="$(eval local_planner == 'rosnav' and train_mode == true)"/>
+        </node>
+    </group>
 
     
 </launch>

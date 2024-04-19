@@ -435,7 +435,7 @@ class PedsimManager(EntityManager):
                 obstacle.extra.get("force_factor_obstacle", None)
             )
             msg.force_factor_social = Pedsim.FORCE_FACTOR_SOCIAL(
-                obstacle.extra.get("force_factor_social", 3.0)
+                obstacle.extra.get("force_factor_social", 1.0)
             )
             msg.force_factor_robot = Pedsim.FORCE_FACTOR_ROBOT(
                 obstacle.extra.get("force_factor_robot", 0.0)

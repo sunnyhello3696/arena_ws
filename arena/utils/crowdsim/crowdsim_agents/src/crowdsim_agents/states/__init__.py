@@ -121,7 +121,7 @@ class Agent(StatechartProvider):
                 in_data.agents[i].destination.x, in_data.agents[i].destination.y, in_data.agents[i].destination.z = self._destination
 
         except Exception as e:
-            rospy.logerr(f"Error setting destination: {e}")
+            rospy.logwarn(f"Error setting destination: {e}")
 
     def post(self, in_data: utils.InData, work_data: utils.WorkData, i: int):
         work_data.social_state[i] = self._animation

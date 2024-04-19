@@ -45,6 +45,6 @@
 
   <!-- move_base -->
   <!-- 所有发送到这个文件的数据都会被丢弃。在ROS中，使用/devnull（注意ROS中没有下划线）作为话题名称，意味着发布到这个话题的消息将被丢弃，即没有任何节点订阅这个话题。 -->
-  <remap from="move_base_flex/TebLocalPlannerROS/global_plan" to="/devnull" /> optics
+  <remap from="move_base_flex/TebLocalPlannerROS/global_plan" to="/devnull" />
 
 </launch>
