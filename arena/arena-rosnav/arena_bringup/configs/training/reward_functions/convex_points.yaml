@@ -13,7 +13,7 @@ safe_distance_exp:
 #   reward: -0.005
 
 no_movement:
-  reward: -0.025
+  reward: -0.022
   _on_safe_dist_violation: true
 
 approach_goal:
@@ -50,6 +50,6 @@ collision:
 # action_points_change:
 #   penalty_factor: 0.006
 
-follow_tebplan:
-  reward_factor: 0.0125
-  _on_safe_dist_violation: true
+# follow_tebplan:
+#   reward_factor: 0.008
+#   _on_safe_dist_violation: true

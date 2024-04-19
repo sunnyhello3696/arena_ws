@@ -346,7 +346,7 @@ class AGENT_89(BaseAgent):
     }
     features_extractor_class = ConvexExtractor_2d_with_ActPts
     features_extractor_kwargs = {"features_dim": 256}
-    net_arch = dict(pi=[256, 128, 64], vf=[128, 64, 64])
+    net_arch = dict(pi=[256, 128, 64, 64], vf=[256, 128, 64])
     activation_fn = nn.ReLU
 
 @AgentFactory.register("BarnResNet")
