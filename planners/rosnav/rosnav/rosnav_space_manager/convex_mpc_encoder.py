@@ -242,6 +242,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 #     # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
                 #     action_points.pop()
                 #     action_points.append(goal_robot_frame)
+                #     action_points_robot.pop()
+                #     action_points_robot.append(goal_robot_frame)
 
                 
                 action_points = np.array(action_points, dtype=np.float32)
