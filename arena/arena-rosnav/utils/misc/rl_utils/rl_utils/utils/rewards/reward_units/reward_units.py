@@ -1215,14 +1215,19 @@ class RewardFollowTebplan(RewardUnit):
         self,
         reward_function: "RewardFunction",
         reward_factor: float = DEFAULTS.FOLLOW_GLOBALPLAN.REWARD_FACTOR,
+        is_integral_distance: bool = True,
         _on_safe_dist_violation: bool = DEFAULTS.FOLLOW_GLOBALPLAN._ON_SAFE_DIST_VIOLATION,
         *args, **kwargs,
     ) -> None:
         super().__init__(reward_function, _on_safe_dist_violation, *args, **kwargs)
         self._reward_factor = reward_factor
+        self.is_integral_distance = is_integral_distance
         self.is_normalize_points = rospy.get_param_cached("is_normalize_points", False)
         self.action_points_num = rospy.get_param_cached("action_points_num", 0)
         self.marker_pub = rospy.Publisher('Tebplan_visualization_marker', Marker, queue_size=1)
+        # 根据self.action_points_num计算时间间隔的索引
+        self.time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
+        self._step_size = rospy.get_param_cached("/step_size", 0.2)
         self.empty_count = 0
 
     def check_parameters(self, *args, **kwargs):
@@ -1275,11 +1280,15 @@ class RewardFollowTebplan(RewardUnit):
 
             # Assuming robot_pose is an object with attributes x and y
             robot_start = np.array([robot_pose.x, robot_pose.y])
-
-            # Compute distances efficiently
-            distances = np.linalg.norm(np.diff(action_points_map, axis=0, prepend=[robot_start]), axis=1)
-            # np.cumsum 函数计算给定数组的累积和,每个元素 accumulated_distances[i] 存储的是从机器人初始位置到动作点 action_points_map[i] 的总距离
-            accumulated_distances = np.cumsum(distances)
+            if self.is_integral_distance:
+                # Compute distances efficiently
+                distances = np.linalg.norm(np.diff(action_points_map, axis=0, prepend=[robot_start]), axis=1)
+                # np.cumsum 函数计算给定数组的累积和,每个元素 accumulated_distances[i] 存储的是从机器人初始位置到动作点 action_points_map[i] 的总距离
+                accumulated_distances = np.cumsum(distances)
+            else:
+                # 根据时间间隔和固定速度计算累积距离
+                speed = 0.55  # m/s
+                accumulated_distances = self.time_intervals * self._step_size * speed
 
             # Efficiently find corresponding points in the trimmed TEB plan
             teb_distances = np.linalg.norm(np.diff(teb_plan, axis=0, prepend=[robot_start]), axis=1)

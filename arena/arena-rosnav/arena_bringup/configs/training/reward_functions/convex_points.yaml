@@ -51,5 +51,6 @@ collision:
 #   penalty_factor: 0.006
 
 # follow_tebplan:
-#   reward_factor: 0.008
+#   reward_factor: 0.007
+#   is_integral_distance: false
 #   _on_safe_dist_violation: true
