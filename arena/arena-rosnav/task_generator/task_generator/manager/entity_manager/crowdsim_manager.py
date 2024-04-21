@@ -376,7 +376,7 @@ class CrowdsimManager(EntityManager):
 
             msg.type = _get_ped_type()
             msg.number_of_peds = 1
-            msg.vmax = Pedsim.VMAX(obstacle.extra.get("vmax", None))
+            msg.vmax = Pedsim.VMAX(obstacle.extra.get("vmax", 1.0))
 
             # TODO
             msg.configuration = json.dumps({})
