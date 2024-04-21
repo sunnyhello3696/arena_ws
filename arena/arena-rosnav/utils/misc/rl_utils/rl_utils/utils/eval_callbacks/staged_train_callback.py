@@ -6,6 +6,8 @@ import time
 from typing import List
 from std_msgs.msg import Bool
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+
+
 from typing import Any, Callable, Dict, List, Optional, Union
 import os
 from stable_baselines3.common.vec_env import (
@@ -147,11 +149,14 @@ class InitiateNewTrainStage(BaseCallback):
                         stage_save_path = os.path.join(self.best_model_save_path, f"stage_{self.curr_stage}_{best_success_rate:.2f}_{EvalObject.num_timesteps}")  # 创建阶段目录
                         os.makedirs(stage_save_path, exist_ok=True)  # 确保目录存在
                         EvalObject.model.save(os.path.join(stage_save_path, "best_model"))
-                        # if isinstance(EvalObject.train_env, VecNormalize):
-                        EvalObject.train_env.save(os.path.join(stage_save_path, "vec_normalize_best_model.pkl"))
+                        if isinstance(EvalObject.train_env, VecNormalize):
+                            EvalObject.train_env.save(os.path.join(stage_save_path, "vec_normalize_best_model.pkl"))
+                        elif isinstance(EvalObject.train_env.venv, VecNormalize):
+                            EvalObject.train_env.venv.save(os.path.join(stage_save_path, "vec_normalize_best_model.pkl"))
                         print(f"Model and VecNormalize saved in {stage_save_path}")
                 except Exception as e:
                     print(f"Error saving model and VecNormalize stage_{self.curr_stage}_{best_success_rate:.2f}_{EvalObject.num_timesteps}: {e}")
+                    EvalObject.train_env.save(os.path.join(stage_save_path, "vec_normalize_best_model.pkl"))
 
     def log_curr_stage(self, logger):
         time.sleep(1)

@@ -520,8 +520,12 @@ class EvalCallback(EventCallback):
                     print("New best mean reward!")
                 if self.best_model_save_path is not None:
                     self.model.save(os.path.join(self.best_model_save_path, "best_model"))
+
                     if isinstance(self.train_env, VecNormalize):
-                        self.train_env.save(os.path.join(self.best_model_save_path, "vec_normalize.pkl"))
+                        self.train_env.save(os.path.join(self.best_model_save_path, "vec_normalize_best_model.pkl"))
+                    elif hasattr(self.train_env, "venv") and isinstance(self.train_env.venv, VecNormalize):
+                        self.train_env.venv.save(os.path.join(self.best_model_save_path, "vec_normalize_best_model.pkl"))
+
                 self.best_mean_reward = mean_reward
 
                 ## Send new best model progress to webapp backend
