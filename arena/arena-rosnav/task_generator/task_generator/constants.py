@@ -27,7 +27,6 @@ class Constants:
     class EntityManager(Enum):
         PEDSIM = "pedsim"
         FLATLAND = "flatland"
-        CROWDSIM = "crowdsim"
 
     class TaskMode:
         @enum.unique

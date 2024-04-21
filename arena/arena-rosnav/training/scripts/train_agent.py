@@ -37,8 +37,9 @@ def main():
     # generate agent name and model specific paths
     generate_agent_name(config)
     paths = get_paths(config)
-
+    
     print(f"Paths: {paths}")
+
     print("________ STARTING TRAINING WITH:  %s ________\n" % config["agent_name"])
 
     # initialize hyperparameters (save to/ load from json)

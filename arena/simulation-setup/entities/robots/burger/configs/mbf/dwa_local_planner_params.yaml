@@ -1,13 +1,23 @@
 DwaLocalPlannerROS:
   # Robot Configuration Parameters
-  max_vel_x: 0.4
+  # # burger
+  # max_vel_x: 0.22
+  # # originBot
+  # max_vel_x: 0.8
+  # turtlebot2
+  max_vel_x: 0.7
   min_vel_x: -0.2
 
   max_vel_y: 0.0
   min_vel_y: 0.0
 
   # The velocity when robot is moving in a straight line
-  max_vel_trans: 0.22
+  # # originBot
+  # max_vel_trans: 0.22
+  # # originBot
+  # max_vel_trans: 0.8
+  # turtlebot2
+  max_vel_trans: 0.7
   min_vel_trans: 0.11
 
   max_vel_theta: 2.75

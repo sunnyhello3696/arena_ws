@@ -396,8 +396,8 @@ class FlatlandEnv(gymnasium.Env):
         )
         self.reward_calculator.reset()
         self._steps_curr_episode = 0
-        # linear x, linear y, angular z
-        self._last_action = np.array([0, 0, 0])
+
+        self._last_action = np.array([0, 0, 0])  # linear x, linear y, angular z
         if self.is_normalize_points:
             self._last_action_points = np.zeros((self.action_points_num, 2), dtype=np.float32)
         self._obs_dict = None

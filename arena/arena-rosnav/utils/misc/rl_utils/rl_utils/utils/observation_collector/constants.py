@@ -1,5 +1,5 @@
 import enum
-from crowdsim_agents.utils import SemanticAttribute
+from pedsim_agents.utils import SemanticAttribute
 
 
 class DONE_REASONS(enum.Enum):
@@ -20,7 +20,7 @@ class TOPICS:
     TEBPLAN = "move_base_flex/TebLocalPlannerROS/local_plan"
 
     PEDSIM_STATES = "pedsim_simulator/simulated_agents"
-    PEDSIM_SEMANTIC = "crowdsim_agents/semantic"
+    PEDSIM_SEMANTIC = "pedsim_agents/semantic"
 
 
 class OBS_DICT_KEYS:

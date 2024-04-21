@@ -151,8 +151,7 @@ class TaskFactory:
 
                 self.__param_tm_obstacles = None
                 self.__param_tm_robots = None
-                # Staged module
-                self.__modules = [
+                self.__modules = [ # Staged module
                     cls.registry_module[module](task=self) for module in modules
                 ]
 

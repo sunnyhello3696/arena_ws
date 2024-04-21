@@ -1287,7 +1287,7 @@ class RewardFollowTebplan(RewardUnit):
                 accumulated_distances = np.cumsum(distances)
             else:
                 # 根据时间间隔和固定速度计算累积距离
-                speed = 0.55  # m/s
+                speed = 0.6  # m/s
                 accumulated_distances = self.time_intervals * self._step_size * speed
 
             # Efficiently find corresponding points in the trimmed TEB plan

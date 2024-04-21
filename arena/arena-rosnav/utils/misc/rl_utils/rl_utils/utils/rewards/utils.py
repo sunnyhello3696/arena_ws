@@ -63,9 +63,8 @@ class InternalStateInfoUpdate:
         )
 
 
-# OBS_DICT_KEYS.LASER = "laser_scan"
 def min_dist_laser(
-    laser_scan: np.ndarray,
+    laser_scan: np.ndarray, # OBS_DICT_KEYS.LASER = "laser_scan"
     point_cloud: np.ndarray,
     from_aggregate_obs: bool,
     *args,

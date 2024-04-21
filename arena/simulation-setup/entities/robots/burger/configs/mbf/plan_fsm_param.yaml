@@ -11,7 +11,7 @@ goal_tolerance: &goal_tolerance 0.2
 subgoal_tolerance: &subgoal_tolerance 0.2
 
 planning_time_horizon: &planning_time_horizon 3.0       # sec look ahead time
-planning_horizon: &planning_horizon 1.0                # m   look ahead distance
+planning_horizon: &planning_horizon 4.0                # m   look ahead distance
 # # burger
 # sensor_range: &sensor_range 3.5                         # m   laser sensor range
 # originBot/turtlebot2
@@ -22,12 +22,11 @@ sensor_range: &sensor_range 8.0                         # m   laser sensor range
 # # originBot
 # max_vel: &max_vel 0.8                                 # m/s   robot max vel
 # turtlebot2
-max_vel: &max_vel 0.7                                   # m/s   robot max vel
-
+max_vel: &max_vel 0.7                                 # m/s   robot max vel
 max_acc: &max_acc 3.0                                   # m/s^2 srobot max acc
 max_jerk: &max_jerk 4.0                                 # m/s^3 robot max jerk
 
-avg_vel: &avg_vel 0.7                                  # m/s for timed_astar action set 
+avg_vel: &avg_vel 0.15                                   # m/s for timed_astar action set 
 #min_vel: &min_vel 0.3                                 # m/s for timed_astar action set 
 min_vel: &min_vel 0.08                                 # m/s for timed_astar action set
 

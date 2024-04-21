@@ -57,7 +57,6 @@ class RewardUnit(ABC):
     def get_internal_state_info(self, key: str, default: Any = None) -> Any:
         """
         Retrieves internal state information from the RewardFunction wrapper based on the provided key.
-        set by safe_dist_breached()
 
         Args:
             key (str): The key to identify the internal state information.
