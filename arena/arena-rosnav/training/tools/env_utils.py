@@ -79,10 +79,11 @@ def load_vec_framestack(config: dict, env: VecEnv, eval_env: VecEnv):
         Tuple[VecEnv, VecEnv]: Tuple containing the modified training and evaluation environments.
     """
     fs_cfg = config["rl_agent"]["frame_stacking"]
-    env = VecFrameStack(env, n_stack=fs_cfg["stack_size"], channels_order="first")
-    eval_env = VecFrameStack(
-        eval_env, n_stack=fs_cfg["stack_size"], channels_order="first"
-    )
+    if fs_cfg["enabled"]:
+        env = VecFrameStack(env, n_stack=fs_cfg["stack_size"], channels_order="first")
+        eval_env = VecFrameStack(
+            eval_env, n_stack=fs_cfg["stack_size"], channels_order="first"
+        )
     return env, eval_env
 
 
@@ -191,12 +192,10 @@ def make_envs(
     observation_manager = eval_env.envs[0].model_space_encoder.observation_space_manager
 
     # load vec wrappers
-    if config["rl_agent"]["frame_stacking"]["enabled"]:
-        train_env, eval_env = load_vec_framestack(config, train_env, eval_env)
+    train_env, eval_env = load_vec_framestack(config, train_env, eval_env)
 
     # load vec normalize
-    if config["rl_agent"]["normalize"]["enabled"]:
-        train_env, eval_env = load_vec_normalize(config, paths, train_env, eval_env)
+    train_env, eval_env = load_vec_normalize(config, paths, train_env, eval_env)
 
     # wrap env with statistics wrapper
     cmd_logging_cfg = config["monitoring"]["cmd_line_logging"]["episode_statistics"]

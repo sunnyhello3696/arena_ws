@@ -116,14 +116,14 @@ void ControllerAction::runImpl(GoalHandle &goal_handle, AbstractControllerExecut
   ros::NodeHandle private_nh("~");
 
   double oscillation_timeout_tmp;
-  private_nh.param("oscillation_timeout", oscillation_timeout_tmp, 150.0);
+  private_nh.param("oscillation_timeout", oscillation_timeout_tmp, 0.0);
   ros::Duration oscillation_timeout(oscillation_timeout_tmp);
 
   double oscillation_distance;
-  private_nh.param("oscillation_distance", oscillation_distance, 10.0);
+  private_nh.param("oscillation_distance", oscillation_distance, 0.03);
 
   double oscillation_angle;
-  private_nh.param("oscillation_angle", oscillation_angle, 6.28);
+  private_nh.param("oscillation_angle", oscillation_angle, M_PI);
 
   mbf_msgs::ExePathResult result;
   mbf_msgs::ExePathFeedback feedback;

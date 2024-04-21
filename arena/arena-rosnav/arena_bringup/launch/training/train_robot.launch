@@ -32,7 +32,6 @@
     <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="transform_broadcaster"
       args="0 0 0 0 0 0 1 map $(arg name)/odom" /> -->
     
-    
     <!-- move_base plan manager: which provide basic global planner and cost map -->
     <group>
 

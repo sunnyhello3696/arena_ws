@@ -10,7 +10,6 @@ from rl_utils.utils.observation_collector.constants import OBS_DICT_KEYS
 
 from ...observation_space_factory import SpaceFactory
 from .base_feature_map_space import BaseFeatureMapSpace
-from ..base_observation_space import BaseObservationSpace
 
 
 @SpaceFactory.register("stacked_laser_map")
@@ -135,6 +134,7 @@ class StackedLaserMapSpace(BaseFeatureMapSpace):
             # 初始化一个空的特征映射矩阵 scan_avg，其大小为 (20, 80)。这个矩阵用于存放处理后的激光数据，即经过最小化和平均化处理的数据。
             scan_avg = np.zeros((10, 80))
 
+
             for n in range(5):
                 scan_tmp = temp[n * 720 : (n + 1) * 720]
                 for i in range(80):
@@ -167,7 +167,6 @@ class StackedLaserMapSpace(BaseFeatureMapSpace):
             dtype=np.float32,
         )
 
-    @BaseObservationSpace.apply_normalization
     def encode_observation(self, observation: dict, *args, **kwargs) -> ndarray:
         """
         Encodes the observation into a feature map.

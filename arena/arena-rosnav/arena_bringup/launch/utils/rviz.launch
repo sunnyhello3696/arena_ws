@@ -1,5 +1,6 @@
 <launch>
     <arg name="show_rviz" default="true" doc="Wether to show rviz or not" />
+    <arg name="rviz_file" default="nav"/>
 
     <node 
         name="rviz" 

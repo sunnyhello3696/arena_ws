@@ -4,7 +4,7 @@
   <param name="SIMULATOR" value="flatland" />
   <param name="local_planner" value="rosnav" />
 
-  <param name="if_viz" value="false" />
+  <param name="if_viz" value="true" />
   <param name="max_vertex_num" value="120" />
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
   <arg name="model" default="burger"      doc="model type [burger, jackal, ridgeback, agvota, rto, rto_real]"/>
@@ -20,20 +20,19 @@
 
   <!-- the folder name under the path simulator_setup/maps  -->
   <!-- Dynamic Map task mode is loaded if the argument of map_file is dynamic_map -->
-  <arg name="map_folder_name" default="map_empty" />
+  <arg name="map_folder_name" default="map_empty" doc="[map_empty, arena_hawker_centre, aws_house, experiment_room_2, experiment_room_3, experiment_room_4]" />
   <param name="map_file" value="$(arg map_folder_name)" />
   <param name="map_layer_path" value="$(find arena_simulation_setup)/worlds/$(arg map_folder_name)/map/map.world.yaml" />
 
-  <arg name="entity_manager" default="pedsim" doc="[flatland, pedsim, crowdsim]" />
-  <arg name="sfm" default="" doc="sfm for crowdsim [passthrough, pysocial]"/>
-  <arg name="world_file" default=""/>
+  <arg name="entity_manager" default="pedsim" doc="[flatland, pedsim]" />
   <param name="entity_manager" value="$(arg entity_manager)" />
 
   <!-- if it's false flatland server will not publish any debug related infomation and you will not able to visuzalize e.g robot, dynamic obstacles  -->
+  <!-- <param name="space_encoder" value="UniformEncoder" /> -->
   <rosparam file="$(find arena_bringup)/configs/task_generator.yaml" command="load" ns="configuration"/>
-  <rosparam command="load" file="$(find arena_simulation_setup)/entities/robots/$(arg model)/model_params.yaml" />
-  <rosparam command="load" file="$(find arena_simulation_setup)/entities/robots/$(arg model)/configs/mbf/plan_fsm_param.yaml"/> 
-
+  <rosparam command="load" file="$(find arena_simulation_setup)/entities/robots/$(arg model)/model_params.yaml" /> 
+  <rosparam command="load" file="$(find arena_simulation_setup)/entities/robots/$(arg model)/configs/mbf/plan_fsm_param.yaml"/>
+  
   <rosparam command="load" file="$(find arena_bringup)/params/flatland.yaml" />
   <rosparam command="load" file="$(find arena_bringup)/params/drl.yaml" />
   <rosparam command="load" file="$(find arena_bringup)/params/map_generator.yaml" ns="map_generator" />
@@ -63,17 +62,12 @@
   <include file="$(find arena_bringup)/launch/training/single_env_training.launch">
     <arg name="ns" value="eval_sim" />
     <arg name="model" value="$(arg model)" />
-    <arg name="entity_manager" value="$(arg entity_manager)" />
-    <arg name="sfm" value="$(arg sfm)" />
-    <arg name="world_file" value="$(arg world_file)" />
   </include>
 
   <include file="$(find arena_bringup)/launch/training/start_envs.launch">
     <arg name="num_envs" value="$(arg num_envs)" />
     <arg name="ns_prefix" value="$(arg ns_prefix)" />
     <arg name="model" value="$(arg model)" />
-    <arg name="entity_manager" value="$(arg entity_manager)" />
-    <arg name="sfm" value="$(arg sfm)" />
   </include> 
   
   <node pkg="task_generator" name="task_generator_server" type="server.py" output="screen"/>

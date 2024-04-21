@@ -77,13 +77,11 @@ class Mod_Staged(TM_Module):
         CURRICULUM_PATH (Namespace): The path to the curriculum files.
     """
 
-    # 存储当前所有阶段的配置信息，类型为Config。
-    __config: Config
+    __config: Config    # 存储当前所有阶段的配置信息，类型为Config。
     __target_stage: StageIndex
     __current_stage: StageIndex
 
-    # 'training_config.yaml'的路径，可能为None如果在调试模式下。
-    __training_config_path: Optional[Namespace]
+    __training_config_path: Optional[Namespace] # 'training_config.yaml'的路径，可能为None如果在调试模式下。
     __debug_mode: bool
     __config_lock: FileLock
 

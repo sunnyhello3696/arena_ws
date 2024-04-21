@@ -1,5 +1,4 @@
 robot_base_frame: $(arg frame)base_footprint
-
 # # burger\originBot
 # robot_radius: 0.113
 

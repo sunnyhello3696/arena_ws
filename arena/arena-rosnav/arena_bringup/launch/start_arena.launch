@@ -16,14 +16,16 @@
   <!-- You can launch a single robot and his local_planner with arguments -->
   <arg name="model" default="burger" doc="robot model type [burger, jackal, ridgeback, agvota, rto, ...]" />
   <arg name="inter_planner" default="bypass" doc="inter planner type [bypass, shortsighted, polite, aggressive, sideways]" />
-  <arg name="local_planner" default="teb" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <arg name="local_planner" default="rosnav" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
   <arg name="simulator" default="flatland" doc="[flatland, gazebo]" />
   <arg name="headless" default="0" doc="0 = show all, 1 = show only rviz, 2 = show nothing" />
   <env name="SIMULATOR" value="$(arg simulator)" />
   <param name="headless" value="$(arg headless)" /> 
 
-  <arg name="entity_manager" default="crowdsim" doc="[flatland, pedsim, crowdsim]" />
-  <arg name="sfm" default="" doc="sfm for crowdsim [passthrough, pysocial]"/>
+  <arg name="entity_manager" default="pedsim" doc="[pedsim, flatland]" />
+  <arg name="pedsim" value="$(eval entity_manager == 'pedsim')" />
+  <env name="PEDSIM" value="$(arg pedsim)" />
+  <arg name="sfm" default="passthrough" doc="sfm for pedsim [passthrough, moonwalk]"/>
 
   <arg name="complexity" default="1" doc="1 = Map known, Position known; 2 = Map known, Position unknown (AMCL); 3 = Map unknown, Position unknown (SLAM)" />
   
@@ -81,6 +83,7 @@
   <param name="tm_obstacles" value="$(arg tm_obstacles)" />
   <param name="tm_modules" value="$(arg tm_modules)" />
   <param name="/benchmark_resume" value="$(arg benchmark_resume)" />
+  <param name="pedsim" type="bool" value="$(arg pedsim)" />
   <param name="map_path" value="$(arg map_path)" />
   <param name="train_mode" value="false" />
   <param name="show_viz" value="$(arg show_rviz)"/>
@@ -112,13 +115,6 @@
 
   <param name="robot_name" value="$(arg model)" />
 
-  <!-- Entity Manager -->
-  <include file="$(find arena_bringup)/launch/utils/entity_manager.launch">
-    <arg name="entity_manager" value="$(arg entity_manager)" />
-    <arg name="world_file" value="$(arg world_file)" />
-    <arg name="sfm" value="$(arg sfm)" />
-  </include>
-
   <!-- use simulator-->
 
   <!-- Flatland -->
@@ -136,6 +132,7 @@
     <arg name="rviz_file" value="$(arg rviz_file)" />
     <arg name="show_rviz" default="$(arg show_rviz)" />
     <arg name="world" value="$(arg world_file)"/>
+    <arg name="pedsim" value="$(arg pedsim)"/>
     <arg name="headless" value="$(arg headless)" />
   </include>
 
@@ -155,6 +152,15 @@
 
   <include file="$(find arena_bringup)/launch/testing/task_generator.launch">
   </include>
+
+  <!-- Launch pedsim agent spawner  -->
+  <group if="$(eval arg('pedsim'))">
+    <include file="$(find pedsim_ros)/launch/pedsim.launch">
+      <arg name="sfm" value="$(arg sfm)"/>
+      <arg name="scene_file" value="$(find arena_simulation_setup)/worlds/$(arg world_file)/worlds/$(arg world_file).world" />
+      <arg name="visualize" value="true" />
+    </include>
+  </group>
 
   <node type="create_config_file.py" pkg="rviz_utils" name="rviz_config_file_creator" />
   

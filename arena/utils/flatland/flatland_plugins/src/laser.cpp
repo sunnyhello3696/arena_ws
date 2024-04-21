@@ -199,7 +199,6 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
               // 组成新的字符串
               result = first_part + "/robot";
           }
-      }
 
       scan_vis.header.frame_id = result;
       scan_vis_publisher_.publish(scan_vis);
@@ -209,6 +208,8 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
       polygon_Stamped.header.frame_id = result;
       polygon_Stamped.polygon = std::get<0>(res);
       convex_polygon_vis_publisher_.publish(polygon_Stamped);
+      
+      }
     }
   }
 

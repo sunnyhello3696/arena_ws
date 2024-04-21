@@ -5,10 +5,7 @@ bodies: # List of named bodies
     color: [0.2, 0.8, 0.2, 1.0]
     footprints:
       - type: circle
-        # # burger\originBot
-        # radius: 0.105 # (0.105**2+0.041**2)**(1/2)
-        # turtlebot2
-        radius: 0.177
+        radius: 0.105 # (0.105**2+0.041**2)**(1/2)
         # radius: 0.116042
         center: [0.0, 0.0]
         layers: ["all"]
