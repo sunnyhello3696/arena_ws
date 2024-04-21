@@ -225,7 +225,7 @@ bool AbstractControllerExecution::checkCmdVelIgnored(const geometry_msgs::Twist&
   }
   else if (ignored_duration > 1.0)
   {
-    ROS_WARN_THROTTLE(1,
+    ROS_DEBUG_THROTTLE(1,
                       "Robot is ignoring velocity commands for %.2f seconds (last command: vx=%.2f, vy=%.2f, w=%.2f)",
                       ignored_duration, cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z);
   }
@@ -484,7 +484,7 @@ void AbstractControllerExecution::run()
         boost::this_thread::interruption_point();
         if (!loop_rate_.sleep())
         {
-          ROS_WARN_THROTTLE(1.0, "Calculation needs too much time to stay in the moving frequency! (%.4fs > %.4fs)",
+          ROS_DEBUG_THROTTLE(1.0, "Calculation needs too much time to stay in the moving frequency! (%.4fs > %.4fs)",
                             loop_rate_.cycleTime().toSec(), loop_rate_.expectedCycleTime().toSec());
         }
         boost::this_thread::interruption_point();
