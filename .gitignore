@@ -1,7 +1,0 @@
-# python
-__pycache__/
-
-#vscode
-.vscode/
-**/.vscode
-/**/__pycache__
