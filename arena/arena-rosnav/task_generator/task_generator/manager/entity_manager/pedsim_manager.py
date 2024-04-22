@@ -354,8 +354,8 @@ class PedsimManager(EntityManager):
         if not self._respawn_obstacles_srv.call(srv).success:
             rospy.logwarn(f"spawn static obstacle failed!")
 
-        rospy.set_param(self._namespace("agent_topic_string"), self.agent_topic_str)
-        rospy.set_param(self._namespace(self.PARAM_NEEDS_RESPAWN_OBSTACLES), True)
+        self.safe_set_param(self._namespace("agent_topic_string"), self.agent_topic_str)
+        self.safe_set_param(self._namespace(self.PARAM_NEEDS_RESPAWN_OBSTACLES), True)
 
         return
 
@@ -498,8 +498,8 @@ class PedsimManager(EntityManager):
         if not self._respawn_peds_srv.call(srv).success:
             rospy.logwarn(f"spawn dynamic obstacles failed!")
 
-        rospy.set_param(self._namespace("agent_topic_string"), self.agent_topic_str)
-        rospy.set_param(self._namespace(self.PARAM_NEEDS_RESPAWN_PEDS), True)
+        self.safe_set_param(self._namespace("agent_topic_string"), self.agent_topic_str)
+        self.safe_set_param(self._namespace(self.PARAM_NEEDS_RESPAWN_PEDS), True)
 
     def unuse_obstacles(self):
         self._is_paused = True
@@ -655,7 +655,7 @@ class PedsimManager(EntityManager):
 
                 entity.pedsim_spawned = True
 
-        rospy.set_param(self._namespace(self.PARAM_NEEDS_RESPAWN_OBSTACLES), False)
+        self.safe_set_param(self._namespace(self.PARAM_NEEDS_RESPAWN_OBSTACLES), False)
 
     def _ped_callback(self, actors: pedsim_msgs.AgentStates):
         if self._is_paused:
@@ -707,3 +707,28 @@ class PedsimManager(EntityManager):
                 )
 
                 entity.pedsim_spawned = True
+
+    def safe_set_param(self, param_name, param_value, max_retries=10, delay=0.5):
+        """尝试设置ROS参数，如果失败则重试，直到最大重试次数。
+        
+        Args:
+            param_name (str): 要设置的参数名称。
+            param_value (any): 要设置的参数值。
+            max_retries (int): 最大重试次数，默认为10。
+            delay (float): 重试之间的延迟（秒），默认为0.5秒。
+        
+        Raises:
+            Exception: 如果达到最大重试次数后仍然失败。
+        """
+        attempts = 0
+        while attempts < max_retries:
+            try:
+                rospy.set_param(param_name, param_value)
+                return  # 如果成功设置参数，则直接返回
+            except Exception as e:
+                attempts += 1
+                if attempts >= max_retries:
+                    rospy.logerr(
+                        f"Failed to set parameter {param_name} to {param_value} after {max_retries} attempts."
+                    )
+                time.sleep(delay)  # 在下一次尝试前暂停

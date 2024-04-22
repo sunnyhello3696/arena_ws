@@ -182,18 +182,17 @@ class Mod_Staged(TM_Module):
             if "sim_1" in rospy.get_name() or self.__debug_mode:
                 # publish goal radius
                 goal_radius = float(self.stage.goal_radius)
-                time.sleep(0.5)
                 if goal_radius is None:
                     goal_radius = rosparam_get(float, self.PARAM_GOAL_RADIUS, 1.0)
-                # rospy.set_param(self.PARAM_GOAL_RADIUS, goal_radius)
+                self.safe_set_param(self.PARAM_GOAL_RADIUS, goal_radius)
 
                 # set map generator params
                 if self.stage.dynamic_map.algorithm is not None:
-                    rospy.set_param(
+                    self.safe_set_param(
                         MAP_GENERATOR_NS("algorithm"), self.stage.dynamic_map.algorithm
                     )
                 if self.stage.dynamic_map.algorithm_config is not None:
-                    rospy.set_param(
+                    self.safe_set_param(
                         MAP_GENERATOR_NS("algorithm_config"),
                         self.stage.dynamic_map.algorithm_config,
                     )
@@ -337,8 +336,8 @@ class Mod_Staged(TM_Module):
         if (
             self.IS_EVAL_SIM and self.__current_stage != self.__target_stage
         ):  # TODO reconsider if this check is needed
-            rospy.set_param(self.PARAM_CURR_STAGE, self.__target_stage)
-            rospy.set_param(
+            self.safe_set_param(self.PARAM_CURR_STAGE, self.__target_stage)
+            self.safe_set_param(
                 self.PARAM_LAST_STAGE_REACHED,
                 self.__target_stage == self.MAX_STAGE,
             )
@@ -352,3 +351,28 @@ class Mod_Staged(TM_Module):
         Current stage configuration.
         """
         return self.__config.stages[self.stage_index]
+    
+    def safe_set_param(self, param_name, param_value, max_retries=10, delay=0.5):
+        """尝试设置ROS参数，如果失败则重试，直到最大重试次数。
+        
+        Args:
+            param_name (str): 要设置的参数名称。
+            param_value (any): 要设置的参数值。
+            max_retries (int): 最大重试次数，默认为10。
+            delay (float): 重试之间的延迟（秒），默认为0.5秒。
+        
+        Raises:
+            Exception: 如果达到最大重试次数后仍然失败。
+        """
+        attempts = 0
+        while attempts < max_retries:
+            try:
+                rospy.set_param(param_name, param_value)
+                return  # 如果成功设置参数，则直接返回
+            except Exception as e:
+                attempts += 1
+                if attempts >= max_retries:
+                    rospy.logerr(
+                        f"Failed to set parameter {param_name} to {param_value} after {max_retries} attempts."
+                    )
+                time.sleep(delay)  # 在下一次尝试前暂停
