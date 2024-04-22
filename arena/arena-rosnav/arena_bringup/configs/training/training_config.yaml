@@ -69,7 +69,7 @@ rl_agent:
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
   resume: "burger_AGENT_89_2024_04_21__22_39_17" # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
   # resume: "burger"
-  checkpoint: "last_model" # gonna be ignored if resume is not null
+  checkpoint: "best_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
