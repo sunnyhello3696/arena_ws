@@ -86,7 +86,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self._robot_vel = None
         self._last_action_points = None
 
-        self.debug_vis = False
+        self.debug_vis = True
         self.mpc_mapframe_test_traj = True
         # if self.mpc_mapframe_test_traj:
             # self.mpc_xref_traj = genfromtxt("/home/dmz/Documents/mpc_test_traj/ref_states_2.csv", delimiter=',')

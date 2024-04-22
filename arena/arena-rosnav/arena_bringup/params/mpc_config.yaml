@@ -4,7 +4,7 @@ mpc:
    k: 1 # b-spline order
    if_add_robot_pt: false # Add robot position at the first point of the action points
    feasible_position_speed_factor: 1.0 # Factor to calculate the feasible position speed
-   goal_in_convex_if_angle: false # If the goal is in the convex, if true, the the action points angle set to goal angle; if false, set goal to the last action point
+   goal_in_convex_if_angle: true # If the goal is in the convex, if true, the the action points angle set to goal angle; if false, set goal to the last action point
    xmin1: [-10, -10, -10] # Min ERROR from reference trajectory ([m], [m], [rad])
    xmax1: [10, 10, 10]  # max ERROR from reference trjectory ([m], [m], [rad])
    umin1: [-0.8, -2.24]  # Min absolute control input ([m/s], [rad/s])

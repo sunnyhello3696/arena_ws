@@ -50,7 +50,7 @@ callbacks:
   training_curriculum:
     # file for the robot's learning curriculum
     training_curriculum_file: "default.yaml"
-    curr_stage: 0
+    curr_stage: 1
     threshold_type: "succ"
     upper_threshold: 0.85
     lower_threshold: 0.60
@@ -67,9 +67,9 @@ rl_agent:
   # architecture_name: "RosnavResNet_3"
   architecture_name: "AGENT_89"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: null # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
+  resume: "burger_AGENT_89_2024_04_21__22_39_17" # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
   # resume: "burger"
-  checkpoint: "best_model" # gonna be ignored if resume is not null
+  checkpoint: "last_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
