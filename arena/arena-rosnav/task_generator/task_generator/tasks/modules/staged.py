@@ -13,10 +13,11 @@ from task_generator.constants import Constants
 from task_generator.shared import Namespace, rosparam_get
 from task_generator.tasks.modules import TM_Module
 from task_generator.tasks.task_factory import TaskFactory
+import time
 
 
-# 它描述了每个阶段的特征，包括静态、互动、动态元素的数量，目标半径和动态地图的配置。
-# 每个阶段都可以序列化成字典形式，便于存储和传输。
+# 它描述了每个阶段的特征,包括静态、互动、动态元素的数量,目标半径和动态地图的配置。
+# 每个阶段都可以序列化成字典形式,便于存储和传输。
 class Stage(NamedTuple):
     static: int
     interactive: int
@@ -77,11 +78,11 @@ class Mod_Staged(TM_Module):
         CURRICULUM_PATH (Namespace): The path to the curriculum files.
     """
 
-    __config: Config    # 存储当前所有阶段的配置信息，类型为Config。
+    __config: Config    # 存储当前所有阶段的配置信息,类型为Config。
     __target_stage: StageIndex
     __current_stage: StageIndex
 
-    __training_config_path: Optional[Namespace] # 'training_config.yaml'的路径，可能为None如果在调试模式下。
+    __training_config_path: Optional[Namespace] # 'training_config.yaml'的路径,可能为None如果在调试模式下。
     __debug_mode: bool
     __config_lock: FileLock
 
@@ -165,9 +166,9 @@ class Mod_Staged(TM_Module):
         This method updates the current stage and performs necessary actions before resetting the module.
         
         这个方法在task_factory.py被调用。
-        它首先检查是否需要转移到目标阶段（即__current_stage与__target_stage不同），如果需要，就进行转换，并通过ROS日志记录信息。
-        然后，根据当前阶段的配置更新相关的ROS参数和动态配置。这包括目标半径、地图生成算法及其配置，以及静态、动态和互动障碍物的配置。
-        如果有训练配置路径，则通过文件锁同步更新配置文件中的当前阶段信息。
+        它首先检查是否需要转移到目标阶段(即__current_stage与__target_stage不同),如果需要,就进行转换,并通过ROS日志记录信息。
+        然后,根据当前阶段的配置更新相关的ROS参数和动态配置。这包括目标半径、地图生成算法及其配置,以及静态、动态和互动障碍物的配置。
+        如果有训练配置路径,则通过文件锁同步更新配置文件中的当前阶段信息。
         """
 
         if self.__current_stage != self.__target_stage:
@@ -177,10 +178,11 @@ class Mod_Staged(TM_Module):
             )
 
             # only update cpmfogiratopm with one task module instance
-            # 因为在random等mode读取参数服务器时，不区分namespace
+            # 因为在random等mode读取参数服务器时,不区分namespace
             if "sim_1" in rospy.get_name() or self.__debug_mode:
                 # publish goal radius
-                goal_radius = self.stage.goal_radius
+                goal_radius = float(self.stage.goal_radius)
+                time.sleep(0.5)
                 if goal_radius is None:
                     goal_radius = rosparam_get(float, self.PARAM_GOAL_RADIUS, 0.3)
                 rospy.set_param(self.PARAM_GOAL_RADIUS, goal_radius)
@@ -196,7 +198,7 @@ class Mod_Staged(TM_Module):
                         self.stage.dynamic_map.algorithm_config,
                     )
 
-                # 将当前stage的配置信息更新到ros参数服务器，以供obstacle modes（如random）使用。
+                # 将当前stage的配置信息更新到ros参数服务器,以供obstacle modes(如random)使用。
                 obs_config = {}
                 for obs_type in ["static", "dynamic", "interactive"]:
                     obs_config.update(
@@ -311,9 +313,9 @@ class Mod_Staged(TM_Module):
     def stage_index(self, val: StageIndex):
         """
         Setter for the stage index.
-        这段代码是Mod_Staged类中stage_index属性的设置器（setter）。
-        在Python中，属性的设置器允许你控制属性值的设置过程，可以在值被赋予属性前进行检查或修改。
-        这里的stage_index属性代表当前任务阶段的索引，而这个设置器允许动态地调整任务的当前阶段。
+        这段代码是Mod_Staged类中stage_index属性的设置器(setter)。
+        在Python中,属性的设置器允许你控制属性值的设置过程,可以在值被赋予属性前进行检查或修改。
+        这里的stage_index属性代表当前任务阶段的索引,而这个设置器允许动态地调整任务的当前阶段。
 
         Args:
             val (StageIndex): The new stage index.
@@ -330,7 +332,7 @@ class Mod_Staged(TM_Module):
 
         self.__target_stage = val
 
-        # 如果当前是在评估模式（self.IS_EVAL_SIM为True）并且当前阶段（__current_stage）与目标阶段（__target_stage）不同，那么程序将通过ROS参数服务器和os.system调用更新相关的参数和动态配置。
+        # 如果当前是在评估模式(self.IS_EVAL_SIM为True)并且当前阶段(__current_stage)与目标阶段(__target_stage)不同,那么程序将通过ROS参数服务器和os.system调用更新相关的参数和动态配置。
         # publish stage state
         if (
             self.IS_EVAL_SIM and self.__current_stage != self.__target_stage
