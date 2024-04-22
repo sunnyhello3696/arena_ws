@@ -184,8 +184,8 @@ class Mod_Staged(TM_Module):
                 goal_radius = float(self.stage.goal_radius)
                 time.sleep(0.5)
                 if goal_radius is None:
-                    goal_radius = rosparam_get(float, self.PARAM_GOAL_RADIUS, 0.3)
-                rospy.set_param(self.PARAM_GOAL_RADIUS, goal_radius)
+                    goal_radius = rosparam_get(float, self.PARAM_GOAL_RADIUS, 1.0)
+                # rospy.set_param(self.PARAM_GOAL_RADIUS, goal_radius)
 
                 # set map generator params
                 if self.stage.dynamic_map.algorithm is not None:

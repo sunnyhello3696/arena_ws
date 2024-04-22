@@ -212,7 +212,7 @@ class FlatlandEnv(gymnasium.Env):
             holonomic=self.model_space_encoder._is_holonomic,
             robot_radius=self.task.robot_managers[0]._robot_radius,
             safe_dist=self.task.robot_managers[0].safe_distance,
-            goal_radius=rosparam_get(float, "goal_radius", 0.3),
+            goal_radius=rosparam_get(float, "goal_radius", 1.0),
             **self._reward_fnc_kwargs,
         )
 

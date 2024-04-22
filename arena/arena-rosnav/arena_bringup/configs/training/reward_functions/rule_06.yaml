@@ -1,28 +1,72 @@
 goal_reached:
-  reward: 17.5
+  reward: 24
 
-safe_dist:
-  punishment: 0.15
+safe_distance:
+  reward: -0.2
+
+safe_distance_exp:
+  reward: -0.24
+  w_factor: 1.7
+  punish_dist: 1.4
+
+fixed_per_step:
+  reward: -0.015
+
+# Don't add if action range [0,1] or output points
+no_movement:
+  reward: -0.02
+  _on_safe_dist_violation: true
+
+approach_goal:
+  pos_factor: 0.1
+  neg_factor: 0.5
+  _on_safe_dist_violation: true
 
 collision:
-  punishment: 10
+  reward: -22
 
-goal_approached:
-  reward_factor: 0.45
-  penalty_factor: 0.6
+# # Don't add if action range [0,1] or output points
+# distance_travelled:
+#   consumption_factor: 0.005
+#   lin_vel_scalar: 1.0
+#   ang_vel_scalar: 0.001
+#   _on_safe_dist_violation: false
+
+# # not used in globalplan_collector_unit.py
+# approach_globalplan:
+#   pos_factor: 0.3
+#   neg_factor: 0.5
+#   _on_safe_dist_violation: false
+# follow_globalplan:
+#   min_dist_to_path: 0.5
+#   reward_factor: 0.1
+#   _on_safe_dist_violation: false
 
 reverse_drive:
-  penalty: 0.0001
+  reward: -0.08
+  _on_safe_dist_violation: true
 
-abrupt_vel_change:
-  "0":
-    vel_idx: 0
-    factor: 0.5
+# # Request modify if action range [0,1] or output points
+# abrupt_velocity_change:
+#   vel_factors:
+#     "0": 0.1
+#     "1": 0.00
+#     "2": 0.03
+#   _on_safe_dist_violation: true
 
-  "-1":
-    vel_idx: -1
-    factor: 0.2
+# # Request modify if action range [0,1] or output points
+# root_velocity_difference:
+#   k: -0.01
+#   _on_safe_dist_violation: true
 
-  "1":
-    vel_idx: 1
-    factor: 0.2
+# two_factor_velocity_difference:
+#   alpha: 0.003
+#   beta: 0.003
+#   _on_safe_dist_violation: true
+
+abrupt_velocity_change:
+  vel_factors:
+    "0": 0.3
+    "1": 0.00
+    "2": 0.03
+  _on_safe_dist_violation: true

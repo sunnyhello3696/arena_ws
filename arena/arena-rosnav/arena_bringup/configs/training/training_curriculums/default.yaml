@@ -9,7 +9,7 @@
 # (will carry on training on last stage when threshhold reached)
 
 - #0
-  goal_radius: 2.0
+  goal_radius: 1.0
   map_generator:
     algorithm: null
     algorithm_config: null
@@ -20,7 +20,7 @@
   static: 0
   dynamic: 0
 - #1
-  goal_radius: 1.5
+  goal_radius: 1.0
   map_generator:
     algorithm: null
     algorithm_config: null
@@ -34,7 +34,7 @@
   static: 5
   dynamic: 5
 - #3
-  goal_radius: 1.2
+  goal_radius: 1.0
   map_generator:
     algorithm: null
     algorithm_config: null
@@ -42,14 +42,14 @@
   static: 10
   dynamic: 5
 - #4
-  goal_radius: 0.8
+  goal_radius: 1.0
   map_generator:
     algorithm: null
     algorithm_config: null
   static: 10
   dynamic: 10
 - #5
-  goal_radius: 0.8
+  goal_radius: 1.0
   map_generator:
     algorithm: null
     algorithm_config: null
