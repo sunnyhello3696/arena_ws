@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Pose1
-        - /Pose2
         - /Path2
         - /Path3
         - /Marker4
@@ -183,10 +182,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker
       Name: Marker
       Namespaces:
-        feasible_space_0: true
-        feasible_space_1: true
-        prev_next_line: true
-        start_line: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -202,23 +198,7 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
-      Topic: /eval_sim/eval_sim_burger/current_goal
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/Pose
-      Color: 78; 154; 6
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Queue Size: 10
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
-      Topic: /sim_1/sim_1_burger/move_base_simple/goal
+      Topic: /eval_sim/eval_sim_burger/move_base_simple/goal
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -274,7 +254,7 @@ Visualization Manager:
       Marker Topic: /Tebplan_visualization_marker
       Name: Marker
       Namespaces:
-        teb_points: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -313,10 +293,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: -24.446340560913086
+      Scale: -25.836557388305664
       Target Frame: <Fixed Frame>
-      X: 11.766072273254395
-      Y: 14.189568519592285
+      X: 11.832531929016113
+      Y: 12.286734580993652
     Saved: ~
 Window Geometry:
   Displays:
@@ -336,5 +316,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1652
-  X: 268
-  Y: 104
+  X: 262
+  Y: 67

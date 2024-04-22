@@ -5,6 +5,7 @@ mpc:
    if_add_robot_pt: false # Add robot position at the first point of the action points
    feasible_position_speed_factor: 1.0 # Factor to calculate the feasible position speed
    goal_in_convex_if_angle: false # If the goal is in the convex, if true, the the action points angle set to goal angle; if false, set goal to the last action point
+   set_goal_as_last_action_point_when_reward_cal: true # Set goal as the last action point when calculating reward
    xmin1: [-10, -10, -10] # Min ERROR from reference trajectory ([m], [m], [rad])
    xmax1: [10, 10, 10]  # max ERROR from reference trjectory ([m], [m], [rad])
    umin1: [-0.8, -2.24]  # Min absolute control input ([m/s], [rad/s])
@@ -12,14 +13,14 @@ mpc:
    Q1:
       - [300, 0, 0]
       - [0, 300, 0]
-      - [0, 0, 250]
+      - [0, 0, 400]
    QN1:
       - [300, 0, 0]
       - [0, 300, 0]
-      - [0, 0, 250]
+      - [0, 0, 400]
    R1:
-      - [350, 0]
-      - [0, 500]
+      - [300, 0]
+      - [0, 400]
    # T: 0.2 # [s]
    # N: 10 # Receding horizon (steps), N > 20 seems to require too much CPU power
    # xmin1: [-0.4, -0.5, -0.45] # Min ERROR from reference trajectory ([m], [m], [rad])
