@@ -371,6 +371,9 @@ class Mod_Staged(TM_Module):
                 return  # 如果成功设置参数，则直接返回
             except Exception as e:
                 attempts += 1
+                rospy.logwarn(
+                    f"Failed to set parameter {param_name} to {param_value} on attempt {attempts}."
+                )
                 if attempts >= max_retries:
                     rospy.logerr(
                         f"Failed to set parameter {param_name} to {param_value} after {max_retries} attempts."

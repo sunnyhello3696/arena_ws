@@ -4,7 +4,7 @@ TebLocalPlannerROS:
   # Trajectory
 
   # 轨迹优化过程中考虑的最大样本数。增加样本数可以提高轨迹的质量，但会增加计算量。
-  max_samples: 500
+  max_samples: 150
   # 是否允许轨迹从后退运动开始。
   allow_init_with_backwards_motion: false
   # 全局路径中两个连续路径点之间的最大距离，超过该距离路径规划器将自动插入新的路径点。设置为负值禁用此功能。
@@ -19,15 +19,15 @@ TebLocalPlannerROS:
   # Robot
 
   # 机器人在x轴方向的最大速度。
-  max_vel_x: 0.7
+  max_vel_x: 0.8
   # 机器人向后的最大速度。对于不支持后退的机器人，此值应为0。
-  max_vel_x_backwards: 0.7
+  max_vel_x_backwards: 0.0
   # 对于非全向机器人，此值应为0。
   max_vel_y: 0.0
   # 机器人的最大旋转速度。
   max_vel_theta: 2.23
-  acc_lim_x: 1.0
-  acc_lim_theta: 1.0
+  acc_lim_x: 3.0
+  acc_lim_theta: 3.0
   # 机器人的最小转弯半径。对于差动驱动机器人，此值通常为0，意味着机器人可以原地旋转。
   min_turning_radius: 0.0 # diff-drive robot (can turn on place!)
 

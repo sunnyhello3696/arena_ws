@@ -33,10 +33,10 @@
   </node> -->
 
   <group ns="move_base_flex">
-    <rosparam file="$(find arena_simulation_setup)/configs/mbf/local/teb_local_planner_params.yaml"
+    <rosparam file="$(find arena_simulation_setup)/configs/mbf/local/teb_convexmpc_local_planner_params.yaml"
       command="load" subst_value="True" />
     <rosparam
-      file="$(find arena_simulation_setup)/entities/robots/$(arg model)/configs/mbf/teb_local_planner_params.yaml"
+      file="$(find arena_simulation_setup)/entities/robots/$(arg model)/configs/mbf/teb_convexmpc_local_planner_params.yaml"
       command="load" subst_value="True" />
 
     <param name="base_local_planner" value="TebLocalPlannerROS" />
