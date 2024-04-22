@@ -117,6 +117,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self.if_add_robot_pt = bool(cfg['mpc']['if_add_robot_pt'])
         self._feasible_position_speed_factor = float(cfg['mpc']['feasible_position_speed_factor'])
         self.goal_in_convex_if_angle = bool(cfg['mpc']['goal_in_convex_if_angle'])
+        self.set_goal_as_last_action_point_when_reward_cal = bool(cfg['mpc']['set_goal_as_last_action_point_when_reward_cal'])
         xmin = np.array(cfg['mpc']['xmin1']).astype(np.float32)
         xmax = np.array(cfg['mpc']['xmax1']).astype(np.float32)
         umin = np.array(cfg['mpc']['umin1']).astype(np.float32)
@@ -245,6 +246,9 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                         # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
                         action_points.pop()
                         action_points.append(goal_robot_frame)
+                        if self.set_goal_as_last_action_point_when_reward_cal:
+                            action_points_robot.pop()
+                            action_points_robot.append(goal_robot_frame)
 
                 
                 action_points = np.array(action_points, dtype=np.float32)

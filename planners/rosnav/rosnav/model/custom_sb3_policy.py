@@ -204,6 +204,23 @@ class AGENT_59(BaseAgent):
     net_arch = dict(pi=[256, 256, 64], vf=[256, 64])
     activation_fn = nn.ReLU
 
+@AgentFactory.register("AGENT_63")
+class AGENT_63(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = DefaultEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {}
+    features_extractor_class = EXTRACTOR_6
+    features_extractor_kwargs = {"features_dim": 512}
+    net_arch = dict(pi=[256, 256, 64], vf=[256, 64])
+    activation_fn = nn.ReLU
+
 
 @AgentFactory.register("AGENT_66")
 class AGENT_66(BaseAgent):
@@ -348,9 +365,9 @@ class AGENT_89(BaseAgent):
     features_extractor_kwargs = {"features_dim": 256}
     net_arch = dict(pi=[256, 128, 64, 64], vf=[256, 128, 64])
     activation_fn = nn.ReLU
-
+    
 @AgentFactory.register("AGENT_90")
-class AGENT_89(BaseAgent):
+class AGENT_90(BaseAgent):
     type = PolicyType.CNN
     space_encoder_class = ConvexMPCEncoder
 
