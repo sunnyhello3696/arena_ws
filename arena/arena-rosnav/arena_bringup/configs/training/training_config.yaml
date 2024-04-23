@@ -65,7 +65,7 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_90"
+  architecture_name: "AGENT_89"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
   resume: "burger_AGENT_89_2024_04_21__22_39_17" # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
   # resume: "burger"
@@ -121,7 +121,7 @@ rl_agent:
       final_value: 0.0001
 
   ppo:
-    batch_size: 10240
+    batch_size: 20480
     gamma: 0.99
     n_steps: 1200
     ent_coef: 0.005
@@ -129,6 +129,6 @@ rl_agent:
     vf_coef: 0.22
     max_grad_norm: 0.5
     gae_lambda: 0.95
-    m_batch_size: 1024
+    m_batch_size: 2048
     n_epochs: 3
     clip_range: 0.25
