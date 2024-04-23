@@ -117,6 +117,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self.if_add_robot_pt = bool(cfg['mpc']['if_add_robot_pt'])
         self.if_promote_goal_in_convex = bool(cfg['mpc']['if_promote_goal_in_convex'])
         self._feasible_position_speed_factor = float(cfg['mpc']['feasible_position_speed_factor'])
+        self.if_promote_goal_in_convex = bool(cfg['mpc']['if_promote_goal_in_convex'])
         self.angle_or_last_pt = bool(cfg['mpc']['angle_or_last_pt'])
         self.last_pt_include_reward_cal = bool(cfg['mpc']['last_pt_include_reward_cal'])
         xmin = np.array(cfg['mpc']['xmin1']).astype(np.float32)
@@ -200,7 +201,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     action_points.append((0.,0.))
                     # print("add robot point to action points.")
 
-                if self.angle_or_last_pt and self.if_promote_goal_in_convex:
+                if self.if_promote_goal_in_convex and self.angle_or_last_pt:
                     # if goal in convex, the angle of the first action point set to goal
                     goal_robot_frame = action_obs_dict["goal_location_in_robot_frame"]
                     convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]

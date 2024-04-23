@@ -3,18 +3,18 @@ controllers:
     type: teb_local_planner/TebLocalPlannerROS
 
 controller_frequency: 5.0  # *控制器更新频率（Hz）
-controller_patience: 15.0  # 控制器等待最优路径的最长时间（秒）
+controller_patience: 10.0  # 控制器等待最优路径的最长时间（秒）
 planner_frequency: 0.0  # 规划器更新频率，设为0表示只在需要时更新
 
 TebLocalPlannerROS:
   # *当机器人距离目标点的水平距离小于这个值时，认为已经到达目标。
-  xy_goal_tolerance: 0.2
+  xy_goal_tolerance: 1.0
   # *当机器人的朝向与目标朝向的差值小于此角度（以弧度为单位）时，认为已经到达目标朝向。
-  yaw_goal_tolerance: 3.14
+  yaw_goal_tolerance: 10.0
   # 到达目标点时是否需要减速到停止。如果设为false，机器人可以以非零速度通过目标点。
   free_goal_vel: false
   # 是否始终执行到全局计划的最后一个点。这确保了路径始终尝试完成提供的全局路径。
-  complete_global_plan: true
+  complete_global_plan: false
   # *机器人需要保持的到最近障碍物的最小距离。
   min_obstacle_dist: 0.25
   # 用于在路径规划中考虑障碍物周围的缓冲区。
@@ -34,30 +34,30 @@ TebLocalPlannerROS:
   costmap_converter_spin_thread: true
   costmap_converter_rate: 5  # Costmap转换器的调用频率（Hz）
 
-  no_inner_iterations: 5  # *优化过程中的内部迭代次数
-  no_outer_iterations: 5  # *优化过程中的外部迭代次数
+  no_inner_iterations: 1  # *优化过程中的内部迭代次数
+  no_outer_iterations: 1  # *优化过程中的外部迭代次数
   optimization_activate: true  # 是否激活优化过程
   optimization_verbose: false  # 是否输出详细的优化过程日志
 
-  penalty_epsilon: 0.5  # 优化过程中使用的罚函数ε值，控制松弛程度
-  obstacle_cost_exponent: 4  # 障碍物成本的指数，增加此值会使避障更加积极
-  weight_max_vel_x: 2  # *最大x轴速度的权重
-  weight_max_vel_theta: 1  # *最大角速度的权重
-  weight_acc_lim_x: 1  # *x轴加速度限制的权重
-  weight_acc_lim_theta: 1  # *角加速度限制的权重
-  weight_kinematics_nh: 1000  # 非完整性运动学的权重
+  penalty_epsilon: 2.0  # 优化过程中使用的罚函数ε值，控制松弛程度
+  obstacle_cost_exponent: 10  # 障碍物成本的指数，增加此值会使避障更加积极
+  weight_max_vel_x: 0.01  # *最大x轴速度的权重
+  weight_max_vel_theta: 0.01  # *最大角速度的权重
+  weight_acc_lim_x: 0.01  # *x轴加速度限制的权重
+  weight_acc_lim_theta: 0.01  # *角加速度限制的权重
+  weight_kinematics_nh: 50  # 非完整性运动学的权重
   weight_kinematics_forward_drive: 1  # 向前驾驶的运动学权重
-  weight_kinematics_turning_radius: 1  # *转向半径的权重
-  weight_optimaltime: 1  # *时间最优化的权重, 增加路径平滑权重，以鼓励生成更平滑的轨迹
+  weight_kinematics_turning_radius: 60  # *转向半径的权重
+  weight_optimaltime: 5  # *时间最优化的权重, 增加路径平滑权重，以鼓励生成更平滑的轨迹
   weight_shortest_path: 0  # 最短路径权重
-  weight_obstacle: 100  # *避障权重
+  weight_obstacle: 50  # *避障权重
   weight_inflation: 0.3  # 膨胀权重
-  weight_dynamic_obstacle: 80  # *动态障碍物权重
-  weight_dynamic_obstacle_inflation: 0.3  # 动态障碍物膨胀权重
+  weight_dynamic_obstacle: 100  # *动态障碍物权重
+  weight_dynamic_obstacle_inflation: 0.5  # 动态障碍物膨胀权重
   weight_viapoint: 1  # 途径点的权重
   weight_adapt_factor: 2  # 自适应因子权重
 
-  enable_homotopy_class_planning: true  # 是否启用同伦类路径规划
+  enable_homotopy_class_planning: false  # 是否启用同伦类路径规划
   enable_multithreading: true  # 是否启用多线程处理
   max_number_classes: 4  # 最大同伦类数量
   selection_cost_hysteresis: 1.0  # 选择成本滞后
@@ -74,7 +74,7 @@ TebLocalPlannerROS:
   obstacle_heading_threshold: 0.45  # 障碍物朝向阈值（弧度）
   switching_blocking_period: 0.0  # 切换阻塞周期（秒）
 
-  viapoints_all_candidates: true  # 是否考虑所有途径点候选
+  viapoints_all_candidates: false  # 是否考虑所有途径点候选
   delete_detours_backwards: true  # 是否删除向后的绕路
   max_ratio_detours_duration_best_duration: 3.0  # 绕路与最佳路径持续时间的最大比率
 
@@ -83,16 +83,18 @@ TebLocalPlannerROS:
   shrink_horizon_backup: true  # 是否启用视界缩减备份
   shrink_horizon_min_duration: 10  # 视界缩减的最小持续时间（秒）
 
-  oscillation_recovery: true  # 是否启用摆动恢复机制
+  oscillation_recovery: false  # 是否启用摆动恢复机制
   oscillation_v_eps: 0.1  # 摆动检测的速度阈值
   oscillation_omega_eps: 0.1  # 摆动检测的角速度阈值
-  oscillation_recovery_min_duration: 10  # 摆动恢复的最小持续时间（秒）
-  oscillation_filter_duration: 10  # 摆动滤波的持续时间（秒）
+  oscillation_recovery_min_duration: 100  # 摆动恢复的最小持续时间（秒）
+  oscillation_filter_duration: 100  # 摆动滤波的持续时间（秒）
+  oscillation_timeout: 1500.0  # 增加摆动检测的超时时间
+  oscillation_distance: 0.2  # 增加摆动检测的距离阈值
 
   teb_autosize: true  # 是否自动调整TEB大小
   dt_ref: 0.3  # 参考时间间隔（秒）
   dt_hysteresis: 0.1  # 时间间隔的滞后性（秒）
 
   global_plan_overwrite_orientation: true  # 是否覆盖全局计划中的方向
-  max_global_plan_lookahead_dist: 3.0  # 全局规划前瞻距离（米）
+  max_global_plan_lookahead_dist: 5.0  # 全局规划前瞻距离（米）
   feasibility_check_no_poses: 5  # 可行性检查的姿态数
