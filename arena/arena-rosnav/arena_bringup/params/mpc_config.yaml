@@ -2,11 +2,17 @@ mpc:
    T: 0.2 # [s]
    N: 10 # Receding horizon (steps), N > 20 seems to require too much CPU power
    k: 1 # b-spline order
+
    if_add_robot_pt: false # Add robot position at the first point of the action points
    feasible_position_speed_factor: 1.0 # Factor to calculate the feasible position speed
+
    if_promote_goal_in_convex: true
-   angle_or_last_pt: true # If the goal is in the convex, if true, the the action points angle set to goal angle; if false, set goal to the last action point
+   angle_or_last_pt: false # If the goal is in the convex, if true, the the action points angle set to goal angle; if false, set goal to the last action point
    last_pt_include_reward_cal: true # Set goal as the last action point when calculating reward
+
+   # Reduce the angle sampling range to [pi/2,3/2*pi] to keep the robot facing forward
+   # angle_or_last_pt can not be true
+   if_reduce_angle_sample: true
    xmin1: [-10, -10, -10] # Min ERROR from reference trajectory ([m], [m], [rad])
    xmax1: [10, 10, 10]  # max ERROR from reference trjectory ([m], [m], [rad])
    umin1: [-0.8, -2.24]  # Min absolute control input ([m/s], [rad/s])

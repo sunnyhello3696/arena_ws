@@ -184,8 +184,8 @@ class FlatlandEnv(gymnasium.Env):
             obs_structur=[
                 # BaseCollectorUnit,
                 ConvexCollectorUnit,
-                TebplanCollectorUnit,
-                # GlobalplanCollectorUnit,
+                # TebplanCollectorUnit,
+                GlobalplanCollectorUnit,
                 # SemanticAggregateUnit,
             ],
             obs_unit_kwargs=self._obs_unit_kwargs,

@@ -125,6 +125,7 @@ class GlobalplanRewardUnit(RewardUnit, ABC):
         super().__init__(reward_function, _on_safe_dist_violation, *args, **kwargs)
         self._kdtree = None
         self._reward_function.add_internal_state_info("curr_dist_to_path", None)
+        self._sum_reward = 0.0
 
     @property
     def curr_dist_to_path(self) -> float:
@@ -156,3 +157,4 @@ class GlobalplanRewardUnit(RewardUnit, ABC):
     def reset(self):
         self._kdtree = None
         self.curr_dist_to_path = None
+        self._sum_reward = 0.0

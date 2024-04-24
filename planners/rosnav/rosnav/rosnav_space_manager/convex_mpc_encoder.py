@@ -86,7 +86,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self._robot_vel = None
         self._last_action_points = None
 
-        self.debug_vis = False
+        self.debug_vis = True
         self.mpc_mapframe_test_traj = True
         # if self.mpc_mapframe_test_traj:
             # self.mpc_xref_traj = genfromtxt("/home/dmz/Documents/mpc_test_traj/ref_states_2.csv", delimiter=',')
@@ -119,6 +119,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self.if_promote_goal_in_convex = bool(cfg['mpc']['if_promote_goal_in_convex'])
         self.angle_or_last_pt = bool(cfg['mpc']['angle_or_last_pt'])
         self.last_pt_include_reward_cal = bool(cfg['mpc']['last_pt_include_reward_cal'])
+        self.if_reduce_angle_sample = bool(cfg['mpc']['if_reduce_angle_sample'])
         xmin = np.array(cfg['mpc']['xmin1']).astype(np.float32)
         xmax = np.array(cfg['mpc']['xmax1']).astype(np.float32)
         umin = np.array(cfg['mpc']['umin1']).astype(np.float32)
@@ -215,8 +216,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                                 netout_scale_factors[i] = goal_theta_scale
                             elif i % 2 == 0:
                                 netout_scale_factors[i] = 0.0
-                            # elif i % 2 == 1:
-                            #     netout_scale_factors[i] = 1.0
+                            elif i % 2 == 1:
+                                netout_scale_factors[i] = 1.0
                 
                 if len(netout_scale_factors) >= 2:
                     one_action_point = self.calc_polar_action_points(
@@ -245,11 +246,13 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
                     if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
                         # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
-                        action_points.pop()
-                        action_points.append(goal_robot_frame)
-                        if self.last_pt_include_reward_cal:
-                            action_points_robot.pop()
-                            action_points_robot.append(goal_robot_frame)
+                        goal_dis = np.linalg.norm(goal_robot_frame)
+                        if goal_dis <= (0.8*0.2*10):
+                            action_points.pop()
+                            action_points.append(goal_robot_frame)
+                            if self.last_pt_include_reward_cal:
+                                action_points_robot.pop()
+                                action_points_robot.append(goal_robot_frame)
 
                 
                 action_points = np.array(action_points, dtype=np.float32)
@@ -580,7 +583,11 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         """
         # refer polar action point angle
         # 基于动作参数和起始点的朝向（start[2]），计算目标动作点相对于起始点的极坐标角度。
-        theta = self.NormalizeAngleTo2Pi(2*np.pi*action[0] + start[2])
+        if not self.if_reduce_angle_sample:
+            theta = self.NormalizeAngleTo2Pi(2*np.pi*action[0] + start[2])
+        else:
+            theta = math.pi * action[0] - math.pi / 2
+            theta = self.NormalizeAngleTo2Pi(theta + start[2])
         thetas = []
         # # debug
         pts_world = []

@@ -40,6 +40,11 @@ collision:
 #   beta: 0.003
 #   _on_safe_dist_violation: true
 
+approach_globalplan:
+  pos_factor: 0.1
+  neg_factor: 0.15
+  _on_safe_dist_violation: false
+
 # abrupt_velocity_change:
 #   vel_factors:
 #     "0": 0.15
@@ -47,8 +52,8 @@ collision:
 #     "2": 0.05
 #   _on_safe_dist_violation: true
 
-# action_points_change:
-#   penalty_factor: 0.006
+action_points_change:
+  penalty_factor: 0.006
 
 # follow_tebplan:
 #   reward_factor: 0.006
