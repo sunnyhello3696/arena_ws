@@ -21,13 +21,13 @@ TebLocalPlannerROS:
   # 机器人在x轴方向的最大速度。
   max_vel_x: 0.7
   # 机器人向后的最大速度。对于不支持后退的机器人，此值应为0。
-  max_vel_x_backwards: 0.0
+  max_vel_x_backwards: 0.7
   # 对于非全向机器人，此值应为0。
   max_vel_y: 0.0
   # 机器人的最大旋转速度。
   max_vel_theta: 2.23
-  acc_lim_x: 2.0
-  acc_lim_theta: 2.0
+  acc_lim_x: 1.0
+  acc_lim_theta: 1.0
   # 机器人的最小转弯半径。对于差动驱动机器人，此值通常为0，意味着机器人可以原地旋转。
   min_turning_radius: 0.0 # diff-drive robot (can turn on place!)
 
