@@ -164,6 +164,9 @@ class PedsimManager(EntityManager):
     def __init__(self, namespace, simulator):
         EntityManager.__init__(self, namespace=namespace, simulator=simulator)
 
+        self._is_paused = False
+        self._semaphore_reset = False
+
         # KnownObstacles 类是一个辅助类，用于存储和管理已知障碍物的信息。
         # 这个类提供了一个接口，使得可以方便地添加、获取、删除和查询障碍物。
         self._known_obstacles = KnownObstacles()
@@ -274,9 +277,6 @@ class PedsimManager(EntityManager):
 
         self.JAIL_POS = gen_JAIL_POS(10)
         # end temp
-
-        self._is_paused = False
-        self._semaphore_reset = False
 
     def spawn_walls(self, walls, heightmap):
         if self.WALLS_ENTITY in self._known_obstacles:  # controversial
