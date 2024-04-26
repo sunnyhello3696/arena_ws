@@ -1,28 +1,28 @@
 goal_reached:
-  reward: 22
+  reward: 15
 
 safe_distance:
-  reward: -0.3
+  reward: -0.35
 
 safe_distance_exp:
-  reward: -0.20
+  reward: -0.15
   w_factor: 1.7
-  punish_dist: 1.15
+  punish_dist: 1.0
 
-# fixed_per_step:
-#   reward: -0.005
+fixed_per_step:
+  reward: -0.026
 
 no_movement:
-  reward: -0.024
+  reward: -0.027
   _on_safe_dist_violation: true
 
 approach_goal:
   pos_factor: 0.1
-  neg_factor: 0.4
+  neg_factor: 0.5
   _on_safe_dist_violation: true
 
 collision:
-  reward: -24
+  reward: -14
 
 # # Don't add if action range [0,1] or output points
 # distance_travelled:
@@ -40,22 +40,22 @@ collision:
 #   beta: 0.003
 #   _on_safe_dist_violation: true
 
-approach_globalplan:
-  pos_factor: 0.1
-  neg_factor: 0.15
-  _on_safe_dist_violation: false
+# approach_globalplan:
+#   pos_factor: 0.1
+#   neg_factor: 0.15
+#   _on_safe_dist_violation: false
 
-# abrupt_velocity_change:
-#   vel_factors:
-#     "0": 0.15
-#     "1": 0.00
-#     "2": 0.05
-#   _on_safe_dist_violation: true
+abrupt_velocity_change:
+  vel_factors:
+    "0": 0.15
+    "1": 0.00
+    "2": 0.08
+  _on_safe_dist_violation: true
 
 action_points_change:
-  penalty_factor: 0.006
+  penalty_factor: 0.01
 
-# follow_tebplan:
-#   reward_factor: 0.006
-#   is_integral_distance: false
-#   _on_safe_dist_violation: true
+follow_tebplan:
+  reward_factor: 0.0074
+  is_integral_distance: false
+  _on_safe_dist_violation: true

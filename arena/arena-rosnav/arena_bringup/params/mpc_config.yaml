@@ -15,7 +15,7 @@ mpc:
    if_reduce_angle_sample: true
    xmin1: [-10, -10, -10] # Min ERROR from reference trajectory ([m], [m], [rad])
    xmax1: [10, 10, 10]  # max ERROR from reference trjectory ([m], [m], [rad])
-   umin1: [-0.8, -2.24]  # Min absolute control input ([m/s], [rad/s])
+   umin1: [0.15, -2.24]  # Min absolute control input ([m/s], [rad/s])
    umax1: [0.8, 2.24]  # Max absolute control input ([m/s], [rad/s])
    Q1:
       - [300, 0, 0]

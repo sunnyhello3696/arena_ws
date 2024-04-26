@@ -20,6 +20,8 @@ import training.srv as training_srvs
 
 from task_generator.utils import ModelLoader
 
+from typing import Any, Dict
+
 
 class TaskFactory:
     registry_obstacles: Dict[Constants.TaskMode.TM_Obstacles, Type[TM_Obstacles]] = {}
@@ -155,6 +157,8 @@ class TaskFactory:
                     cls.registry_module[module](task=self) for module in modules
                 ]
 
+                self._done_info = {}
+
                 if self._train_mode:
                     self.set_tm_robots(Constants.TaskMode.TM_Robots(rospy.get_param("tm_robots")))
                     self.set_tm_obstacles(Constants.TaskMode.TM_Obstacles(rospy.get_param("tm_obstacles")))
@@ -277,6 +281,7 @@ class TaskFactory:
                     **kwargs: Arbitrary keyword arguments.
                 """
                 self._force_reset = False
+                self._done_info = {}
                 if self._train_mode:
                     self._reset_task(**kwargs)
                 else:
@@ -291,6 +296,10 @@ class TaskFactory:
                     bool: True if the task is done, False otherwise.
                 """
                 return self._force_reset or self.__tm_robots.done
+            
+            def get_done_info(self) -> Dict[str, Any]:
+                self._done_info = self.__tm_robots.get_done_info()
+                return self._done_info
 
             def set_robot_position(self, position: PositionOrientation):
                 """

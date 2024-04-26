@@ -21,6 +21,8 @@ import nav_msgs.msg as nav_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_srvs.srv as std_srvs
 
+from sensor_msgs.msg import LaserScan
+from typing import Any, Dict
 
 class RobotManager:
     """
@@ -44,6 +46,8 @@ class RobotManager:
         return self._goal_pos
 
     _position: PositionOrientation
+    _scan: np.array
+    _done_info: Dict[str, Any]
 
     _robot_radius: float
     _goal_tolerance_distance: float
@@ -82,6 +86,9 @@ class RobotManager:
 
         self._position = self._start_pos
 
+        self._scan = np.array([])
+        self._done_info = {}
+
     def set_up_robot(self):
         self._robot = dataclasses.replace(
             self._robot,
@@ -119,6 +126,22 @@ class RobotManager:
         rospy.Subscriber(
             self.namespace("odom"), nav_msgs.Odometry, self._robot_pos_callback
         )
+
+        rospy.Subscriber(
+            self.namespace("scan"), LaserScan, self._scan_callback
+        )
+
+        self._SUCCESS_INFO= {
+            "is_done": True,
+            "done_reason": 2,
+            "is_success": True,
+        }
+
+        self._COLLISION_INFO = {
+            "is_done": True,
+            "done_reason": 1,
+            "is_success": False,
+        }
 
         # if Utils.get_arena_type() == Constants.ArenaType.TRAINING:
         #     return
@@ -159,7 +182,10 @@ class RobotManager:
     @property
     def is_done(self) -> bool:
         """kind of redundant right now, but could contain more logic in the future"""
-        return self._is_goal_reached
+        return self._is_goal_reached or self._is_collision
+    
+    def get_done_info(self) -> Dict[str, Any]:
+        return self._done_info
 
     def move_robot_to_pos(self, position: PositionOrientation):
         self._entity_manager.move_robot(name=self.name, position=position)
@@ -172,6 +198,7 @@ class RobotManager:
         """
         Publishes start and goal to data_recorder, publishes goal to move_base
         """
+        self._done_info = {}
 
         if start_pos is not None:
             self._start_pos = start_pos
@@ -203,13 +230,24 @@ class RobotManager:
             np.array(goal[:2]) - np.array(start[:2])
         )
 
-        # https://gamedev.stackexchange.com/a/4472
-        angle_to_goal: float = np.pi - np.abs(np.abs(goal[2] - start[2]) - np.pi)
-
-        return (
-            distance_to_goal < self._goal_tolerance_distance
-            and angle_to_goal < self._goal_tolerance_angle
+        is_goal_reached = (
+            distance_to_goal < 1.0
         )
+        if is_goal_reached:
+            self._done_info.update(self._SUCCESS_INFO)
+            rospy.loginfo(f"Goal reached")
+
+        return is_goal_reached
+    
+    @property
+    def _is_collision(self) -> bool:
+        if len(self._scan) == 0:
+            return False
+        is_collision = np.min(self._scan) < (self._robot_radius + 0.05)
+        if is_collision:
+            self._done_info.update(self._COLLISION_INFO)
+            rospy.loginfo(f"Collision detected")
+        return is_collision
 
     def _publish_goal_periodically(self, *args, **kwargs):
         if self._goal_pos is not None:
@@ -292,3 +330,11 @@ class RobotManager:
             current_position.position.y,
             rot.as_euler("xyz")[2],
         )
+
+    def _scan_callback(self, data: LaserScan):
+        # check data 
+        if len(data.ranges) == 0:
+            return
+        # convert to numpy array and find min value
+        self._scan = np.array(data.ranges)
+        self._scan[np.isinf(self._scan)] = 8.0

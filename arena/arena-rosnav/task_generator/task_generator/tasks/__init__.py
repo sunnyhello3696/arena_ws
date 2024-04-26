@@ -14,6 +14,8 @@ from task_generator.utils import ModelLoader
 import rosgraph_msgs.msg as rosgraph_msgs
 import std_msgs.msg as std_msgs
 
+from typing import Any, Dict
+
 
 class Props_Manager:
     obstacle_manager: ObstacleManager
@@ -128,6 +130,8 @@ class Task(Props_):
     __reset_end: rospy.Publisher
     __reset_mutex: bool
 
+    _done_info: Dict[str, Any]
+
     def __init__(
         self,
         obstacle_manager: ObstacleManager,
@@ -145,6 +149,9 @@ class Task(Props_):
     @property
     def is_done(self) -> bool:
         return False
+    
+    def get_done_info(self) -> Dict[str, Any]:
+        raise NotImplementedError()
 
     @property
     def robot_names(self) -> List[str]:
