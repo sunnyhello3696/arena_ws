@@ -10,7 +10,7 @@ TebLocalPlannerROS:
   # *当机器人距离目标点的水平距离小于这个值时，认为已经到达目标。
   xy_goal_tolerance: 0.2
   # *当机器人的朝向与目标朝向的差值小于此角度（以弧度为单位）时，认为已经到达目标朝向。
-  yaw_goal_tolerance: 3.14
+  yaw_goal_tolerance: 0.78
   # 到达目标点时是否需要减速到停止。如果设为false，机器人可以以非零速度通过目标点。
   free_goal_vel: false
   # 是否始终执行到全局计划的最后一个点。这确保了路径始终尝试完成提供的全局路径。
@@ -40,20 +40,20 @@ TebLocalPlannerROS:
   optimization_verbose: false  # 是否输出详细的优化过程日志
 
   penalty_epsilon: 0.5  # 优化过程中使用的罚函数ε值，控制松弛程度
-  obstacle_cost_exponent: 4  # 障碍物成本的指数，增加此值会使避障更加积极
+  obstacle_cost_exponent: 5  # 障碍物成本的指数，增加此值会使避障更加积极
   weight_max_vel_x: 2  # *最大x轴速度的权重
   weight_max_vel_theta: 1  # *最大角速度的权重
   weight_acc_lim_x: 1  # *x轴加速度限制的权重
   weight_acc_lim_theta: 1  # *角加速度限制的权重
   weight_kinematics_nh: 1000  # 非完整性运动学的权重
-  weight_kinematics_forward_drive: 1  # 向前驾驶的运动学权重
-  weight_kinematics_turning_radius: 1  # *转向半径的权重
+  weight_kinematics_forward_drive: 3  # 向前驾驶的运动学权重
+  weight_kinematics_turning_radius: 5  # *转向半径的权重
   weight_optimaltime: 1  # *时间最优化的权重, 增加路径平滑权重，以鼓励生成更平滑的轨迹
   weight_shortest_path: 0  # 最短路径权重
   weight_obstacle: 100  # *避障权重
   weight_inflation: 0.3  # 膨胀权重
   weight_dynamic_obstacle: 80  # *动态障碍物权重
-  weight_dynamic_obstacle_inflation: 0.3  # 动态障碍物膨胀权重
+  weight_dynamic_obstacle_inflation: 0.4  # 动态障碍物膨胀权重
   weight_viapoint: 1  # 途径点的权重
   weight_adapt_factor: 2  # 自适应因子权重
 

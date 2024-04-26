@@ -52,8 +52,8 @@ collision:
 #     "2": 0.05
 #   _on_safe_dist_violation: true
 
-# action_points_change:
-#   penalty_factor: 0.006
+action_points_change:
+  penalty_factor: 0.006
 
 # follow_tebplan:
 #   reward_factor: 0.0036

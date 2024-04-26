@@ -487,6 +487,8 @@ class RewardApproachGlobalplan(GlobalplanRewardUnit):
 
         if self.curr_dist_to_path and self.last_dist_to_path:
             self.add_reward(self._calc_reward())
+            if if_show_reward:
+                self._sum_reward += self._calc_reward()
 
         self.last_dist_to_path = self.curr_dist_to_path
 
@@ -499,6 +501,8 @@ class RewardApproachGlobalplan(GlobalplanRewardUnit):
         return w * (self.last_dist_to_path - self.curr_dist_to_path)
 
     def reset(self):
+        if if_show_reward:
+            print("ApproachGlobalplan reward:", self._sum_reward)
         super().reset()
         self.last_dist_to_path = None
 

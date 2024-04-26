@@ -120,6 +120,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self.if_promote_goal_in_convex = bool(cfg['mpc']['if_promote_goal_in_convex'])
         self.angle_or_last_pt = bool(cfg['mpc']['angle_or_last_pt'])
         self.last_pt_include_reward_cal = bool(cfg['mpc']['last_pt_include_reward_cal'])
+        self.if_reduce_angle_sample = bool(cfg['mpc']['if_reduce_angle_sample'])
         xmin = np.array(cfg['mpc']['xmin1']).astype(np.float32)
         xmax = np.array(cfg['mpc']['xmax1']).astype(np.float32)
         umin = np.array(cfg['mpc']['umin1']).astype(np.float32)
@@ -583,7 +584,11 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         """
         # refer polar action point angle
         # 基于动作参数和起始点的朝向（start[2]），计算目标动作点相对于起始点的极坐标角度。
-        theta = self.NormalizeAngleTo2Pi(2*np.pi*action[0] + start[2])
+        if not self.if_reduce_angle_sample:
+            theta = self.NormalizeAngleTo2Pi(2*np.pi*action[0] + start[2])
+        else:
+            theta = math.pi * action[0] - math.pi / 2
+            theta = self.NormalizeAngleTo2Pi(theta + start[2])
         thetas = []
         # # debug
         pts_world = []

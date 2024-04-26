@@ -9,6 +9,7 @@ Panels:
         - /Path2
         - /Path3
         - /Marker4
+        - /Pose2
       Splitter Ratio: 0.32637855410575867
     Tree Height: 486
   - Class: rviz/Selection
@@ -182,7 +183,10 @@ Visualization Manager:
       Marker Topic: /visualization_marker
       Name: Marker
       Namespaces:
-        {}
+        feasible_space_0: true
+        feasible_space_1: true
+        prev_next_line: true
+        start_line: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -272,6 +276,22 @@ Visualization Manager:
       Namespaces:
         {}
       Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 52; 101; 164
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /eval_sim/eval_sim_burger/subgoal
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
