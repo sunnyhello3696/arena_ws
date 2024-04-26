@@ -42,7 +42,7 @@ callbacks:
     n_eval_episodes: 40
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 15000
+    eval_freq: 20000
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -65,9 +65,9 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_89"
+  architecture_name: "AGENT_91"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: "burger_AGENT_89_2024_04_21__22_39_17" # "jackal_AGENT_25_RobotSpecificEncoder_2023_01_21__03_01"
+  resume: "burger_AGENT_91_2024_04_23__22_24_23"
   # resume: "burger"
   checkpoint: "best_model" # gonna be ignored if resume is not null
 

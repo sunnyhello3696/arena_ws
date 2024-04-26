@@ -216,8 +216,8 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                                 netout_scale_factors[i] = goal_theta_scale
                             elif i % 2 == 0:
                                 netout_scale_factors[i] = 0.0
-                            # elif i % 2 == 1:
-                            #     netout_scale_factors[i] = 1.0
+                            elif i % 2 == 1:
+                                netout_scale_factors[i] = 1.0
                 
                 if len(netout_scale_factors) >= 2:
                     one_action_point = self.calc_polar_action_points(
@@ -246,11 +246,13 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                     convex_region_robot_frame = self.obs_dict_d86["laser_convex"][0]
                     if self.is_in_convex(goal_robot_frame,convex_region_robot_frame):
                         # action_points[-1] = (goal_robot_frame[0],goal_robot_frame[1])
-                        action_points.pop()
-                        action_points.append(goal_robot_frame)
-                        if self.last_pt_include_reward_cal:
-                            action_points_robot.pop()
-                            action_points_robot.append(goal_robot_frame)
+                        goal_dis = np.linalg.norm(goal_robot_frame)
+                        if goal_dis <= (0.8*0.2*10):
+                            action_points.pop()
+                            action_points.append(goal_robot_frame)
+                            if self.last_pt_include_reward_cal:
+                                action_points_robot.pop()
+                                action_points_robot.append(goal_robot_frame)
 
                 
                 action_points = np.array(action_points, dtype=np.float32)
