@@ -243,7 +243,7 @@ class RobotManager:
     def _is_collision(self) -> bool:
         if len(self._scan) == 0:
             return False
-        is_collision = np.min(self._scan) < (self._robot_radius + 0.05)
+        is_collision = np.min(self._scan) < (self._robot_radius + 0.001)
         if is_collision:
             self._done_info.update(self._COLLISION_INFO)
             rospy.loginfo(f"Collision detected")

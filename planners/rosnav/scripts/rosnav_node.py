@@ -103,7 +103,7 @@ class RosnavNode:
         # # check if action pts mpc mode
         self.is_normalize_points = False
         self.action_points_num = 0
-        if "action_space" in self._hyperparams["rl_agent"]:
+        if "normalize_points" in self._hyperparams["rl_agent"]["action_space"]:
             self.is_normalize_points = self._hyperparams["rl_agent"]["action_space"]["normalize_points"]["enabled"]
             if self.is_normalize_points:
                 rospy.set_param("is_normalize_points", self.is_normalize_points)
