@@ -3,7 +3,7 @@
 # further no wandb logging and fake (simulated) multiprocessing for traceback
 debug_mode: false
 # number of parallel environments
-n_envs: 16
+n_envs: 10
 # gpu yes or no
 no_gpu: false
 
@@ -42,7 +42,7 @@ callbacks:
     n_eval_episodes: 40
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 20000
+    eval_freq: 25000
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -67,14 +67,14 @@ rl_agent:
   # architecture_name: "RosnavResNet_3"
   architecture_name: "AGENT_91"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: "burger_AGENT_91_2024_04_23__22_24_23"
-  # resume: "burger"
+  resume: null
   checkpoint: "best_model" # gonna be ignored if resume is not null
+  # checkpoint: "last_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
     enabled: true
-    stack_size: 3
+    stack_size: 5
 
   reward_fnc: "convex_points"
   reward_fnc_kwargs: 
@@ -121,7 +121,7 @@ rl_agent:
       final_value: 0.0001
 
   ppo:
-    batch_size: 20480
+    batch_size: 10240
     gamma: 0.99
     n_steps: 1200
     ent_coef: 0.005
@@ -129,6 +129,6 @@ rl_agent:
     vf_coef: 0.22
     max_grad_norm: 0.5
     gae_lambda: 0.95
-    m_batch_size: 2048
+    m_batch_size: 1024
     n_epochs: 3
-    clip_range: 0.25
+    clip_range: 0.2

@@ -11,7 +11,7 @@
 
   <!-- Here are the argument that may be frequently changed -->
   <arg name="ns_prefix" default="sim" />
-  <arg name="num_envs" default="16" />
+  <arg name="num_envs" default="10" />
 
   <param name="single_env" value="false" />
 
