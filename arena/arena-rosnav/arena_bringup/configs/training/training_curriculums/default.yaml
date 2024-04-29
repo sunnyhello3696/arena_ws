@@ -31,17 +31,17 @@
   map_generator:
     algorithm: null
     algorithm_config: null
-  static: 10
-  dynamic: 0
+  static: 5
+  dynamic: 2
 - #3
-  goal_radius: 1.0
+  goal_radius: 0.8
   map_generator:
     algorithm: null
     algorithm_config: null
   static: 5
   dynamic: 5
 - #4
-  goal_radius: 1.0
+  goal_radius: 0.6
   map_generator:
     algorithm: null
     algorithm_config: null
@@ -49,14 +49,14 @@
   static: 10
   dynamic: 5
 - #5
-  goal_radius: 1.0
+  goal_radius: 0.5
   map_generator:
     algorithm: null
     algorithm_config: null
   static: 10
   dynamic: 10
 - #6
-  goal_radius: 1.0
+  goal_radius: 0.5
   map_generator:
     algorithm: null
     algorithm_config: null

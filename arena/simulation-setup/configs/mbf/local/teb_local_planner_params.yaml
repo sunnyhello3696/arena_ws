@@ -41,14 +41,14 @@ TebLocalPlannerROS:
 
   penalty_epsilon: 0.5  # 优化过程中使用的罚函数ε值，控制松弛程度
   obstacle_cost_exponent: 5  # 障碍物成本的指数，增加此值会使避障更加积极
-  weight_max_vel_x: 2  # *最大x轴速度的权重
-  weight_max_vel_theta: 1  # *最大角速度的权重
-  weight_acc_lim_x: 1  # *x轴加速度限制的权重
-  weight_acc_lim_theta: 1  # *角加速度限制的权重
+  weight_max_vel_x: 5  # *最大x轴速度的权重
+  weight_max_vel_theta: 5  # *最大角速度的权重
+  weight_acc_lim_x: 5  # *x轴加速度限制的权重
+  weight_acc_lim_theta: 5  # *角加速度限制的权重
   weight_kinematics_nh: 1000  # 非完整性运动学的权重
   weight_kinematics_forward_drive: 3  # 向前驾驶的运动学权重
   weight_kinematics_turning_radius: 5  # *转向半径的权重
-  weight_optimaltime: 1  # *时间最优化的权重, 增加路径平滑权重，以鼓励生成更平滑的轨迹
+  weight_optimaltime: 5  # *时间最优化的权重, 增加路径平滑权重，以鼓励生成更平滑的轨迹
   weight_shortest_path: 0  # 最短路径权重
   weight_obstacle: 100  # *避障权重
   weight_inflation: 0.3  # 膨胀权重

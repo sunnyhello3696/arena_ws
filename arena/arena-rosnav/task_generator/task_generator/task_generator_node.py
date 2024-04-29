@@ -39,6 +39,8 @@ import map_distance_server.srv as map_distance_server_srvs
 import std_msgs.msg as std_msgs
 import std_srvs.srv as std_srvs
 
+from typing import Any, Dict
+
 
 def create_default_robot_list(
     robot_model: ModelWrapper,
@@ -102,6 +104,8 @@ class TaskGenerator:
     _start_time: float
     _number_of_resets: int
 
+    _done_info: Dict[str, Any]
+
     def __init__(self, namespace: str = "/") -> None:
         self._namespace = Namespace(namespace)
 
@@ -139,6 +143,7 @@ class TaskGenerator:
             rospy.set_param("/robot_names", self._task.robot_names)
 
             self._number_of_resets = 0
+            self._done_info = {}
 
             self.srv_start_model_visualization = rospy.ServiceProxy(
                 "start_model_visualization", std_srvs.Empty
@@ -317,6 +322,7 @@ class TaskGenerator:
 
         self._pub_scenario_reset.publish(self._number_of_resets)
         self._number_of_resets += 1
+        self._done_info = {}
         self._send_end_message_on_end()
 
         self._env_wrapper.after_reset_task()
@@ -327,6 +333,12 @@ class TaskGenerator:
 
     def _check_task_status(self, *args, **kwargs):
         if self._task.is_done:
+            rospy.loginfo("Task is done!")
+            # TIMEOUT = 0
+            # COLLISION = 1
+            # SUCCESS = 2
+            self._done_info = self._task.get_done_info()
+            print(self._done_info)
             self.reset_task()
 
     def _reset_task_srv_callback(self, req: std_srvs.EmptyRequest):

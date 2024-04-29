@@ -114,20 +114,22 @@ class TaskConfig:
 
 Config = TaskConfig()
 
-def _cb_reconfigure(config):
-    global Config
+_train_mode = rosparam_get(bool, "train_mode", False)
+if _train_mode:
+    def _cb_reconfigure(config):
+        global Config
 
-    Config.General.RNG=np.random.default_rng((lambda x: x if x >= 0 else None)(config["RANDOM_seed"]))
-    Config.General.DESIRED_EPISODES=(lambda x: float("inf") if x<0 else x)(config["episodes"])
-    
-    Config.Robot.GOAL_TOLERANCE_RADIUS=config["goal_radius"]
-    Config.Robot.GOAL_TOLERANCE_ANGLE=config["goal_tolerance_angle"]
-    Config.Robot.TIMEOUT=(lambda x: float("inf") if x<0 else x)(config["timeout"])
+        Config.General.RNG=np.random.default_rng((lambda x: x if x >= 0 else None)(config["RANDOM_seed"]))
+        Config.General.DESIRED_EPISODES=(lambda x: float("inf") if x<0 else x)(config["episodes"])
+        
+        Config.Robot.GOAL_TOLERANCE_RADIUS=config["goal_radius"]
+        Config.Robot.GOAL_TOLERANCE_ANGLE=config["goal_tolerance_angle"]
+        Config.Robot.TIMEOUT=(lambda x: float("inf") if x<0 else x)(config["timeout"])
 
-dynamic_reconfigure.client.Client(
-    name=Constants.TASK_GENERATOR_SERVER_NODE,
-    config_callback=_cb_reconfigure
-)
+    dynamic_reconfigure.client.Client(
+        name=Constants.TASK_GENERATOR_SERVER_NODE,
+        config_callback=_cb_reconfigure
+    )
 
 
 class FlatlandRandomModel:

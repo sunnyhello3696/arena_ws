@@ -50,7 +50,7 @@ callbacks:
   training_curriculum:
     # file for the robot's learning curriculum
     training_curriculum_file: "default.yaml"
-    curr_stage: 1
+    curr_stage: 0
     threshold_type: "succ"
     upper_threshold: 0.85
     lower_threshold: 0.60
@@ -65,9 +65,10 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_91"
+  architecture_name: "AGENT_92"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: null
+  resume: "burger_AGENT_92_2024_04_24__18_34_08"
+  # resume: null
   checkpoint: "best_model" # gonna be ignored if resume is not null
   # checkpoint: "last_model" # gonna be ignored if resume is not null
 
@@ -132,3 +133,5 @@ rl_agent:
     m_batch_size: 1024
     n_epochs: 3
     clip_range: 0.2
+    use_sde: false
+    sde_sample_freq: 1000
