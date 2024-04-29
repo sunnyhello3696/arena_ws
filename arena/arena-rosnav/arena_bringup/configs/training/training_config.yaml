@@ -42,7 +42,7 @@ callbacks:
     n_eval_episodes: 40
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 15000
+    eval_freq: 1
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -68,7 +68,7 @@ rl_agent:
   architecture_name: "AGENT_92"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
   resume: "burger_AGENT_92_2024_04_24__18_34_08"
-  # resume: "burger"
+  # resume: null
   checkpoint: "best_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
@@ -132,3 +132,5 @@ rl_agent:
     m_batch_size: 1024
     n_epochs: 3
     clip_range: 0.25
+    use_sde: false
+    sde_sample_freq: 1000
