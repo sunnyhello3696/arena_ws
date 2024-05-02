@@ -65,17 +65,17 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_92"
+  architecture_name: "AGENT_95"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: "burger_AGENT_92_2024_04_24__18_34_08"
-  # resume: null
+  # resume: "burger_AGENT_92_2024_04_29__22_04_08"
+  resume: null
   checkpoint: "best_model" # gonna be ignored if resume is not null
   # checkpoint: "last_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
     enabled: true
-    stack_size: 5
+    stack_size: 6
 
   reward_fnc: "convex_points"
   reward_fnc_kwargs: 
@@ -125,7 +125,7 @@ rl_agent:
     batch_size: 10240
     gamma: 0.99
     n_steps: 1200
-    ent_coef: 0.005
+    ent_coef: 0.0085
     learning_rate: 0.0005
     vf_coef: 0.22
     max_grad_norm: 0.5
