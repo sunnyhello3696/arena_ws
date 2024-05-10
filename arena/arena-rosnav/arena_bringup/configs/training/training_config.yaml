@@ -50,7 +50,7 @@ callbacks:
   training_curriculum:
     # file for the robot's learning curriculum
     training_curriculum_file: "default.yaml"
-    curr_stage: 0
+    curr_stage: 4
     threshold_type: "succ"
     upper_threshold: 0.85
     lower_threshold: 0.60
@@ -65,16 +65,16 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_92"
+  architecture_name: "AGENT_95"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: "burger_AGENT_92_2024_04_24__18_34_08"
+  resume: "burger_AGENT_91_2024_04_27__15_08_34"
   # resume: null
   checkpoint: "best_model" # gonna be ignored if resume is not null
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
     enabled: true
-    stack_size: 3
+    stack_size: 6
 
   reward_fnc: "convex_points"
   reward_fnc_kwargs: 

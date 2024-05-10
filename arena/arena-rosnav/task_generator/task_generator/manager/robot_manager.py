@@ -319,6 +319,8 @@ class RobotManager:
 
     def _robot_pos_callback(self, data: nav_msgs.Odometry):
         current_position = data.pose.pose
+        current_velocity = data.twist.twist
+
         quat = current_position.orientation
 
         rot = scipy.spatial.transform.Rotation.from_quat(
@@ -329,6 +331,12 @@ class RobotManager:
             current_position.position.x,
             current_position.position.y,
             rot.as_euler("xyz")[2],
+        )
+
+        self._velocity = PositionOrientation(
+            current_velocity.linear.x,
+            current_velocity.linear.y,
+            current_velocity.angular.z,
         )
 
     def _scan_callback(self, data: LaserScan):
