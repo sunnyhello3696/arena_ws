@@ -1230,7 +1230,10 @@ class RewardFollowTebplan(RewardUnit):
         self.action_points_num = rospy.get_param_cached("action_points_num", 0)
         self.marker_pub = rospy.Publisher('Tebplan_visualization_marker', Marker, queue_size=1)
         # 根据self.action_points_num计算时间间隔的索引
-        self.time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
+        if self.action_points_num == 1:
+            self.time_intervals = np.array([10], dtype=int)
+        else:
+            self.time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
         self._step_size = rospy.get_param_cached("/step_size", 0.2)
         self.empty_count = 0
 

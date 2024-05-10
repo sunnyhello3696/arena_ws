@@ -463,7 +463,10 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         speed_factor = self._feasible_position_speed_factor
 
         # 根据self.action_points_num计算时间间隔的索引
-        time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
+        if self.action_points_num == 1:
+            time_intervals = np.array([10], dtype=int)
+        else:
+            time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
 
         for index in time_intervals:
             # 计算每个时间间隔的可行距离
