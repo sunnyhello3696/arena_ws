@@ -6,6 +6,7 @@
 
   <param name="if_viz" value="true" />
   <param name="max_vertex_num" value="120" />
+  <param name="if_compute_convex" value="false" />
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
   <arg name="model" default="burger"      doc="model type [burger, jackal, ridgeback, agvota, rto, rto_real]"/>
 

@@ -72,6 +72,8 @@ void Laser::OnInitialize(const YAML::Node &config) {
   nh_.getParam("/if_viz", if_viz); // 传递变量作为引用
   max_vertex_num = 120;
   nh_.getParam("/max_vertex_num", max_vertex_num); // 传递变量作为引用
+  if_compute_convex = false;
+  nh_.getParam("/if_compute_convex", if_compute_convex); // 传递变量作为引用
 
 
   // construct the body to laser transformation matrix once since it never
@@ -154,59 +156,60 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
     // publish the laser scan
     scan_publisher_.publish(laser_scan_);
     
-    
-    // convex publisher
-    bool is_collision = process_scan_msg(laser_scan_,scans_xy);
-
-    if(galaxy_xyin_360out(res, scans_xy,max_vertex_num,0,0,15.0))
+    if(if_compute_convex)
     {
-      g2dres.success.data = true;
-      g2dres.scans = laser_scan_.ranges;
-      
-      // polygon：它由一系列点组成，这些点定义了多边形的顶点。在这段代码中，polygon 的顶点来自 convex 向量，其中每个顶点由一个 geometry_msgs::Point32 类型的对象表示。Point32 对象包含三个浮点数字段 x, y, z，在这种情况下只使用 x 和 y 来表示二维空间中的点。
-      // polar_convex、polar_convex_theta：极坐标下的距离、角度。相比于convex，polar_convex已经根据max_vertex_num计算重新Q分配后的点
-      g2dres.convex_vertex = std::get<0>(res);
-      g2dres.polar_convex = std::get<1>(res);
-      g2dres.polar_convex_theta = std::get<2>(res);
-    }
-    else
-    {
-      g2dres.success.data = false;
-      g2dres.scans = laser_scan_.ranges;
-    }
-    galaxy_publisher_.publish(g2dres); 
+      // convex publisher
+      bool is_collision = process_scan_msg(laser_scan_,scans_xy);
 
-    if (if_viz)
-    { 
-      sensor_msgs::LaserScan scan_vis = laser_scan_;
-      scan_vis.header.stamp = timekeeper.GetSimTime();
-      // frame_id= nh_ + /robot
+      if(galaxy_xyin_360out(res, scans_xy,max_vertex_num,0,0,15.0))
+      {
+        g2dres.success.data = true;
+        g2dres.scans = laser_scan_.ranges;
+        
+        // polygon：它由一系列点组成，这些点定义了多边形的顶点。在这段代码中，polygon 的顶点来自 convex 向量，其中每个顶点由一个 geometry_msgs::Point32 类型的对象表示。Point32 对象包含三个浮点数字段 x, y, z，在这种情况下只使用 x 和 y 来表示二维空间中的点。
+        // polar_convex、polar_convex_theta：极坐标下的距离、角度。相比于convex，polar_convex已经根据max_vertex_num计算重新Q分配后的点
+        g2dres.convex_vertex = std::get<0>(res);
+        g2dres.polar_convex = std::get<1>(res);
+        g2dres.polar_convex_theta = std::get<2>(res);
+      }
+      else
+      {
+        g2dres.success.data = false;
+        g2dres.scans = laser_scan_.ranges;
+      }
+      galaxy_publisher_.publish(g2dres); 
 
-      std::string result = "sim_1/robot";
-      // 找到第一个 '/' 的位置 from topic_
-      size_t start = topic_.find_first_of('/');
-      if (start != std::string::npos) {
-          // 找到第二个 '/' 的位置
-          size_t end = topic_.find('/', start + 1);
-          if (end != std::string::npos) {
-              // 提取从第一个 '/' 到第二个 '/' 之间的字符串（不包括这两个 '/'）
-              std::string first_part = topic_.substr(start + 1, end - start - 1);
-              // 组成新的字符串
-              result = first_part + "/robot";
-          }
+      if (if_viz)
+      { 
+        sensor_msgs::LaserScan scan_vis = laser_scan_;
+        scan_vis.header.stamp = timekeeper.GetSimTime();
+        // frame_id= nh_ + /robot
 
-      scan_vis.header.frame_id = result;
-      scan_vis_publisher_.publish(scan_vis);
+        std::string result = "sim_1/robot";
+        // 找到第一个 '/' 的位置 from topic_
+        size_t start = topic_.find_first_of('/');
+        if (start != std::string::npos) {
+            // 找到第二个 '/' 的位置
+            size_t end = topic_.find('/', start + 1);
+            if (end != std::string::npos) {
+                // 提取从第一个 '/' 到第二个 '/' 之间的字符串（不包括这两个 '/'）
+                std::string first_part = topic_.substr(start + 1, end - start - 1);
+                // 组成新的字符串
+                result = first_part + "/robot";
+            }
 
-      geometry_msgs::PolygonStamped polygon_Stamped;
-      polygon_Stamped.header.stamp = timekeeper.GetSimTime();
-      polygon_Stamped.header.frame_id = result;
-      polygon_Stamped.polygon = std::get<0>(res);
-      convex_polygon_vis_publisher_.publish(polygon_Stamped);
-      
+        scan_vis.header.frame_id = result;
+        scan_vis_publisher_.publish(scan_vis);
+
+        geometry_msgs::PolygonStamped polygon_Stamped;
+        polygon_Stamped.header.stamp = timekeeper.GetSimTime();
+        polygon_Stamped.header.frame_id = result;
+        polygon_Stamped.polygon = std::get<0>(res);
+        convex_polygon_vis_publisher_.publish(polygon_Stamped);
+        
+        }
       }
     }
-    
   }
 
   if (broadcast_tf_) {

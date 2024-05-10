@@ -42,7 +42,7 @@ callbacks:
     n_eval_episodes: 40
     # evaluation frequency, evaluation after every n_envs * eval_freq timesteps
     # too long
-    eval_freq: 1
+    eval_freq: 20000
 
   ### Training Curriculum
   # threshold metric to be considered during evaluation
@@ -65,7 +65,7 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_95"
+  architecture_name: "AGENT_70"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
   # resume: "burger_AGENT_95_2024_05_02__12_22_20"
   resume: null
@@ -73,10 +73,12 @@ rl_agent:
 
   # frame_stacking和normalize由env_utils.py设置
   frame_stacking:
-    enabled: true
+    enabled: false
     stack_size: 6
 
-  reward_fnc: "convex_points"
+  # reward_fnc: "convexmap_points"
+  reward_fnc: "lidar_e2e"
+  # reward_fnc: "convex_e2e"
   reward_fnc_kwargs: 
     placeholder: 0 # placeholder kwarg
 
@@ -102,7 +104,7 @@ rl_agent:
 
   action_space:
     normalize_points: 
-      enabled: true # normalize points_num action points to [0, 1] and no continuous and discrete action space
+      enabled: false # normalize points_num action points to [0, 1] and no continuous and discrete action space
       action_points_num: 1
     discrete: false
     custom_discretization: # only used if discrete is true, otherwise ignored
