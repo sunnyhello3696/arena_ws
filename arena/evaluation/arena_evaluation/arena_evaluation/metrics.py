@@ -72,7 +72,7 @@ class PedsimMetric(Metric, typing.TypedDict):
 
 
 class Config:
-    TIMEOUT_TRESHOLD = 180e9
+    TIMEOUT_TRESHOLD = 75
     MAX_COLLISIONS = 3
     MIN_EPISODE_LENGTH = 5
     
@@ -115,11 +115,22 @@ class Math:
     
     @classmethod
     def path_length(cls, position: np.ndarray) -> np.ndarray:
+        """
+        首先，调用 grouping 方法，将路径点分组成两两一组，形成路径中相邻的点的对。
+        然后，计算每对相邻点之间的距离，通过计算每个对中两个点之间的欧氏距离。
+        最后，将这些距离组合成一个NumPy数组，并返回该数组作为路径长度。
+        """
         pairs = cls.grouping(position, 2)
         return np.linalg.norm(pairs[:,0,:] - pairs[:,1,:], axis=1)
 
     @classmethod
     def curvature(cls, position: np.ndarray) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """
+        Calculates the curvature of a path. The curvature is defined as the inverse of the radius of the circle that best fits the path at a given point.
+        计算路径的曲率和归一化路径曲率。曲率定义为在给定点最适合路径的圆的半径的倒数。
+        curvature：一个NumPy数组，其中包含了路径的曲率数据。与输入中的路径点一一对应。
+        normalized：一个NumPy数组，其中包含了路径的归一化曲率数据。同样，与输入中的路径点一一对应。
+        """
 
         triangles = cls.triangles(position)
 
@@ -143,6 +154,14 @@ class Math:
 
     @classmethod
     def roughness(cls, position: np.ndarray) -> np.ndarray:
+        """
+        计算路径的粗糙度。
+            首先，根据输入的路径位置数据，将路径划分成相邻的三角形。
+            然后，计算每个三角形的面积。
+            接着，计算每个三角形的一条边的长度，通常取相邻两个顶点之间的距离。
+            最后，根据公式，使用三角形的面积和边长来计算路径的粗糙度。
+        粗糙度指标可以帮助评估路径的平滑程度。如果路径的粗糙度较高，表示路径中存在较多的起伏和曲折，可能需要更多的调整和控制来保持稳定的导航。
+        """
         
         triangles = cls.triangles(position)
 
@@ -178,18 +197,24 @@ class Metrics:
     _episode_data: typing.Dict[int, Metric]
 
     def _load_data(self) -> typing.List[pd.DataFrame]:
+
+        # converters 参数允许你传递一个字典，其中键是列名，值是一个函数，用于对该列的值进行转换。
+        # 定义了一个转换器函数，它将名为 "data" 的列中的值转换为整数类型。如果值的长度小于等于 0，则转换器函数将值设置为 0。
         episode = pd.read_csv(os.path.join(self.dir, "episode.csv"), converters={
             "data": lambda val: 0 if len(val) <= 0 else int(val) 
         })
 
+        # rename(columns={"data": "laserscan"}) 用于重命名 DataFrame 中的列。在第二个例子中，我们将列名为 "data" 的列重命名为 "laserscan"。
         laserscan = pd.read_csv(os.path.join(self.dir, "scan.csv"), converters={
             "data": Utils.string_to_float_list
         }).rename(columns={"data": "laserscan"})
 
+        # 这个 lambda 函数首先将字符串中的单引号替换为双引号，然后使用 json.loads 函数将其解析为 Python 对象。
         odom = pd.read_csv(os.path.join(self.dir, "odom.csv"), converters={
             "data": lambda col: json.loads(col.replace("'", "\""))
         }).rename(columns={"data": "odom"})
 
+        # string_to_float_list接受一个格式为 "[1.0, 2.0, 3.0]" 的字符串，然后将其转换为包含浮点数的列表 [1.0, 2.0, 3.0]
         cmd_vel = pd.read_csv(os.path.join(self.dir, "cmd_vel.csv"), converters={
             "data": Utils.string_to_float_list
         }).rename(columns={"data": "cmd_vel"})
@@ -204,7 +229,7 @@ class Metrics:
     def __init__(self, dir: str):
 
         self.dir = dir
-        self.robot_params = self._get_robot_params()
+        # self.robot_params = self._get_robot_params()
 
         data = pd.concat(self._load_data(), axis=1, join="inner")
         data = data.loc[:,~data.columns.duplicated()].copy()
@@ -215,9 +240,13 @@ class Metrics:
 
         while True:
             current_episode = data[data["episode"] == i]
-
+            
+            # check current_episode's data items length
             if len(current_episode) < Config.MIN_EPISODE_LENGTH:
                 break
+
+            # Remove the first three time steps from current_episode
+            current_episode = current_episode.iloc[3:]
             
             episode_data[i] = self._analyze_episode(current_episode, i)
             i = i + 1
@@ -229,10 +258,12 @@ class Metrics:
     
     def _analyze_episode(self, episode: pd.DataFrame, index) -> Metric:
 
-        episode["time"] /= 10**10
+        # 将纳秒转换为秒
+        # episode["time"] /= 10**10
+        episode.loc[:, "time"] /= 10**10
         
         positions = np.array([frame["position"] for frame in episode["odom"]])
-        velocities = np.array([frame["position"] for frame in episode["odom"]])
+        velocities = np.array([frame["velocity"] for frame in episode["odom"]])
 
         curvature, normalized_curvature = Math.curvature(positions)
         roughness = Math.roughness(positions)
@@ -243,7 +274,7 @@ class Metrics:
 
         collisions, collision_amount = self._get_collisions(
             episode["laserscan"],
-            self.robot_params["robot_radius"]
+            0.177 + 0.01 # turtlebot radius + safety margin
         )
 
         path_length = Math.path_length(positions)
@@ -257,22 +288,39 @@ class Metrics:
         # print("PATH LENGTH", path_length, path_length_per_step)
 
         return Metric(
+            # curvature 和 normalized_curvature 是路径的曲率和归一化曲率数据。
             curvature = Math.round_values(curvature),
             normalized_curvature = Math.round_values(normalized_curvature),
+
+            # roughness 是路径的粗糙度数据。
             roughness = Math.round_values(roughness),
+
+            # path_length_values 是positions group by 2的长度array
             path_length_values = Math.round_values(path_length),
+            # path_length 是路径的总长度。
             path_length = path_length.sum(),
+
+            # velocity、acceleration 和 jerk 是路径的速度、加速度和加加速度数据。
             acceleration = Math.round_values(acceleration),
             jerk = Math.round_values(jerk),
             velocity = Math.round_values(vel_absolute),
+
+            # collision_amount 是碰撞次数，collisions 是碰撞的时间点index
             collision_amount = collision_amount,
             collisions = list(collisions),
+
+            # path 是路径的位置数据，angle_over_length 是路径的角度和长度之比。
             path = [list(p) for p in positions],
             angle_over_length = np.abs(turn.sum() / path_length.sum()),
+
+            # action_type 是路径的动作类型数据，result 是路径的结果数据。
             action_type = list(self._get_action_type(episode["cmd_vel"])),
-            time_diff = time, ## Ros time in ns
+
+            time_diff = time, ## Ros time in s
             time = list(map(int, episode["time"].tolist())),
+
             episode = index,
+
             result = self._get_success(time, collision_amount),
             cmd_vel = list(map(list, episode["cmd_vel"].to_list())),
             goal = goal_position,
@@ -296,6 +344,14 @@ class Metrics:
             return yaml.safe_load(file)
 
     def _get_mean_position(self, episode, key):
+        """
+        该函数用于计算给定键对应列的平均位置。
+        该函数接受两个参数：episode 和 key。episode 是一个 DataFrame，包含了一个名为 key 的列，该列包含了位置数据。
+            然后，它遍历位置列表中的每个位置，并将其转换为字符串格式，并使用冒号连接起来形成一个哈希值。
+            每次出现一个新的哈希值时，将其添加到计数器中，并增加计数器的值。
+            接着，它对计数器中的项按照键进行排序，以确保具有相同哈希值的位置按照其出现次数排序。
+            最后，它从排序后的位置中获取第一个位置的哈希值，并将其转换为浮点数列表作为平均位置返回。
+        """
         positions = episode[key].to_list()
         counter = {}
 
@@ -341,6 +397,9 @@ class Metrics:
         collisions = []
         collisions_marker = []
 
+
+        # 函数通过循环遍历 laser_scans 中的每个时间点，并检查该时间点上的激光扫描数据是否有任何值小于或等于 lower_bound。
+        # 如果有，则将该时间点标记为发生了碰撞，并将其索引记录在 collisions 列表中。
         for i, scan in enumerate(laser_scans):
 
             is_collision = len(scan[scan <= lower_bound]) > 0
@@ -350,8 +409,8 @@ class Metrics:
             if is_collision:
                 collisions.append(i)
 
+        # 它遍历 collisions_marker 列表，并检查相邻的标记之间是否由未发生碰撞变为发生了碰撞。如果是，则将碰撞次数加一。
         collision_amount = 0
-
         for i, coll in enumerate(collisions_marker[1:]):
             prev_coll = collisions_marker[i]
 

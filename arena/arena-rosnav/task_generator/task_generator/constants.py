@@ -115,7 +115,8 @@ class TaskConfig:
 Config = TaskConfig()
 
 _train_mode = rosparam_get(bool, "train_mode", False)
-if _train_mode:
+_tm_robots = rosparam_get(str, "tm_robots", "random")
+if _train_mode or _tm_robots == "scenario":
     def _cb_reconfigure(config):
         global Config
 

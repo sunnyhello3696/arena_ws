@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import json
 import yaml
 
+from matplotlib.patches import Circle
+
 from arena_evaluation.utils import Utils
 
 """
@@ -308,23 +310,44 @@ class DiscreteValuePlotter:
 class PathVisualizer:
 
     def __init__(self, scenario):
-        # self.scenario_file, self.scenario_content = PathVisualizer.read_scenario_file(scenario)
-
-        self.map_name = "small_warehouse" # self.scenario_content["map"]
+        self.map_name = "map_empty" # self.scenario_content["map"]
+        self.scenario_file, self.scenario_content = PathVisualizer.read_scenario_file(scenario)
         self.map_path, self.map_content = PathVisualizer.read_map_file(self.map_name)
 
         print(self.map_content)
 
     def create_map_plot(self):
         self.map_img = plt.imread(os.path.join(self.map_path, self.map_content["image"]), )
+        
+        # Get map parameters
+        resolution = self.map_content["resolution"]
+        origin = self.map_content["origin"]
+
+        # Calculate extent of the map
+        height, width, _ = self.map_img.shape
+        extent = [
+            origin[0],
+            origin[0] + width * resolution,
+            origin[1],
+            origin[1] + height * resolution
+        ]
 
         fig, ax = plt.subplots()
 
-        ax.imshow(self.map_img, cmap="gray")
+        ax.imshow(self.map_img, cmap="gray", extent=extent)
 
         return fig, ax
 
-    def create_episode_plots_for_namespaces(self, dataset, title, save_name, episode=0, differentiate="local_planner", desired_results=[], should_add_obstacles=False, should_add_collisions=False):
+    def create_episode_plots_for_namespaces(self, 
+                                            dataset, 
+                                            title, 
+                                            save_name, 
+                                            episode=0, 
+                                            differentiate="local_planner", 
+                                            desired_results=[], 
+                                            should_add_obstacles=False, 
+                                            should_add_collisions=False):
+        
         robots_tested = list(set(dataset[differentiate].to_list()))
 
         plt.close()
@@ -336,6 +359,8 @@ class PathVisualizer:
 
             paths_for_namespace = dataset[dataset[differentiate] == namespace][["path", "result", "start", "goal"]]
 
+            start_pos = paths_for_namespace["start"][0]
+            
             path_amount = len(paths_for_namespace.index)
 
             iterator = list(range(path_amount))
@@ -350,11 +375,11 @@ class PathVisualizer:
                 if len(desired_results) > 0 and not result in desired_results:
                     break 
 
-                path = np.array(list(map(self.ros_to_real_coord, path))).transpose()
+                # Add start_pos to the beginning of the path
+                path = np.concatenate((np.array([start_pos]), path), axis=0)
+                ax.plot(path[:, 0], path[:, 1], label=namespace)
 
-                ax.plot(path[0][:-10], path[1][:-10], label=namespace)
-
-        self.add_obstacles_to_plot(should_add_obstacles)
+        self.add_obstacles_to_plot(ax, should_add_obstacles)
 
         self.add_start_and_goal_to_plot(ax, paths_for_namespace["start"][0], paths_for_namespace["goal"][0])
 
@@ -403,7 +428,7 @@ class PathVisualizer:
             verts = [self.ros_to_real_coord(waypoint) for waypoint in o["waypoints"]]
             verts.append(verts[0])
 
-            x, y = zip(*verts)
+            x, y, z = zip(*verts)
 
             ax.plot(x, y, "x--", lw=1, color="black", ms=10, alpha=0.4)
 
@@ -416,9 +441,13 @@ class PathVisualizer:
 
         ax.plot(goal[0], goal[1], "*", label="Goal", ms=10, color="red")
 
+        # Draw a circle around the goal point
+        circle = Circle((goal[0], goal[1]), radius=1.0, edgecolor="red", facecolor="none")
+        ax.add_patch(circle)
+
     @staticmethod
     def read_scenario_file(scenario):
-        name = os.path.join(rospkg.RosPack().get_path("task_generator"), "scenarios", scenario)
+        name = os.path.join(rospkg.RosPack().get_path("arena_simulation_setup"), "worlds", "map_empty", "scenarios", scenario)
 
         with open(name) as file:
             content = yaml.safe_load(file)
@@ -427,7 +456,7 @@ class PathVisualizer:
 
     @staticmethod
     def read_map_file(map_name):
-        map_path = os.path.join(rospkg.RosPack().get_path("arena-simulation-setup"), "maps", map_name)
+        map_path = os.path.join(rospkg.RosPack().get_path("arena_simulation_setup"), "worlds", map_name, "map")
 
         with open(os.path.join(map_path, "map.yaml")) as file:
             content = yaml.safe_load(file)
@@ -435,10 +464,10 @@ class PathVisualizer:
         return map_path, content
 
     def ros_to_real_coord(self, coord):
-        new_coord = [(c - self.map_content["origin"][i]) / self.map_content["resolution"] for i, c in enumerate(coord)][:2]
+        # new_coord = [(c - self.map_content["origin"][i]) / self.map_content["resolution"] for i, c in enumerate(coord)][:2]
 
-        new_coord[1] = - new_coord[1] + self.map_img.shape[1] # - (self.map_content["origin"][0] / self.map_content["resolution"])
-
+        # new_coord[1] = - new_coord[1] + self.map_img.shape[1] # - (self.map_content["origin"][0] / self.map_content["resolution"])
+        new_coord = coord
         return new_coord
 
 
@@ -562,6 +591,7 @@ def create_plots_from_declaration_file(declaration_file):
             dataset, 
             episode_plots_for_namespaces["title"],
             episode_plots_for_namespaces["save_name"],
+            episode=episode_plots_for_namespaces.get("episode", 0),
             differentiate=episode_plots_for_namespaces["differentiate"],
             desired_results=episode_plots_for_namespaces["desired_results"],
             should_add_obstacles=episode_plots_for_namespaces.get("should_add_obstacles", False),

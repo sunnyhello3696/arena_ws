@@ -1,5 +1,5 @@
 SCENARIO:
-  file: default.json
+  file: 4.json
 
 PARAMETRIZED:
   file: default.xml 

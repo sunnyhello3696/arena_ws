@@ -5,6 +5,7 @@
 
   <param name="if_viz" value="true" />
   <param name="max_vertex_num" value="120" />
+  <param name="if_compute_convex" value="false" />
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
   <param name="debug_mode" value="true" />
   <arg name="desired_resets" default="10" />
@@ -18,7 +19,8 @@
   <!-- You can launch a single robot and his local_planner with arguments -->
   <arg name="model" default="burger" doc="robot model type [burger, jackal, ridgeback, agvota, rto, ...]" />
   <arg name="inter_planner" default="bypass" doc="inter planner type [bypass, shortsighted, polite, aggressive, sideways]" />
-  <arg name="local_planner" default="mpc" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <arg name="local_planner" default="rlca" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <param name="scenario_file" value="4.json" />
   <arg name="simulator" default="flatland" doc="[flatland, gazebo]" />
   <arg name="headless" default="0" doc="0 = show all, 1 = show only rviz, 2 = show nothing" />
   <env name="SIMULATOR" value="$(arg simulator)" />
@@ -51,8 +53,8 @@
   <param name="complexity" value="$(arg complexity)" />
   
 
-  <arg name="tm_robots" default="random"/>
-  <arg name="tm_obstacles" default="random"/>
+  <arg name="tm_robots" default="scenario" doc="random, scenario"/>
+  <arg name="tm_obstacles" default="scenario" doc="random, scenario"/>
   <arg name="tm_modules" default="" />
   <arg name="benchmark_resume" default="false" />
   

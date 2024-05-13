@@ -331,6 +331,23 @@ class AGENT_68(BaseAgent):
     net_arch = dict(pi=[512, 64], vf=[256, 64])
     activation_fn = nn.ReLU
 
+@AgentFactory.register("AGENT_70")
+class AGENT_70(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = DefaultEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {}
+    features_extractor_class = EXTRACTOR_3
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[128, 64, 64], vf=[128, 64, 64])
+    activation_fn = nn.ReLU
+
 @AgentFactory.register("AGENT_88")
 class AGENT_88(BaseAgent):
     type = PolicyType.CNN
@@ -433,6 +450,113 @@ class AGENT_92(BaseAgent):
     features_extractor_class = ConvexExtractor_2d_with_ActPts_2
     features_extractor_kwargs = {"features_dim": 512}
     net_arch = dict(pi=[256, 128, 64], vf=[256, 128, 64])
+    activation_fn = nn.ReLU
+
+@AgentFactory.register("AGENT_93")
+class AGENT_93(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexMPCEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+        SPACE_INDEX.LAST_ACTION_POINTS,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+    }
+    features_extractor_class = ConvexExtractor_2d_with_ActPts
+    features_extractor_kwargs = {"features_dim": 512}
+    net_arch = dict(pi=[256, 128, 64], vf=[256, 128, 64])
+    activation_fn = nn.ReLU
+
+@AgentFactory.register("AGENT_94")
+class AGENT_94(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexMPCEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+        SPACE_INDEX.LAST_ACTION_POINTS,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+    }
+    features_extractor_class = ConvexExtractor_2d_with_ActPts
+    features_extractor_kwargs = {"features_dim": 512}
+    net_arch = dict(pi=[256, 256, 128], vf=[256, 128, 64])
+    activation_fn = nn.ReLU
+
+@AgentFactory.register("AGENT_95")
+class AGENT_95(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexMPCEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+        SPACE_INDEX.LAST_ACTION_POINTS,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+    }
+    features_extractor_class = ConvexExtractor_2d_with_ActPts
+    features_extractor_kwargs = {"features_dim": 512}
+    net_arch = dict(pi=[512, 256, 128], vf=[256, 128, 64])
+    activation_fn = nn.ReLU
+
+@AgentFactory.register("AGENT_96")
+class AGENT_96(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexMPCEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+        SPACE_INDEX.LAST_ACTION_POINTS,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+    }
+    features_extractor_class = ConvexExtractor_2d_with_ActPts
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[256, 128, 64], vf=[256, 128, 64])
+    activation_fn = nn.ReLU
+
+@AgentFactory.register("AGENT_100")
+class AGENT_100(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexMPCEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.STACKED_LASER_MAP,
+        SPACE_INDEX.CONVEX,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 80,
+        "roi_in_m": 20,
+        "feature_map_size": 80,
+        "laser_stack_size": 10,
+    }
+    features_extractor_class = RESNET_COVEXMAP_EXTRACTOR_1
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[256, 64], vf=[256, 64])
     activation_fn = nn.ReLU
 
 @AgentFactory.register("BarnResNet")

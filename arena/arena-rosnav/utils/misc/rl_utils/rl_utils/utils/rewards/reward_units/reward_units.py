@@ -33,7 +33,7 @@ __all__ = [
     "RewardActionPointsChange",
 ]
 
-if_show_reward = False
+if_show_reward = True
 
 
 @RewardUnitFactory.register("goal_reached")
@@ -1230,7 +1230,10 @@ class RewardFollowTebplan(RewardUnit):
         self.action_points_num = rospy.get_param_cached("action_points_num", 0)
         self.marker_pub = rospy.Publisher('Tebplan_visualization_marker', Marker, queue_size=1)
         # 根据self.action_points_num计算时间间隔的索引
-        self.time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
+        if self.action_points_num == 1:
+            self.time_intervals = np.array([10], dtype=int)
+        else:
+            self.time_intervals = np.linspace(1, 10, self.action_points_num, dtype=int)
         self._step_size = rospy.get_param_cached("/step_size", 0.2)
         self.empty_count = 0
 
@@ -1291,7 +1294,7 @@ class RewardFollowTebplan(RewardUnit):
                 accumulated_distances = np.cumsum(distances)
             else:
                 # 根据时间间隔和固定速度计算累积距离
-                speed = 0.6  # m/s
+                speed = 0.55  # m/s
                 accumulated_distances = self.time_intervals * self._step_size * speed
 
             # Efficiently find corresponding points in the trimmed TEB plan
@@ -1343,3 +1346,72 @@ class RewardFollowTebplan(RewardUnit):
             pt.z = 0
             marker.points.append(pt)
         self.marker_pub.publish(marker)
+    
+@RewardUnitFactory.register("max_steps_exceeded")
+class RewardMaxStepsExceeded(RewardUnit):
+    """
+    A reward unit that penalizes the agent when the maximum number of steps is exceeded.
+    Args:
+        reward_function (RewardFunction): The reward function to which this unit belongs.
+        penalty (float, optional): The penalty value to be applied when the maximum steps are exceeded. Defaults to 10.
+        _on_safe_dist_violation (bool, optional): Whether to apply the penalty on safe distance violation. Defaults to True.
+        *args: Variable length argument list.
+        **kwargs: Arbitrary keyword arguments.
+    Attributes:
+        _penalty (float): The penalty value to be applied when the maximum steps are exceeded.
+        _steps (int): The current number of steps taken.
+    Methods:
+        __call__(*args, **kwargs): Updates the step count and applies the penalty if the maximum steps are exceeded.
+        reset(): Resets the step count to zero.
+    """
+
+    DONE_INFO = {
+        "is_done": True,
+        "done_reason": DONE_REASONS.STEP_LIMIT.name,
+        "is_success": 0,
+    }
+
+    @check_params
+    def __init__(
+        self,
+        reward_function: RewardFunction,
+        penalty: float = 10,
+        _on_safe_dist_violation: bool = True,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(reward_function, _on_safe_dist_violation, *args, **kwargs)
+        self._penalty = penalty
+        self._steps = 0
+
+    def check_parameters(self, *args, **kwargs):
+        if self._penalty < 0.0:
+            warn_msg = (
+                f"[{self.__class__.__name__}] Reconsider this reward. "
+                f"The penalty should be a positive value as it is going to be subtracted from the total reward."
+                f"Current value: {self._penalty}"
+            )
+            warn(warn_msg)
+
+    def __call__(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Updates the step count and applies the penalty if the maximum steps are exceeded.
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
+        self._steps += 1
+        if self._steps >= self._reward_function.max_steps:
+            self.add_reward(-self._penalty)
+            self.add_info(self.DONE_INFO)
+            if if_show_reward:
+                self._sum_reward += -self._penalty
+
+    def reset(self):
+        """
+        Resets the step count to zero.
+        """
+        self._steps = 0
+        if if_show_reward:
+            print("MaxStepsExceeded reward:", self._sum_reward)
+            self._sum_reward = 0

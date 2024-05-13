@@ -129,6 +129,15 @@ class Recorder:
         self.write_params()
 
         topics_to_monitor = self.get_topics_to_monitor()
+        """
+        topics_to_monitor
+        [
+        ('/burger/scan', <class 'sensor_msgs.msg._LaserScan.LaserScan'>),
+        ('/burger/scenario_reset', <class 'std_msgs.msg._Int16.Int16'>), 
+        ('/burger/odom', <class 'nav_msgs.msg._Odometry.Odometry'>), 
+        ('/burger/cmd_vel', <class 'geometry_msgs.msg._Twist.Twist'>), ('/pedsim_simulator/pedsim_agents_data', <class 'pedsim_msgs.msg._PedsimAgentsDataframe.PedsimAgentsDataframe'>)
+        ] 
+        """
 
         topics = rostopic.get_topic_list()
         published_topics = topics[0]
@@ -148,6 +157,17 @@ class Recorder:
             topics_to_sub.append([topic_name, *self.get_class_for_topic_name(topic_name)])
 
             # topics_to_sub.append([topic_name, *[t for t in topics_to_monitor if t[0] == match.group()][0]])
+
+        """
+        topics_to_sub
+        ('topics_to_sub: ', [
+        ['/pedsim_simulator/pedsim_agents_data', 'pedsim_agents_data', <class 'pedsim_msgs.msg._PedsimAgentsDataframe.PedsimAgentsDataframe'>], 
+        ['/burger/odom', 'odom', <class 'nav_msgs.msg._Odometry.Odometry'>], 
+        ['/burger/scan', 'scan', <class 'sensor_msgs.msg._LaserScan.LaserScan'>]
+        ])
+        """
+        # cmd_vel in the beginning of published_topics, so manually add it
+        topics_to_sub.append(["/burger/cmd_vel", *self.get_class_for_topic_name("/burger/cmd_vel")])
 
         self.data_collectors = []
 
@@ -215,6 +235,7 @@ class Recorder:
             return ["cmd_vel", Twist]
         if "/pedsim_agents_data" in topic_name:
             return ["pedsim_agents_data", pedsim_msgs.PedsimAgentsDataframe]
+        raise ValueError(f"Unknown topic name: {topic_name}")
 
     def get_topics_to_monitor(self):
         return [
@@ -239,7 +260,7 @@ class Recorder:
                 "scenario_file": rospy.get_param("/scenario_file", ""),
                 "inter_planner": rospy.get_param(rospy.get_namespace() + "inter_planner", ""),
                 "local_planner": rospy.get_param(rospy.get_namespace() + "local_planner", ""),
-                "agent_name": rospy.get_param(rospy.get_namespace() + "agent_name", ""),
+                "agent_name": rospy.get_param(rospy.get_namespace() + "agent_name", "burger"),
                 "namespace": rospy.get_namespace().replace("/", "")
             }, file)
 

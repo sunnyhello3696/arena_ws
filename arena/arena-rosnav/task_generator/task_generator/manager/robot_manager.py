@@ -243,7 +243,7 @@ class RobotManager:
     def _is_collision(self) -> bool:
         if len(self._scan) == 0:
             return False
-        is_collision = np.min(self._scan) < (self._robot_radius + 0.001)
+        is_collision = np.min(self._scan) < (self._robot_radius)
         if is_collision:
             self._done_info.update(self._COLLISION_INFO)
             rospy.loginfo(f"Collision detected")
@@ -319,6 +319,8 @@ class RobotManager:
 
     def _robot_pos_callback(self, data: nav_msgs.Odometry):
         current_position = data.pose.pose
+        current_velocity = data.twist.twist
+
         quat = current_position.orientation
 
         rot = scipy.spatial.transform.Rotation.from_quat(
@@ -331,6 +333,12 @@ class RobotManager:
             rot.as_euler("xyz")[2],
         )
 
+        self._velocity = PositionOrientation(
+            current_velocity.linear.x,
+            current_velocity.linear.y,
+            current_velocity.angular.z,
+        )
+
     def _scan_callback(self, data: LaserScan):
         # check data 
         if len(data.ranges) == 0:
@@ -338,3 +346,5 @@ class RobotManager:
         # convert to numpy array and find min value
         self._scan = np.array(data.ranges)
         self._scan[np.isinf(self._scan)] = 8.0
+        # nan
+        self._scan[np.isnan(self._scan)] = 8.0

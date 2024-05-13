@@ -67,7 +67,7 @@ class TM_Robots(TaskMode):
         # convert to float and keep only 2 decimal places
         episode_duration = round(float(self._PROPS.clock.clock.secs - self._last_reset), 2)
         self._done_info.update({"episode_time": episode_duration})
-        if (episode_duration) > 80.0:
+        if (episode_duration) > 78.0:
             self._done_info.update(self._TIMEOUT_INFO)
             rospy.loginfo(f"Timeout for task")
             return True
