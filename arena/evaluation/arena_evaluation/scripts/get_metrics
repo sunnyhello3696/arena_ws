@@ -3,19 +3,30 @@
 import argparse
 import os 
 import arena_evaluation.metrics as Metrics
+import time
 
+# python your_script.py your_directory --pedsim
+# rosrun arena_evaluation get_metrics /home/dmz/arena_ws/src/arena/evaluation/arena_evaluation/data/24-05-13_10-27-43/burger/
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("dir")
+
+    """
+    --pedsim: 这是参数的名称，表示在命令行中使用--pedsim来启用该参数。
+    action="store_const": 这是指定参数的行为。在这里，store_const表示当命令行中指定了--pedsim时，argparse将会把指定的值（在这个例子中是const=True的True）存储到arguments.pedsim中。
+    default=False: 这是指定参数的默认值。在这个例子中，如果命令行中没有指定--pedsim，则arguments.pedsim将默认为False。
+    """
     parser.add_argument("--pedsim", action="store_const", const=True, default=False)
     arguments = parser.parse_args()
 
     if arguments.pedsim:
+        print("Using pedsim metrics")
         metrics = Metrics.PedsimMetrics(
             dir = arguments.dir
         )
 
     else:
+        print("Using default metrics")
         metrics = Metrics.Metrics(
             dir = arguments.dir
         )

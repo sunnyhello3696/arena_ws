@@ -19,7 +19,8 @@
   <!-- You can launch a single robot and his local_planner with arguments -->
   <arg name="model" default="burger" doc="robot model type [burger, jackal, ridgeback, agvota, rto, ...]" />
   <arg name="inter_planner" default="bypass" doc="inter planner type [bypass, shortsighted, polite, aggressive, sideways]" />
-  <arg name="local_planner" default="rosnav" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <arg name="local_planner" default="rlca" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <param name="scenario_file" value="4.json" />
   <arg name="simulator" default="flatland" doc="[flatland, gazebo]" />
   <arg name="headless" default="0" doc="0 = show all, 1 = show only rviz, 2 = show nothing" />
   <env name="SIMULATOR" value="$(arg simulator)" />
@@ -38,7 +39,7 @@
   <!-- If the robot_setup_file is specified it is always loaded -->
   <arg name="robot_setup_file" default="" doc="" />
 
-  <arg name="record_data" default="false" />
+  <arg name="record_data" default="true" />
   <arg name="record_data_dir" default="auto:" />
   <param name="record_data_dir" type="str" value="$(arg record_data_dir)" if="$(eval arg('record_data'))"/>
 
@@ -52,8 +53,8 @@
   <param name="complexity" value="$(arg complexity)" />
   
 
-  <arg name="tm_robots" default="random"/>
-  <arg name="tm_obstacles" default="random"/>
+  <arg name="tm_robots" default="scenario" doc="random, scenario"/>
+  <arg name="tm_obstacles" default="scenario" doc="random, scenario"/>
   <arg name="tm_modules" default="" />
   <arg name="benchmark_resume" default="false" />
   

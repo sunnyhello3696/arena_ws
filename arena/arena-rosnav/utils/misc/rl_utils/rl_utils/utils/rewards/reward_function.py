@@ -37,6 +37,7 @@ class RewardFunction:
     _robot_radius: float
     _safe_dist: float
     _goal_radius: float
+    _max_steps: int
 
     # 奖励单位的集中内部状态信息。 例如。 以避免在单个步骤中多次计算相同的参数。
     _internal_state_info: Dict[str, Any]
@@ -52,6 +53,7 @@ class RewardFunction:
         rew_func_name: str,
         robot_radius: float,
         goal_radius: float,
+        max_steps: int,
         safe_dist: float,
         internal_state_updates: List[InternalStateInfoUpdate] = None,
         reward_unit_kwargs: dict = None,
@@ -70,6 +72,7 @@ class RewardFunction:
         self._robot_radius = robot_radius
         self._safe_dist = safe_dist
         self._goal_radius = goal_radius
+        self._max_steps = max_steps
 
         # globally accessible and required information for RewardUnits
         self._internal_state_info: Dict[str, Any] = {}
@@ -229,6 +232,10 @@ class RewardFunction:
     @property
     def goal_radius(self) -> float:
         return self._goal_radius
+    
+    @property
+    def max_steps(self) -> int:
+        return self._max_steps
 
     @goal_radius.setter
     def goal_radius(self, value) -> None:
