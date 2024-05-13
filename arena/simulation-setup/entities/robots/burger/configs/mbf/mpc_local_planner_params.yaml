@@ -2,26 +2,29 @@ MpcLocalPlannerROS:
   robot:
     type: unicycle
     unicycle:
-      max_vel_x: 0.4
-      max_vel_x_backwards: 0.2
-      max_vel_theta: 0.3
-      acc_lim_x: 0.2 # deactive bounds with zero
-      dec_lim_x: 0.2 # deactive bounds with zero
-      acc_lim_theta: 0.2 # deactivate bounds with zero
+      max_vel_x: 1
+      max_vel_x_backwards: 0.2  # 0.2
+      max_vel_theta: 0.3  # 0.3
+      acc_lim_x: 3 # 0.2 deactive bounds with zero
+      dec_lim_x: 0.2 # 0.2 deactive bounds with zero
+      acc_lim_theta: 0.2 # 0.2 deactivate bounds with zero
 
   ## Footprint model for collision avoidance
   footprint_model:
     type: point
     is_footprint_dynamic: false
+  # 如果 is_footprint_dynamic参数设置为false，则表示机器人的足迹是静态的，即认为机器人的形状不会发生变化，并且足迹的几何形状已经事先确定好了。这种情况适用于机器人的形状比较简单并且不容易改变的场景，例如小型差分式移动机器人或者某些无人机。
+
+  # 相反，如果 is_footprint_dynamic参数设置为true，则表示机器人的足迹是动态的，即认为机器人的形状可能会发生变化，例如伸缩臂机械臂、变形机器人等。此时，需要在每次运动前重新计算机器人的足迹，并将其纳入路径规划的约束条件中。
 
   ## Collision avoidance
   collision_avoidance:
     min_obstacle_dist: 0.2 # Note, this parameter must be chosen w.r.t. the footprint_model
-    enable_dynamic_obstacles: false
+    enable_dynamic_obstacles: true  # 表示路径规划库是否启用了动态障碍物的检测和避让
     force_inclusion_dist: 0.5
     cutoff_dist: 2.5
     include_costmap_obstacles: true
-    costmap_obstacles_behind_robot_dist: 1.5
+    costmap_obstacles_behind_robot_dist: 1.0 # 1.5
 
   ## Planning grid
   grid:
@@ -44,10 +47,10 @@ MpcLocalPlannerROS:
     terminal_constraint:
       type: none   # can be "none"
   controller:
-    outer_ocp_iterations: 5
+    outer_ocp_iterations: 5  # 5
     max_global_plan_lookahead_dist: 1.5
     global_plan_viapoint_sep: 5.5
   solver:
     type: ipopt
     lsq_lm:
-      iterations: 10
+      iterations: 10 # 10

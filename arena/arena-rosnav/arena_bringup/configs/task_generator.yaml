@@ -14,8 +14,8 @@ RANDOM:
   # A value of -1 indicates a random seed will be used.
   seed: -1
   static:
-    min: 0
-    max: 0
+    min: 10
+    max: 10
     # models: ["shelf","random","long_shelf","warehouse_shelf","table","pallet"]
     models: ["shelf","random","table","pallet"]
   interactive:
@@ -23,6 +23,6 @@ RANDOM:
     max: 0
     models: ["shelf"]
   dynamic:
-    min: 0
-    max: 0
+    min: 10
+    max: 10
     models: ["actor1"]

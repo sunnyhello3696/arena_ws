@@ -16,7 +16,8 @@ void SpacialHorizon::init(ros::NodeHandle &nh)
     nh.param("fsm/goal_tolerance", goal_tolerance, 0.2);
     nh.param("fsm/subgoal_tolerance", subgoal_tolerance, 0.2);
     nh.param("fsm/subgoal_pub_period", subgoal_pub_period, 0.2);
-    nh.param("fsm/planning_horizon", planning_horizon, 5.0);
+    // nh.param("fsm/planning_horizon", planning_horizon, 5.0);
+    planning_horizon = 3.5;
 
     if (!train_mode)
     {
@@ -60,7 +61,7 @@ void SpacialHorizon::initializeGlobalPlanningService()
 
 void SpacialHorizon::odomCallback(const nav_msgs::OdometryConstPtr &msg)
 {
-    ROS_INFO_STREAM("[Spacial Horizon] Received new odom");
+    // ROS_INFO_STREAM("[Spacial Horizon] Received new odom");
     odom_pos =
         Eigen::Vector2d(msg->pose.pose.position.x, msg->pose.pose.position.y);
     odom_vel =
@@ -72,7 +73,7 @@ void SpacialHorizon::odomCallback(const nav_msgs::OdometryConstPtr &msg)
 // 接收新的导航目标位置，如果已接收到里程计数据，则计算从当前位置到目标位置的全局路径。
 void SpacialHorizon::goalCallback(const geometry_msgs::PoseStampedPtr &msg)
 {
-    ROS_INFO_STREAM("[Spacial Horizon] Received new goal");
+    // ROS_INFO_STREAM("[Spacial Horizon] Received new goal");
 
     end_pos = Eigen::Vector2d(msg->pose.position.x, msg->pose.position.y);
 
@@ -158,7 +159,7 @@ void SpacialHorizon::updateSubgoalCallback(const ros::TimerEvent &e)
     }
     else
     {
-        ROS_INFO_STREAM("[Spacial Horizon] Updating subgoal");
+        // ROS_INFO_STREAM("[Spacial Horizon] Updating subgoal");
 
         if (!has_goal) {
             ROS_WARN("[SpacialHorizon] No goal received yet");

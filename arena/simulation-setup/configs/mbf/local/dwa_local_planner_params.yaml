@@ -2,29 +2,37 @@ controllers:
   - name: DwaLocalPlannerROS
     type: dwa_local_planner/DWAPlannerROS
 
-controller_frequency: 5.0
+controller_frequency: 10.0
 controller_patience: 15.0
 planner_frequency: 1.0
 
 DwaLocalPlannerROS:
   odom_topic: odom
-  sim_time: 1.5
-  vx_samples: 20
+  sim_time: 2.5
+  vx_samples: 25  # 20
   controller_frequency: 5.0
   oscillation_reset_dist: 0.05
   path_distance_bias: 32.0
   goal_distance_bias: 20.0
+  # 提高 path_distance_bias 和 goal_distance_bias 参数：增大路径距离和目标距离的权重
+  # 可以使机器人更快地到达目标点，不过也可能导致机器人过于保守或不够稳定
   occdist_scale: 0.02
-  forward_point_distance: 0.325
-  min_vel_trans: .1
+  forward_point_distance: 0.325  # 0.325
+  min_vel_trans: .2  # 0.1
   acc_lim_y: 2.5
   xy_goal_tolerance: 0.05
   yaw_goal_tolerance: 0.17
   latch_xy_goal_tolerance: false
   vy_samples: 0
-  vth_samples: 40
+  vth_samples: 50 #40  倾向于设置 vtheta_samples高于平移速度方向上的采样点数目，因为通常旋转比直线前进更复杂。
   stop_time_buffer: 0.2
-  scaling_speed: 0.25
-  max_scaling_factor: 0.2
+  scaling_speed: 0.5  # 0.25
+  max_scaling_factor: 0.4  # 0.2
   publish_traj_pc: true
   publish_cost_grid_pc: true
+
+# """
+# 小车运动表现：在规划好路径后，小车会走一个弧线，或者三角形或者S形才到达终点
+# 产生问题猜想：小车并不是正车头对准目的地点后才开始运动，刚开始运动时小车和目的地是有一定偏角的，小车想在运动之中尽可能车头对准目的地点走直线过去。但问题来了，小车开始运动时并没有将车头对准目的地，根据生活中此时应该减速转弯从而走直线到达目的地；同理小车此时也应该是这个动作，故猜想小车走弧线三角形的问题是因为减速度不够大，速度降不下来导致越来越偏。
+# 解决方向：增大DWA中trans_stoped_vel和rol_stopped_vel
+# """

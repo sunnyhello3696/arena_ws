@@ -2,9 +2,9 @@ controllers:
   - name: MpcLocalPlannerROS
     type: mpc_local_planner/MpcLocalPlannerROS
 
-controller_frequency: 5.0
+controller_frequency: 10.0  #5
 controller_patience: 15.0
-planner_frequency: 1.0
+planner_frequency: 0.0  # 1 # 规划器更新频率，设为0表示只在需要时更新
 
 MpcLocalPlannerROS:
   odom_topic: odom
@@ -29,14 +29,19 @@ MpcLocalPlannerROS:
         max_grid_size: 50
   planning:
     objective:
-      quadratic_form:
+      quadratic_form: 
+  # 该参数表示MPC目标函数中的二次项系数矩阵，用于设置不同状态量和控制量的权重。
+  # 可以通过逐步调节权重系数，来平衡机器人的控制目标和约束条件，并使机器人趋于行驶更加稳定和快速。
         state_weights:
         - 2.0
         - 2.0
         - 0.25
         control_weights:
-        - 0.1
-        - 0.05
+# control_weights 表示对机器人控制输入的权重设置，包括 v 和 w 两个控制量。
+# 可以尝试增大 v 的权重，以使机器人在直线行驶时速度更快。
+# 同时，为了防止机器人出现剧烈震荡，需要适当增大 w 的权重。
+        - 0.4   # 0.1
+        - 0.2  # 0.05
         integral_form: false
       minimum_time_via_points: {}
     terminal_cost:
@@ -66,6 +71,9 @@ MpcLocalPlannerROS:
     prefer_x_feedback: false
     publish_ocp_results: false
   solver:
+  # solver.ipopt.iterations 和 solver.lsq_lm.iterations：
+  # 这两个参数分别控制了 IPOPT 和 LSQ-LM 等求解器的最大迭代次数，
+  # 在保证求解精度的前提下，可以适当增加迭代次数，以提高求解速度和优化效果。
     ipopt:
       iterations: 100
       max_cpu_time: -1.0

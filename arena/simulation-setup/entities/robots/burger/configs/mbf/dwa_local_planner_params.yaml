@@ -5,8 +5,8 @@ DwaLocalPlannerROS:
   # # originBot
   # max_vel_x: 0.8
   # turtlebot2
-  max_vel_x: 0.7
-  min_vel_x: -0.2
+  max_vel_x: 3   #1
+  min_vel_x: -1  #-0.2
 
   max_vel_y: 0.0
   min_vel_y: 0.0
@@ -17,17 +17,17 @@ DwaLocalPlannerROS:
   # # originBot
   # max_vel_trans: 0.8
   # turtlebot2
-  max_vel_trans: 0.7
-  min_vel_trans: 0.11
+  max_vel_trans: 1
+  min_vel_trans: 0.2
 
   max_vel_theta: 2.75
   min_vel_theta: 1.37
 
-  acc_lim_x: 2.5
+  acc_lim_x: 2.5 #2.5
   acc_lim_y: 0.0
   acc_lim_theta: 3.2
 
   # Goal Tolerance Parametes
-  controller_frequency: 10.0
+  controller_frequency: 10.0  # 10.0
 
   # Trajectory Scoring Parameters

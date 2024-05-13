@@ -200,7 +200,7 @@ class NN_tb3:
             self.env, obs_state_list, self.policy, self.action_bound
         )
         action = scaled_action[0]
-        action[0] *=  float(rospy.get_param("~max_vel_x", 0.3)) # the maximum speed of cmd_vel
+        action[0] *=  float(0.8) # the maximum speed of cmd_vel
         self.control_vel(action)
         # self.update_action(action)
 
