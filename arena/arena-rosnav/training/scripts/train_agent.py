@@ -12,6 +12,14 @@ from tools.general import generate_agent_name, get_paths, initialize_config, loa
 from tools.model_utils import get_ppo_instance, init_callbacks, save_model
 from tools.ros_param_distributor import populate_ros_params
 
+from tools.model_utils import (
+    get_ppo_instance,
+    init_callbacks,
+    save_model,
+    transfer_feature_extractor_weights,
+    PPO,
+)
+
 
 def on_shutdown(model, paths: dict):
     model.env.close()
