@@ -155,7 +155,28 @@ class AGENT_41(BaseAgent):
         SPACE_INDEX.LAST_ACTION,
     ]
     observation_space_kwargs = {}
-    features_extractor_class = EXTRACTOR_7
+    features_extractor_class = EXTRACTOR_3
+    features_extractor_kwargs = dict(features_dim=256)
+    net_arch = [128, 64, 64]
+    activation_fn = nn.ReLU
+    n_lstm_layers = 4
+    lstm_hidden_size = 128
+    shared_lstm = True
+    enable_critic_lstm = False
+
+# lstm + framestacking
+@AgentFactory.register("AGENT_42")
+class AGENT_42(BaseAgent):
+    type = PolicyType.MLP_LSTM
+    space_encoder_class = ConvexMPCEncoder
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {}
+    features_extractor_class = EXTRACTOR_3
     features_extractor_kwargs = dict(features_dim=256)
     net_arch = [128, 64, 64]
     activation_fn = nn.ReLU

@@ -33,7 +33,7 @@ __all__ = [
     "RewardActionPointsChange",
 ]
 
-if_show_reward = True
+if_show_reward = False
 
 
 @RewardUnitFactory.register("goal_reached")

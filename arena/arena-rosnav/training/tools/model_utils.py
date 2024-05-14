@@ -220,6 +220,10 @@ def instantiate_new_model(
         )
 
     is_lstm = "LSTM" in agent_description.type.name
+    if is_lstm:
+        print("Using LSTM model")
+    else:
+        print("Using non-LSTM model")
     return RecurrentPPO(**ppo_kwargs) if is_lstm else PPO(**ppo_kwargs)
 
 
