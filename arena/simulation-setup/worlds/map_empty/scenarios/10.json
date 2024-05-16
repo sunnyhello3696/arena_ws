@@ -1,0 +1,91 @@
+{
+    "robots": [
+        {
+            "start": [
+                2.32,
+                2.38,
+                0.0
+            ],
+            "goal": [
+                23.46,
+                18.45,
+                0.0
+            ]
+        }
+    ],
+    "obstacles": {
+        "static": [
+            {
+                "name": "3",
+                "pos": [
+                    14.09,
+                    16.56,
+                    0.0
+                ],
+                "model": "shelf"
+            }
+        ],
+        "dynamic": [
+            {
+                "name": "1",
+                "pos": [
+                    17.71,
+                    5.91,
+                    0.0
+                ],
+                "type": "adult",
+                "model": "actor1",
+                "waypoints": [
+                    [
+                        17.71,
+                        5.91,
+                        0.0
+                    ],
+                    [
+                        13.5,
+                        11.97,
+                        0.0
+                    ],
+                    [
+                        5.78,
+                        15.3,
+                        0.0
+                    ]
+                ],
+                "waypoint_mode": 1
+            },
+            {
+                "name": "2",
+                "pos": [
+                    11.4,
+                    3.93,
+                    0.0
+                ],
+                "type": "adult",
+                "model": "actor1",
+                "waypoints": [
+                    [
+                        11.4,
+                        3.93,
+                        0.0
+                    ],
+                    [
+                        16.66,
+                        11.16,
+                        0.0
+                    ],
+                    [
+                        24.13,
+                        11.9,
+                        0.0
+                    ]
+                ],
+                "waypoint_mode": 1
+            }
+        ],
+        "interactive": []
+    },
+    "resets": 0,
+    "map_path": "map/map.yaml",
+    "format": "arena-tools"
+}

@@ -33,7 +33,7 @@ __all__ = [
     "RewardActionPointsChange",
 ]
 
-if_show_reward = False
+if_show_reward = True
 
 
 @RewardUnitFactory.register("goal_reached")
@@ -899,7 +899,7 @@ class RewardActionPointsChange(RewardUnit):
         self.last_action_points = None
         if if_show_reward:
             print("ActionPointsChange reward:", self._sum_reward)
-            print("====================================")
+            print("=======================================")
             self._sum_reward = 0
 
 

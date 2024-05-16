@@ -1,5 +1,5 @@
 # Wether you want to show or save the plots
-show_plots: true
+show_plots: false
 # Name of the directory in ./path
 save_location: convex_eval_plots
 
@@ -7,7 +7,7 @@ save_location: convex_eval_plots
 # Name of the directory in ./data
 datasets:
   [
-    "24-05-13_20-01-54/burger",
+    "24-05-16_09-21-52/burger",
   ]
 
 # Wether you want to plot the result counts
