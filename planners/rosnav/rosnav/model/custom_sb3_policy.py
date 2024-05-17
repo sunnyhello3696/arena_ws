@@ -466,6 +466,8 @@ class AGENT_91(BaseAgent):
     ]
     observation_space_kwargs = {
         "convex_map_size": 128,
+        "normalize": True,
+        "norm_func": "max_abs_scaling",
     }
     features_extractor_class = ConvexExtractor_2d_with_ActPts
     features_extractor_kwargs = {"features_dim": 256}

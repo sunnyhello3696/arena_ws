@@ -41,7 +41,7 @@ void sparse_scan(Result2& res,const Points& scans_xy, double drad);
 
 bool is_in_convex(const Point& p,const Points& convex,bool is_clock_wise);
 
-bool galaxy_xyin_360out(Result3& res,const Points& scans_xy,int max_vertex_num,double origin_x, double origin_y, double radius);
+bool galaxy_xyin_360out(Result3& res,const Points& scans_xy,int max_vertex_num,double origin_x, double origin_y, double radius, bool if_evenly_convex);
 
 void Q_equitable_distribution(std::vector<int>& res,std::vector<double>& arr,int n);
 

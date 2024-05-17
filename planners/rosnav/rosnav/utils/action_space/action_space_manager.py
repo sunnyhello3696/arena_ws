@@ -122,8 +122,9 @@ class ActionSpaceManager:
                 dtype=np.float32,
             )
         else:
+            low_limit = np.array([0 if i % 2 == 0 else 0.25 for i in range(self._action_points_num)])
             return spaces.Box(
-                low=np.array([0] * self._action_points_num),
+                low=low_limit,
                 high=np.array([1] * self._action_points_num),
                 dtype=np.float32,
             )

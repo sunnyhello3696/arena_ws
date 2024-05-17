@@ -4,6 +4,7 @@
   <env name="ARENA_TYPE" value="deployment" />
 
   <param name="if_viz" value="true" />
+  <param name="if_evenly_convex" value="true" />
   <param name="max_vertex_num" value="120" />
   <param name="if_compute_convex" value="false" />
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />

@@ -37,6 +37,63 @@ double NormalizeAngleTo2Pi(double d_theta) {
 }
 
 
+// Function to evenly distribute points in polar coordinates using linear interpolation
+bool evenlyDistributePoints(const std::vector<float>& polar_convex,
+                            const std::vector<float>& polar_convex_theta,
+                            std::vector<float>& evenly_polar_convex,
+                            std::vector<float>& evenly_polar_convex_theta,
+                            int num_points) {
+    if (polar_convex.size() != polar_convex_theta.size()) {
+        ROS_ERROR("Input vectors must have the same size.");
+        return false;
+    }
+    
+    if (num_points <= 0) {
+        ROS_ERROR("Number of points must be positive.");
+        return false;
+    }
+    
+    int n = polar_convex.size();
+    float angle_step = 2 * M_PI / num_points;
+
+    evenly_polar_convex.clear();
+    evenly_polar_convex_theta.clear();
+
+    for (int i = 0; i < num_points; ++i) {
+        float target_angle = i * angle_step;
+
+        // Find the two closest points in the original data
+        float angle_diff_min = std::numeric_limits<float>::max();
+        int closest_index_1 = -1;
+        int closest_index_2 = -1;
+        for (int j = 0; j < n; ++j) {
+            float angle_diff = std::abs(polar_convex_theta[j] - target_angle);
+            if (angle_diff < angle_diff_min) {
+                angle_diff_min = angle_diff;
+                closest_index_1 = j;
+                closest_index_2 = (j + 1) % n;
+            }
+        }
+
+        // Perform linear interpolation
+        float t = (target_angle - polar_convex_theta[closest_index_1]) /
+                  (polar_convex_theta[closest_index_2] - polar_convex_theta[closest_index_1]);
+
+        float interpolated_radius = polar_convex[closest_index_1] +
+                                     t * (polar_convex[closest_index_2] - polar_convex[closest_index_1]);
+
+        evenly_polar_convex.push_back(interpolated_radius);
+        evenly_polar_convex_theta.push_back(target_angle);
+    }
+
+    // Check output dimensions
+    if (evenly_polar_convex.size() != num_points || evenly_polar_convex_theta.size() != num_points) {
+        ROS_ERROR("Output vector dimensions do not match the expected number of points.");
+        return false;
+    }
+
+    return true;
+}
 
 double cal_cross_product(const Point& p1, const Point& p2, const Point& p3)
 {
@@ -199,7 +256,7 @@ void Q_equitable_distribution(std::vector<int>& res,std::vector<double>& arr,int
 }
 
 
-bool galaxy_xyin_360out(Result3& res,const Points& scans_xy,int max_vertex_num,double origin_x = 0.0, double origin_y = 0.0, double radius = 10.0)
+bool galaxy_xyin_360out(Result3& res,const Points& scans_xy,int max_vertex_num,double origin_x = 0.0, double origin_y = 0.0, double radius = 10.0,bool if_evenly_convex = false)
 {
     int lidar_num = scans_xy.size();
     // double drad = 2 * M_PI / lidar_num;
@@ -400,6 +457,9 @@ bool galaxy_xyin_360out(Result3& res,const Points& scans_xy,int max_vertex_num,d
 
     std::vector<float> polar_convex;
     std::vector<float> polar_convex_theta;
+    std::vector<float> evenly_polar_convex;
+    std::vector<float> evenly_polar_convex_theta;
+
     // 將角度變爲0-2pi，並找到角度最小且大於0角的索引
     int first_pos = -1;
     float min_pos_theta = 2*M_PI;
@@ -478,9 +538,16 @@ bool galaxy_xyin_360out(Result3& res,const Points& scans_xy,int max_vertex_num,d
         polygon.points.emplace_back(p);
     }
 
-    // polygon：它由一系列点组成，这些点定义了多边形的顶点。在这段代码中，polygon 的顶点来自 convex 向量，其中每个顶点由一个 geometry_msgs::Point32 类型的对象表示。Point32 对象包含三个浮点数字段 x, y, z，在这种情况下只使用 x 和 y 来表示二维空间中的点。
-    // polar_convex、polar_convex_theta：极坐标下的距离、角度。相比于convex，polar_convex已经根据max_vertex_num计算重新Q分配后的点
-    res = std::tie(polygon,polar_convex,polar_convex_theta);
-    
+    if (if_evenly_convex && evenlyDistributePoints(polar_convex, polar_convex_theta,
+                               evenly_polar_convex, evenly_polar_convex_theta,
+                               max_vertex_num)) {
+        // polygon：它由一系列点组成，这些点定义了多边形的顶点。在这段代码中，polygon 的顶点来自 convex 向量，其中每个顶点由一个 geometry_msgs::Point32 类型的对象表示。Point32 对象包含三个浮点数字段 x, y, z，在这种情况下只使用 x 和 y 来表示二维空间中的点。
+        // polar_convex、polar_convex_theta：极坐标下的距离、角度。相比于convex，polar_convex已经根据max_vertex_num计算重新Q分配后的点
+        res = std::tie(polygon,evenly_polar_convex,evenly_polar_convex_theta);  
+    } else {
+        // polygon：它由一系列点组成，这些点定义了多边形的顶点。在这段代码中，polygon 的顶点来自 convex 向量，其中每个顶点由一个 geometry_msgs::Point32 类型的对象表示。Point32 对象包含三个浮点数字段 x, y, z，在这种情况下只使用 x 和 y 来表示二维空间中的点。
+        // polar_convex、polar_convex_theta：极坐标下的距离、角度。相比于convex，polar_convex已经根据max_vertex_num计算重新Q分配后的点
+        res = std::tie(polygon,polar_convex,polar_convex_theta);
+    }
     return true;
 }

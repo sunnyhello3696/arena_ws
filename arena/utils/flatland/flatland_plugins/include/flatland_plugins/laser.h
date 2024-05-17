@@ -87,6 +87,7 @@ class Laser : public ModelPlugin {
   ThreadPool pool_;       ///< ThreadPool for managing concurrent scan threads
   bool if_viz;
   bool if_compute_convex;
+  bool if_evenly_convex;
   int max_vertex_num;
   /*
    * for setting reflectance layers. if the laser hits those layers,

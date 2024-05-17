@@ -50,6 +50,7 @@ class LastActionPointsSpace(BaseObservationSpace):
                 _spaces.append(spaces.Box(low=-np.pi, high=np.pi, shape=(1,), dtype=np.float32))
         return stack_spaces(*_spaces)
 
+    @BaseObservationSpace.apply_normalization
     def encode_observation(self, observation: dict, *args, **kwargs) -> ndarray:
         """
         Encodes the observation by extracting the last action from the observation dictionary.

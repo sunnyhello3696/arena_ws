@@ -70,6 +70,8 @@ void Laser::OnInitialize(const YAML::Node &config) {
 
   if_viz = false; // 定义一个变量来存储参数值
   nh_.getParam("/if_viz", if_viz); // 传递变量作为引用
+  if_evenly_convex = false; // 定义一个变量来存储参数值
+  nh_.getParam("/if_evenly_convex", if_evenly_convex); // 传递变量作为引用
   max_vertex_num = 120;
   nh_.getParam("/max_vertex_num", max_vertex_num); // 传递变量作为引用
   if_compute_convex = false;
@@ -161,7 +163,7 @@ void Laser::AfterPhysicsStep(const Timekeeper &timekeeper) {
       // convex publisher
       bool is_collision = process_scan_msg(laser_scan_,scans_xy);
 
-      if(galaxy_xyin_360out(res, scans_xy,max_vertex_num,0,0,15.0))
+      if(galaxy_xyin_360out(res, scans_xy,max_vertex_num,0,0,15.0,if_evenly_convex))
       {
         g2dres.success.data = true;
         g2dres.scans = laser_scan_.ranges;

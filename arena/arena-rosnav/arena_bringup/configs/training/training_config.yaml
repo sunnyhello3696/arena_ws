@@ -65,9 +65,9 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_97"
+  architecture_name: "AGENT_91"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
-  resume: "burger_AGENT_97_2024_05_14__11_30_56"
+  # resume: "burger_AGENT_97_2024_05_14__11_30_56"
   resume: null
   checkpoint: "best_model" # gonna be ignored if resume is not null
 
@@ -91,7 +91,7 @@ rl_agent:
   normalize:
     enabled: true
     settings:
-      norm_obs: true
+      norm_obs: false
       norm_reward: false # Whether to normalize rewards or not
       clip_obs: 30.0 # Max absolute value for observation
       clip_reward: 30.0 # Max value absolute for discounted reward
@@ -106,7 +106,7 @@ rl_agent:
   action_space:
     normalize_points: 
       enabled: true # normalize points_num action points to [0, 1] and no continuous and discrete action space
-      action_points_num: 1
+      action_points_num: 2
     discrete: false
     custom_discretization: # only used if discrete is true, otherwise ignored
       enabled: true

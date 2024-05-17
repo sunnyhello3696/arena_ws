@@ -5,6 +5,7 @@
   <param name="local_planner" value="rosnav" />
 
   <param name="if_viz" value="true" />
+  <param name="if_evenly_convex" value="true" />
   <param name="max_vertex_num" value="120" />
   <param name="if_compute_convex" value="true" />
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
@@ -12,7 +13,7 @@
 
   <!-- Here are the argument that may be frequently changed -->
   <arg name="ns_prefix" default="sim" />
-  <arg name="num_envs" default="10" />
+  <arg name="num_envs" default="1" />
 
   <param name="single_env" value="false" />
 
