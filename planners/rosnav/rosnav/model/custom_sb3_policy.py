@@ -147,7 +147,15 @@ class AGENT_39(BaseAgent):
 @AgentFactory.register("AGENT_41")
 class AGENT_41(BaseAgent):
     type = PolicyType.MLP_LSTM
-    features_extractor_class = EXTRACTOR_7
+    space_encoder_class = DefaultEncoder
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {}
+    features_extractor_class = EXTRACTOR_3
     features_extractor_kwargs = dict(features_dim=256)
     net_arch = [128, 64, 64]
     activation_fn = nn.ReLU
@@ -156,6 +164,39 @@ class AGENT_41(BaseAgent):
     shared_lstm = True
     enable_critic_lstm = False
 
+# lstm + framestacking
+@AgentFactory.register("AGENT_42")
+class AGENT_42(BaseAgent):
+    type = PolicyType.MLP_LSTM
+    space_encoder_class = ConvexMPCEncoder
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+    ]
+    observation_space_kwargs = {}
+    features_extractor_class = EXTRACTOR_3
+    features_extractor_kwargs = dict(features_dim=256)
+    net_arch = [128, 64, 64]
+    activation_fn = nn.ReLU
+    n_lstm_layers = 4
+    lstm_hidden_size = 128
+    shared_lstm = True
+    enable_critic_lstm = False
+
+# lstm + framestacking
+@AgentFactory.register("AGENT_45")
+class AGENT_45(BaseAgent):
+    type = PolicyType.MLP_LSTM
+    features_extractor_class = EXTRACTOR_7
+    features_extractor_kwargs = dict(features_dim=256)
+    net_arch = [128, 64, 64]
+    activation_fn = nn.ReLU
+    n_lstm_layers = 4
+    lstm_hidden_size = 128
+    shared_lstm = True
+    enable_critic_lstm = False
 
 # lstm + framestacking
 @AgentFactory.register("AGENT_52")
@@ -425,6 +466,8 @@ class AGENT_91(BaseAgent):
     ]
     observation_space_kwargs = {
         "convex_map_size": 128,
+        "normalize": True,
+        "norm_func": "max_abs_scaling",
     }
     features_extractor_class = ConvexExtractor_2d_with_ActPts
     features_extractor_kwargs = {"features_dim": 256}
@@ -534,6 +577,27 @@ class AGENT_96(BaseAgent):
     features_extractor_class = ConvexExtractor_2d_with_ActPts
     features_extractor_kwargs = {"features_dim": 256}
     net_arch = dict(pi=[256, 128, 64], vf=[256, 128, 64])
+    activation_fn = nn.ReLU
+
+@AgentFactory.register("AGENT_97")
+class AGENT_97(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexMPCEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+        SPACE_INDEX.LAST_ACTION_POINTS,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+    }
+    features_extractor_class = ConvexExtractor_2d_with_ActPts
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[128, 64, 64], vf=[128, 64, 64])
     activation_fn = nn.ReLU
 
 @AgentFactory.register("AGENT_100")

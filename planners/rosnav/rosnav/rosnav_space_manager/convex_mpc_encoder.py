@@ -120,6 +120,7 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
         self.angle_or_last_pt = bool(cfg['mpc']['angle_or_last_pt'])
         self.last_pt_include_reward_cal = bool(cfg['mpc']['last_pt_include_reward_cal'])
         self.if_reduce_angle_sample = bool(cfg['mpc']['if_reduce_angle_sample'])
+        self._fix_sample_region = bool(cfg['mpc']['fix_sample_region'])
         xmin = np.array(cfg['mpc']['xmin1']).astype(np.float32)
         xmax = np.array(cfg['mpc']['xmax1']).astype(np.float32)
         umin = np.array(cfg['mpc']['umin1']).astype(np.float32)
@@ -442,6 +443,17 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
                 g2d_convex_vertex.append((scans[di*i]*np.cos(g2d_polar_convex_theta[i]),scans[di*i]*np.sin(g2d_polar_convex_theta[i])))
                 g2d_polar_convex.append(scans[di*i])
 
+        if self._fix_sample_region:
+            g2d_cal_success = False
+            g2d_convex_vertex = []
+            g2d_polar_convex = []
+            g2d_polar_convex_theta = [i*2*np.pi/self._max_vertex_num for i in range(self._max_vertex_num)]
+            # 0-359
+            di = int(self.laser_num_beams/self._max_vertex_num)
+            for i in range(self._max_vertex_num):
+                g2d_convex_vertex.append((self._laser_max_range*np.cos(g2d_polar_convex_theta[i]),self._laser_max_range*np.sin(g2d_polar_convex_theta[i])))
+                g2d_polar_convex.append(self._laser_max_range)
+
         obs_dict_d86 = {
             "laser_scan": np.array(scans),
             "robot_world_pose": self._robot_pose,
@@ -475,13 +487,18 @@ class ConvexMPCEncoder(BaseSpaceEncoder):
 
             # 初始化当前时间间隔的可行空间
             current_feasible_space = []
-            
-            if g2d_cal_success:
-                for dist in g2d_polar_convex:
-                    current_feasible_space.append(min(dist, feasible_dist))
+
+            if not self._fix_sample_region:
+                if g2d_cal_success:
+                    for dist in g2d_polar_convex:
+                        current_feasible_space.append(min(dist, feasible_dist))
+                else:
+                    for dist in scans:
+                        current_feasible_space.append(min(dist, feasible_dist))
+
             else:
-                for dist in scans:
-                    current_feasible_space.append(min(dist, feasible_dist))
+                for i in range(self._max_vertex_num):
+                    current_feasible_space.append(feasible_dist)
 
             # 将当前时间间隔的可行空间添加到总列表中
             feasible_spaces.append(current_feasible_space)

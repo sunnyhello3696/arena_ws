@@ -1,1 +1,54 @@
 robot_frame: $(arg frame)base_footprint
+
+
+recovery_behaviors:
+  enabled: true
+  behaviors:
+    - clear_costmap_recovery
+    - rotate_recovery
+    - aggressive_linear_backup
+    - name: "rotate_recovery"
+      type: "rotate_recovery/RotateRecovery"
+      max_time: 5.0
+      min_abs_angular_z: 0.4
+      min_abs_linear_x: 0.1
+      min_obstacle_distance: 0.5
+      z_timeout: 0.5
+      xy_timeout: 0.5
+      clearing_rotation_allowed: true
+      clearing_distance: 0.5
+      clearing_rotation: 0.5
+    - name: "clear_costmap_recovery"
+      type: "clear_costmap_recovery/ClearCostmapRecovery"
+      reset_distance: 3.0
+      reset_time: 10.0
+      force_updating: true
+      stopping_distance: 0.5
+      max_costmap_removal_distance: 3.0
+      max_costmap_removal_time: 10.0
+      max_iterations: 100
+      max_time: 10.0
+      min_obstacle_distance: 0.5
+      z_timeout: 0.5
+      xy_timeout: 0.5
+      clearing_rotation_allowed: true
+      clearing_distance: 0.5
+      clearing_rotation: 0.5
+    - name: "move_slow_and_clear"
+      type: "move_slow_and_clear/MoveSlowAndClear"
+      clearing_distance: 0.5
+      clearing_rotation: 0.5
+      max_distance: 0.5
+      min_distance: 0.1
+      speed: 0.1
+      z_timeout: 0.5
+      xy_timeout: 0.5
+      clearing_rotation_allowed: true
+    - name: "back_up"
+      type: "back_up/BackUp"
+      max_time: 5.0
+      min_distance: 0.1
+      speed: 0.1
+      z_timeout: 0.5
+      xy_timeout: 0.5
+      clearing_rotation_allowed: true

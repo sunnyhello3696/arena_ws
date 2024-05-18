@@ -79,7 +79,7 @@ void SpacialHorizon::goalCallback(const geometry_msgs::PoseStampedPtr &msg)
 
     if (!has_odom)
     {
-        ROS_WARN("[SpacialHorizon] Received goal before receiving odom");
+        // ROS_WARN("[SpacialHorizon] Received goal before receiving odom");
         return;
     }
 
@@ -162,7 +162,7 @@ void SpacialHorizon::updateSubgoalCallback(const ros::TimerEvent &e)
         // ROS_INFO_STREAM("[Spacial Horizon] Updating subgoal");
 
         if (!has_goal) {
-            ROS_WARN("[SpacialHorizon] No goal received yet");
+            // ROS_WARN("[SpacialHorizon] No goal received yet");
             return;
         }
         Eigen::Vector2d subgoal;
@@ -191,7 +191,7 @@ void SpacialHorizon::updateSubgoalCallback(const ros::TimerEvent &e)
         pose_stamped.pose.position.y = subgoal(1);
         pose_stamped.pose.position.z = 0.0;
 
-        ROS_INFO_STREAM("[Spacial Horizon] Publishing new subgoal");
+        // ROS_INFO_STREAM("[Spacial Horizon] Publishing new subgoal");
 
         pub_subgoal.publish(pose_stamped);
     }

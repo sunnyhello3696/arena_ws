@@ -46,8 +46,8 @@ class ConvexSpace(BaseObservationSpace):
         self.xy_resolution = (self.lidar_max_range*2)/self.map_size
         self.scale_factor = 1.0
 
-        self._space = self.get_gym_space()
         self.enable_rviz = False
+        super().__init__(*args, **kwargs)
 
         # if debug mode
         if rospy.get_param("/debug_mode", False):
@@ -82,6 +82,7 @@ class ConvexSpace(BaseObservationSpace):
             dtype=np.float32,
         )
 
+    @BaseObservationSpace.apply_normalization
     def encode_observation(self, observation: Dict[str, Any], *args, **kwargs) -> ndarray:
         """
         Encodes the laser scan observation.
