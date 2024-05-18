@@ -276,28 +276,28 @@ void ControllerAction::runImpl(GoalHandle &goal_handle, AbstractControllerExecut
         break;
 
       case AbstractControllerExecution::GOT_LOCAL_CMD:
-        // if (!oscillation_timeout.isZero())
-        // {
-        //   // check if oscillating
-        //   if (mbf_utility::distance(robot_pose_, oscillation_pose) >= oscillation_distance ||
-        //       mbf_utility::angle(robot_pose_, oscillation_pose) >= oscillation_angle)
-        //   {
-        //     last_oscillation_reset = ros::Time::now();
-        //     oscillation_pose = robot_pose_;
-        //   }
-        //   else if (last_oscillation_reset + oscillation_timeout < ros::Time::now())
-        //   {
-        //     ROS_WARN_STREAM_NAMED(name_, "The controller is oscillating for "
-        //         << (ros::Time::now() - last_oscillation_reset).toSec() << "s");
+        if (!oscillation_timeout.isZero())
+        {
+          // check if oscillating
+          if (mbf_utility::distance(robot_pose_, oscillation_pose) >= oscillation_distance ||
+              mbf_utility::angle(robot_pose_, oscillation_pose) >= oscillation_angle)
+          {
+            last_oscillation_reset = ros::Time::now();
+            oscillation_pose = robot_pose_;
+          }
+          else if (last_oscillation_reset + oscillation_timeout < ros::Time::now())
+          {
+            ROS_WARN_STREAM_NAMED(name_, "The controller is oscillating for "
+                << (ros::Time::now() - last_oscillation_reset).toSec() << "s");
 
-        //     execution.cancel();
-        //     controller_active = false;
-        //     fillExePathResult(mbf_msgs::ExePathResult::OSCILLATION, "Oscillation detected!", result);
-        //     goal_handle.setAborted(result, result.message);
-        //     break;
-        //   }
-        // }
-        // publishExePathFeedback(goal_handle, execution.getOutcome(), execution.getMessage(), execution.getVelocityCmd());
+            execution.cancel();
+            controller_active = false;
+            fillExePathResult(mbf_msgs::ExePathResult::OSCILLATION, "Oscillation detected!", result);
+            goal_handle.setAborted(result, result.message);
+            break;
+          }
+        }
+        publishExePathFeedback(goal_handle, execution.getOutcome(), execution.getMessage(), execution.getVelocityCmd());
         break;
 
       case AbstractControllerExecution::ARRIVED_GOAL:

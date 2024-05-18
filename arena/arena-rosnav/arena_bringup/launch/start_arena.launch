@@ -19,7 +19,7 @@
   <!-- You can launch a single robot and his local_planner with arguments -->
   <arg name="model" default="burger" doc="robot model type [burger, jackal, ridgeback, agvota, rto, ...]" />
   <arg name="inter_planner" default="bypass" doc="inter planner type [bypass, shortsighted, polite, aggressive, sideways]" />
-  <arg name="local_planner" default="rlca" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <arg name="local_planner" default="teb" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
   <param name="scenario_file" value="4.json" />
   <arg name="simulator" default="flatland" doc="[flatland, gazebo]" />
   <arg name="headless" default="0" doc="0 = show all, 1 = show only rviz, 2 = show nothing" />
@@ -39,7 +39,8 @@
   <!-- If the robot_setup_file is specified it is always loaded -->
   <arg name="robot_setup_file" default="" doc="" />
 
-  <arg name="record_data" default="true" />
+  <!-- 是否记录数据 -->
+  <arg name="record_data" default="false" />  
   <arg name="record_data_dir" default="auto:" />
   <param name="record_data_dir" type="str" value="$(arg record_data_dir)" if="$(eval arg('record_data'))"/>
 
@@ -52,14 +53,14 @@
 
   <param name="complexity" value="$(arg complexity)" />
   
-
+  <!-- mode -->
   <arg name="tm_robots" default="scenario" doc="random, scenario"/>
   <arg name="tm_obstacles" default="scenario" doc="random, scenario"/>
   <arg name="tm_modules" default="" />
   <arg name="benchmark_resume" default="false" />
   
   <arg name="visualization" default="rviz" doc="[rviz, flatland]" />
-  <arg name="show_rviz" default="true" doc="Enables rviz in gazebo" />
+  <arg name="show_rviz" default="false" doc="Enables rviz in gazebo" />
   <arg name="rviz_file" default="nav_flatland_s20d20"/>
   
   <arg name="auto_reset" default="true"/>
@@ -166,8 +167,8 @@
     </include>
   </group>
 
-  <node type="create_config_file.py" pkg="rviz_utils" name="rviz_config_file_creator" />
+  <!-- <node type="create_config_file.py" pkg="rviz_utils" name="rviz_config_file_creator" />
   
-  <node type="visualize_robot_model.py" pkg="rviz_utils" name="visualize_robot_model" output="screen" />
+  <node type="visualize_robot_model.py" pkg="rviz_utils" name="visualize_robot_model" output="screen" /> -->
 
 </launch>

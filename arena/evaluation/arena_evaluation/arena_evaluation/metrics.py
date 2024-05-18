@@ -73,17 +73,19 @@ class PedsimMetric(Metric, typing.TypedDict):
 
 class Config:
     TIMEOUT_TRESHOLD = 75
-    MAX_COLLISIONS = 3
+    MAX_COLLISIONS = 1
     MIN_EPISODE_LENGTH = 5
     
     PERSONAL_SPACE_RADIUS = 1 # personal space is estimated at around 1'-4'
     ROBOT_GAZE_ANGLE = np.radians(5) # size of (one half of) direct robot gaze cone
     PEDESTRIAN_GAZE_ANGLE = np.radians(5) # size of (one half of) direct ped gaze cone
-
+    # 表示机器人或行人注视方向的角度范围
+    # np.radians() 是 NumPy 库中的一个函数，用于将角度值转化为弧度值
 class Math:
 
     @classmethod
     def round_values(cls, values, digits=3):
+        # 保留有效数字
         return [round(v, digits) for v in values]
 
     @classmethod

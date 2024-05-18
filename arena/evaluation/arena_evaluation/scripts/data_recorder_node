@@ -31,14 +31,16 @@ from tf.transformations import euler_from_quaternion
 
 class DataCollector:
     def __init__(self, topic):
-        topic_callbacks = [
+        topic_callbacks = [ # list 列表
             ("scan", self.laserscan_callback),
             ("odom", self.odometry_callback),
             ("cmd_vel", self.action_callback),
             ("pedsim_agents_data", self.pedsim_callback)
         ]
 
+        # 我们尝试从这个列表中找到与当前主题名称匹配的回调函数，并将它赋值给变量 callback。
         try:
+            # 创建一个 lambda 匿名函数来执行特定主题名称对应的回调函数。
             callback = lambda msg: [t[1] for t in topic_callbacks if t[0] == topic[1]][0](msg)
         except:
             traceback.print_exc()
@@ -49,6 +51,7 @@ class DataCollector:
 
         print(topic[0])
 
+        # 创建ROS订阅对象
         self.subscriber = rospy.Subscriber(topic[0], topic[2], callback)
 
     def episode_callback(self, msg_scenario_reset):
@@ -56,8 +59,38 @@ class DataCollector:
         
         self.data = msg_scenario_reset.data
 
-    def laserscan_callback(self, msg_laserscan: LaserScan):
+    def laserscan_callback(self, msg_laserscan: LaserScan):  # 类型注释 表示输入参数 msg_laserscan 应该是一个类型为 LaserScan 的 ROS 消息对象。
+        """
+        三目运算符 ... if ... else ... 的详细用法:
+            # 使用 if-else 语句
+            if x > y:
+                z = x
+            else:
+                z =e
+            # 使用三目运算符
+            z = x if x > y else y
+    列表推导式:[... for val in msg_laserscan.ranges],这是一种快速生成列表的方法。
+
+    round()函数用于将一个数字保留指定位数的小数,math.isnan()函数用于判断一个值是否为 NaN。
+    在这段代码中，先使用 math.isnan() 函数判断当前值是否为NaN,如果是,
+    则返回msg_laserscan.range_max的值;否则,对当前值进行保留3位小数后返回。
+
+    所以该语句的作用是:使用三目运算符对当前值是否为NaN进行判断,如果是,
+    则返回 msg_laserscan.range_max 的值;否则,返回保留3位小数后的val值
+    
+    注:NaN 是英文 "Not a Number" 的缩写，表示不是一个数字
+    NaN 值通常出现在以下情况中：
+    计算结果未定义或不确定。
+    进行非法操作，如对负数求平方根、除以零等。
+    数据类型错误或类型不匹配。
+        """
         self.data = [msg_laserscan.range_max if math.isnan(val) else round(val, 3) for val in msg_laserscan.ranges]
+
+    # 使用列表推导式遍历 Laserscan 消息中的每个 range 值。
+    # 如果 range 值为 NaN，将其替换为 range_max 的值。
+    # 如果 range 值为数字，保留3位小数并添加到数据列表中。
+    # 最后将数据列表赋值给订阅者节点对象中的 data 变量。
+
 
     def odometry_callback(self, msg_odometry: Odometry):
         pose3d = msg_odometry.pose.pose
