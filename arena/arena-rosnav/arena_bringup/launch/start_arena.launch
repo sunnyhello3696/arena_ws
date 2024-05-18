@@ -6,7 +6,9 @@
   <param name="if_viz" value="true" />
   <param name="if_evenly_convex" value="true" />
   <param name="max_vertex_num" value="120" />
-  <param name="if_compute_convex" value="false" />
+  <param name="if_compute_convex" value="true" />
+  <param name="action_dis_min" value="0.25" />
+  
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
   <param name="debug_mode" value="true" />
   <arg name="desired_resets" default="10" />

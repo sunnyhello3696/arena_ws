@@ -2,6 +2,8 @@ import numpy as np
 
 from gymnasium import spaces
 
+import rospy
+
 
 class ActionSpaceManager:
     """
@@ -45,6 +47,7 @@ class ActionSpaceManager:
         self._stacked = stacked
         self._normalize_points = normalize_points
         self._action_points_num = action_points_num*2
+        self._action_dis_min = rospy.get_param_cached("action_dis_min", 0.0)
 
         self._space = self.get_action_space()
 
@@ -122,7 +125,7 @@ class ActionSpaceManager:
                 dtype=np.float32,
             )
         else:
-            low_limit = np.array([0 if i % 2 == 0 else 0.25 for i in range(self._action_points_num)])
+            low_limit = np.array([0 if i % 2 == 0 else self._action_dis_min for i in range(self._action_points_num)])
             return spaces.Box(
                 low=low_limit,
                 high=np.array([1] * self._action_points_num),
