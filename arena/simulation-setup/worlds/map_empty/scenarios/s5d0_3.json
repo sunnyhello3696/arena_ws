@@ -1,0 +1,70 @@
+{
+    "robots": [
+        {
+            "start": [
+                4.31,
+                21.78,
+                0.0
+            ],
+            "goal": [
+                26.83,
+                3.38,
+                0.0
+            ]
+        }
+    ],
+    "obstacles": {
+        "static": [
+            {
+                "name": "1",
+                "pos": [
+                    8.16,
+                    5.69,
+                    0.0
+                ],
+                "model": "shelf"
+            },
+            {
+                "name": "2",
+                "pos": [
+                    12.05,
+                    14.46,
+                    0.0
+                ],
+                "model": "shelf"
+            },
+            {
+                "name": "3",
+                "pos": [
+                    20.52,
+                    17.43,
+                    0.0
+                ],
+                "model": "shelf"
+            },
+            {
+                "name": "4",
+                "pos": [
+                    16.07,
+                    6.43,
+                    0.0
+                ],
+                "model": "shelf"
+            },
+            {
+                "name": "5",
+                "pos": [
+                    21.26,
+                    10.26,
+                    0.0
+                ],
+                "model": "shelf"
+            }
+        ],
+        "dynamic": [],
+        "interactive": []
+    },
+    "resets": 0,
+    "map_path": "map/map.yaml",
+    "format": "arena-tools"
+}

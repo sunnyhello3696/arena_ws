@@ -323,7 +323,7 @@ class Metrics:
 
             episode = index,
 
-            result = self._get_success(time, collision_amount),
+            result = self._get_success(time, collision_amount, positions, goal_position),
             cmd_vel = list(map(list, episode["cmd_vel"].to_list())),
             goal = goal_position,
             start = start_position
@@ -372,7 +372,10 @@ class Metrics:
 
         return collisions
 
-    def _get_success(self, time, collisions):
+    def _get_success(self, time, collisions, positions, goal_position):
+        if np.linalg.norm(positions[-1] - goal_position) < 1.0:
+            return DoneReason.GOAL_REACHED
+        
         if time >= Config.TIMEOUT_TRESHOLD:
             return DoneReason.TIMEOUT
 

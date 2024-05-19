@@ -43,7 +43,7 @@
   <arg name="robot_setup_file" default="" doc="" />
 
   <!-- 是否记录数据 -->
-  <arg name="record_data" default="false" />  
+  <arg name="record_data" default="true" />  
   <arg name="record_data_dir" default="auto:" />
   <param name="record_data_dir" type="str" value="$(arg record_data_dir)" if="$(eval arg('record_data'))"/>
 
@@ -57,8 +57,8 @@
   <param name="complexity" value="$(arg complexity)" />
   
   <!-- mode -->
-  <arg name="tm_robots" default="scenario" doc="random, scenario"/>
-  <arg name="tm_obstacles" default="scenario" doc="random, scenario"/>
+  <arg name="tm_robots" default="random" doc="random, scenario"/>
+  <arg name="tm_obstacles" default="random" doc="random, scenario"/>
   <arg name="tm_modules" default="" />
   <arg name="benchmark_resume" default="false" />
   

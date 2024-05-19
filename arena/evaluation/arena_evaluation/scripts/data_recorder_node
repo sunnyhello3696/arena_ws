@@ -108,16 +108,23 @@ class DataCollector:
                             pose3d.orientation.z,
                             pose3d.orientation.w
                         ]
-                    )[2]
+                    )[2] # 在将四元数转换为欧拉角时，使用了[2]来获取机器人绕z轴的旋转角度。
                 ]
             ],
             "velocity": [
-                round(val, 3) for val in [
+                round(val, 3) for val in [  # round用于对浮点数进行四舍五入
                     twist.linear.x,
                     twist.linear.y,
                     twist.angular.z
                 ]
             ]
+            # 最终，这段代码会生成一个如下所示的字典：
+            # {
+            #     "position": [x, y, theta],
+            #     "velocity": [vx, vy, wz]
+            # }
+
+
         }
 
     def action_callback(self, msg_action: Twist): # variables will be written to csv whenever an action is published

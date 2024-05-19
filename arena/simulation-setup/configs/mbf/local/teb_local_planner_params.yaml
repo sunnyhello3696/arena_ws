@@ -8,7 +8,7 @@ planner_frequency: 0.0  # 规划器更新频率，设为0表示只在需要时�
 
 TebLocalPlannerROS:
   # *当机器人距离目标点的水平距离小于这个值时，认为已经到达目标。
-  xy_goal_tolerance: 0.2
+  xy_goal_tolerance: 0.01
   # *当机器人的朝向与目标朝向的差值小于此角度（以弧度为单位）时，认为已经到达目标朝向。
   yaw_goal_tolerance: 0.78
   # 到达目标点时是否需要减速到停止。如果设为false，机器人可以以非零速度通过目标点。
