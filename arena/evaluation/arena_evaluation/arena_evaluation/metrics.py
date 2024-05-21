@@ -257,7 +257,7 @@ class Metrics:
                 continue
 
             # Remove the first three time steps from current_episode
-            # current_episode = current_episode.iloc[3:]
+            current_episode = current_episode.iloc[3:]
             
             episode_data[i] = self._analyze_episode(current_episode, i)
             i = i + 1

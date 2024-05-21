@@ -8,7 +8,7 @@
   <param name="if_evenly_convex" value="true" />
   <param name="max_vertex_num" value="120" />
   <param name="if_compute_convex" value="true" />
-  <param name="action_dis_min" value="0.25" />
+  <param name="action_dis_min" value="0.15" />
 
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
   <arg name="model" default="burger"      doc="model type [burger, jackal, ridgeback, agvota, rto, rto_real]"/>

@@ -27,6 +27,8 @@ from .spaces.feature_maps.pedestrian_social_state_space import (
 
 from ..observation_space.spaces.base.convex_space import ConvexSpace
 
+from ..observation_space.spaces.base.convexqueue_space import ConvexQueueSpace
+
 
 class SPACE_INDEX(Enum):
     LASER = LaserScanSpace
@@ -34,6 +36,7 @@ class SPACE_INDEX(Enum):
     LAST_ACTION = LastActionSpace
     LAST_ACTION_POINTS = LastActionPointsSpace
     CONVEX = ConvexSpace
+    CONVEX_QUEUE = ConvexQueueSpace
 
     STACKED_LASER_MAP = StackedLaserMapSpace
     PEDESTRIAN_LOCATION = PedestrianLocationSpace

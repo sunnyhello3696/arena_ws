@@ -43,7 +43,7 @@ class ConvexQueueSpace(BaseObservationSpace):
         **kwargs,
     ) -> None:
         self._laser_num_beams = laser_num_beams
-        self._laser_max_range = laser_max_range + 0.5
+        self._laser_max_range = laser_max_range + 0.25
         self._max_vertex_num = rospy.get_param_cached("/max_vertex_num", 120)
 
         super().__init__(*args, **kwargs)
@@ -96,19 +96,18 @@ class ConvexQueueSpace(BaseObservationSpace):
         if g2d_cal_success and len(g2d_polar_convex) == self._max_vertex_num:
             process_scan = g2d_polar_convex
         else:
+            rospy.logwarn("ConvexQueueSpace: Galaxy2D convex failed, using laser scan")
             g2d_cal_success = False
             process_scan = []
-            g2d_convex_vertex = []
+            # g2d_convex_vertex = []
             g2d_polar_convex = []
-            g2d_polar_convex_theta = [i*2*np.pi/self._max_vertex_num for i in range(self._max_vertex_num)]
+            # g2d_polar_convex_theta = [i*2*np.pi/self._max_vertex_num for i in range(self._max_vertex_num)]
             # 0-359
             di = int(self._laser_num_beams/self._max_vertex_num)
             for i in range(self._max_vertex_num):
-                g2d_convex_vertex.append((laser_scan[di*i]*np.cos(g2d_polar_convex_theta[i]),laser_scan[di*i]*np.sin(g2d_polar_convex_theta[i])))
+                # g2d_convex_vertex.append((laser_scan[di*i]*np.cos(g2d_polar_convex_theta[i]),laser_scan[di*i]*np.sin(g2d_polar_convex_theta[i])))
                 g2d_polar_convex.append(laser_scan[di*i])
-                process_scan.append((laser_scan[di*i]+self.safe_dist)/self.lidar_range)
-                process_scan.append(g2d_polar_convex_theta[i]/2./np.pi)
-
-
+                process_scan.append(laser_scan[di*i])
+                # process_scan.append(g2d_polar_convex_theta[i]/2./np.pi)
 
         return process_scan
