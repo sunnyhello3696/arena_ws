@@ -27,6 +27,7 @@ class DoneReason(str, enum.Enum):
     TIMEOUT = "TIMEOUT"
     GOAL_REACHED = "GOAL_REACHED"
     COLLISION = "COLLISION"
+    UNKNOWN = "UNKNOWN"
 
 
 class Metric(typing.TypedDict):
@@ -73,7 +74,7 @@ class PedsimMetric(Metric, typing.TypedDict):
 
 class Config:
     TIMEOUT_TRESHOLD = 75
-    MAX_COLLISIONS = 3
+    MAX_COLLISIONS = 1
     MIN_EPISODE_LENGTH = 5
     
     PERSONAL_SPACE_RADIUS = 1 # personal space is estimated at around 1'-4'
@@ -234,19 +235,29 @@ class Metrics:
         data = pd.concat(self._load_data(), axis=1, join="inner")
         data = data.loc[:,~data.columns.duplicated()].copy()
 
+        max_episode = data["episode"].max()
+        print(f"Max episode: {max_episode}")
+
         i = 0
 
         episode_data = self._episode_data = {}
 
         while True:
+            if i > max_episode:
+                print(f"Finished analyzing {max_episode} episodes")
+                break
+
+            print(f"Analyzing episode {i}")
             current_episode = data[data["episode"] == i]
             
             # check current_episode's data items length
             if len(current_episode) < Config.MIN_EPISODE_LENGTH:
-                break
+                print(f"Episode {i} is too short. len(current_episode) = {len(current_episode)}")
+                i = i + 1
+                continue
 
             # Remove the first three time steps from current_episode
-            current_episode = current_episode.iloc[3:]
+            # current_episode = current_episode.iloc[3:]
             
             episode_data[i] = self._analyze_episode(current_episode, i)
             i = i + 1
@@ -321,7 +332,7 @@ class Metrics:
 
             episode = index,
 
-            result = self._get_success(time, collision_amount),
+            result = self._get_success(time, collision_amount, positions, goal_position),
             cmd_vel = list(map(list, episode["cmd_vel"].to_list())),
             goal = goal_position,
             start = start_position
@@ -370,7 +381,11 @@ class Metrics:
 
         return collisions
 
-    def _get_success(self, time, collisions):
+    def _get_success(self, time, collisions, positions, goal_position):
+        # if last position distance to goal is less than 0.8m
+        if np.linalg.norm(positions[-1] - goal_position) < 1.0:
+            return DoneReason.GOAL_REACHED
+        
         if time >= Config.TIMEOUT_TRESHOLD:
             return DoneReason.TIMEOUT
 

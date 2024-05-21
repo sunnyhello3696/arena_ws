@@ -36,6 +36,8 @@ class Lidar2Image():
 
         # read x_lidar, y_lidar from file
         x_lidar, y_lidar = self.read_lidar_data(lidar_filepath)
+        # for i in range(len(x_lidar)):
+        #     print(f"{x_lidar[i]}, {y_lidar[i]}")
         x_convex, y_convex = self.read_lidar_data(convex_filepath)
 
         x_convex = -x_convex  # 按x轴翻转
@@ -248,8 +250,8 @@ class Lidar2Image():
 # main
 # Usage example
 lidar_to_image = Lidar2Image()
-lidar_filepath = '/home/tuanjie/arena_ws/src/arena/arena-rosnav/testing/scripts/lidar_filepath.txt'
-convex_filepath = '/home/tuanjie/arena_ws/src/arena/arena-rosnav/testing/scripts/convex_filepath.txt'
+lidar_filepath = '/home/dmz/arena_ws/src/arena/arena-rosnav/testing/scripts/lidar_filepath.txt'
+convex_filepath = '/home/dmz/arena_ws/src/arena/arena-rosnav/testing/scripts/convex_filepath.txt'
 
 # You'll need to replace 'lidar_filepath' and 'convex_filepath' with the actual file paths
 merged_map, lidar_map, convex_map = lidar_to_image.lidar_convex_to_map(lidar_filepath, convex_filepath)
