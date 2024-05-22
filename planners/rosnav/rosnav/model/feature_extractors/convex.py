@@ -527,9 +527,9 @@ class ConvexExtractor_2d_with_ActPts_with_ConvexQueue(RosnavBaseExtractor):
         )
 
         self.cnn_1d = nn.Sequential(
-            nn.Conv1d(self._num_stacks, 32, 5, 2),
+            nn.Conv1d(self._num_stacks, 32, 5, 1),
             nn.ReLU(),
-            nn.Conv1d(32, 32, 3, 2),
+            nn.Conv1d(32, 32, 3, 1),
             nn.ReLU(),
             nn.Flatten(),
         )
