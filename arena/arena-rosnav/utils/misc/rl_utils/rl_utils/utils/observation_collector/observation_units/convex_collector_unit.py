@@ -209,9 +209,17 @@ class ConvexCollectorUnit(CollectorUnit):
         else:
             last_action = self._init_last_action
 
+        # check if last_action_points have nan values
+        if np.isnan(self._init_last_action_points).any():
+            last_action_points = self._init_last_action_points
+
         if kwargs.get("last_action_points") is not None:
             last_action_points = kwargs.get("last_action_points")
         else:
+            last_action_points = self._init_last_action_points
+
+        # check if last_action_points have nan values
+        if np.isnan(last_action_points).any():
             last_action_points = self._init_last_action_points
 
         dist_angle_last_action_points_arr = self.process_last_action_points(last_action_points)
