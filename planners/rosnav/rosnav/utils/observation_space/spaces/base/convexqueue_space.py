@@ -109,5 +109,19 @@ class ConvexQueueSpace(BaseObservationSpace):
                 g2d_polar_convex.append(laser_scan[di*i])
                 process_scan.append(laser_scan[di*i])
                 # process_scan.append(g2d_polar_convex_theta[i]/2./np.pi)
+        
+        # Convert list to NumPy array
+        process_scan_array = np.array(process_scan)
+
+        # Find indices where values are NaN or Inf
+        nan_indices = np.isnan(process_scan_array)
+        inf_indices = np.isinf(process_scan_array)
+
+        if np.any(nan_indices) or np.any(inf_indices):
+            rospy.logwarn("ConvexQueueSpace: NaN or Inf values detected in laser scan")
+
+            # Replace NaN and Inf values with laser_max_range
+            process_scan_array[nan_indices] = self._laser_max_range
+            process_scan_array[inf_indices] = self._laser_max_range
 
         return process_scan
