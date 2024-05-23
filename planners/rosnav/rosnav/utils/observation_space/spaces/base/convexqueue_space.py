@@ -124,4 +124,4 @@ class ConvexQueueSpace(BaseObservationSpace):
             process_scan_array[nan_indices] = self._laser_max_range
             process_scan_array[inf_indices] = self._laser_max_range
 
-        return process_scan
+        return process_scan_array
