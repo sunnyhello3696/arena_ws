@@ -236,16 +236,26 @@ class Metrics:
         data = pd.concat(self._load_data(), axis=1, join="inner")
         data = data.loc[:,~data.columns.duplicated()].copy()
 
+        max_episode = data["episode"].max()
+        print(f"Max episode: {max_episode}")
+
         i = 0
 
         episode_data = self._episode_data = {}
 
         while True:
+            if i > max_episode:
+                print(f"Finished analyzing {max_episode} episodes")
+                break
+
+            print(f"Analyzing episode {i}")
             current_episode = data[data["episode"] == i]
             
             # check current_episode's data items length
             if len(current_episode) < Config.MIN_EPISODE_LENGTH:
-                break
+                print(f"Episode {i} is too short. len(current_episode) = {len(current_episode)}")
+                i = i + 1
+                continue
 
             # Remove the first three time steps from current_episode
             current_episode = current_episode.iloc[3:]

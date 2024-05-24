@@ -9,11 +9,15 @@ import time
 # rosrun arena_evaluation get_metrics /home/dmz/arena_ws/src/arena/evaluation/arena_evaluation/data/24-05-13_10-27-43/burger/
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("dir")
+    parser.add_argument("dir") #表示用户需要指定的数据目录
+    # argparse.ArgumentParser()用于创建一个解析器对象，并可以通过调用其方法来添加需要解析的参数和设置对应的属性。
+    # 在这里，我们使用add_argument()方法来添加一个位置参数dir，它没有任何前缀（例如"--"或"-"），因此它被称为位置参数。
+    # "dir"是该参数的名称，它会被解析器用来识别相应的参数。如果命令行中未提供该参数的值，则解析器将引发错误并显示帮助文本。
 
     """
     --pedsim: 这是参数的名称，表示在命令行中使用--pedsim来启用该参数。
-    action="store_const": 这是指定参数的行为。在这里，store_const表示当命令行中指定了--pedsim时，argparse将会把指定的值（在这个例子中是const=True的True）存储到arguments.pedsim中。
+    action="store_const": 这是指定参数的行为。在这里，store_const表示当命令行中指定了--pedsim时，
+    argparse将会把指定的值（在这个例子中是const=True的True）存储到arguments.pedsim中。
     default=False: 这是指定参数的默认值。在这个例子中，如果命令行中没有指定--pedsim，则arguments.pedsim将默认为False。
     """
     parser.add_argument("--pedsim", action="store_const", const=True, default=False)

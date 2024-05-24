@@ -28,7 +28,10 @@ from arena_evaluation.utils import Pedestrian
 # for transformations
 from tf.transformations import euler_from_quaternion
 
-
+# 收集数据
+# 这个类的主要作用是收集ROS机器人系统中不同主题(topic)的数据。
+# 它通过ROS订阅对象获取传感器、里程计(Odometry)、动作(Twist)和PedsimAgentsDataframe等主题的数据,
+# 并将其转换为可读取的格式,如列表、字典等
 class DataCollector:
     def __init__(self, topic):
         topic_callbacks = [ # list 列表
@@ -150,13 +153,23 @@ class DataCollector:
             in msg_pedsim.agent_states
         ]
 
+    # msg_pedsim.agent_states 中的每个元素 agent，生成一个字典，并将所有字典组成一个列表。
+    # 最后将这个列表保存在变量self.data 中，以便其他部分的程序进行进一步处理和使用。
+
     def get_data(self):
         return (
             self.full_topic_name,
             self.data 
         )
+    # 使用圆括号()将两个变量封装成一个元组，并以此作为整个函数的返回值。因此,如果调用该函数，
+    # 将会返回一个包含两个元素的元组，分别对应 self.full_topic_name 和 self.data 的值。
 
-
+# 记录数据到指定文件
+# 这个类的主要作用是记录ROS机器人系统中不同主题(topic)的数据，并将其保存到CSV文件中。
+# 在初始化时，它会订阅给定的主题，并使用DataCollector类从主题获取数据。
+# 它还读取配置文件和ROS参数，以确定如何在何时记录数据。
+# 该类还负责创建结果目录、写入参数、时间戳和数据等信息，并支持在运行节点时动态更改参数。
+# 最后，Recorder类提供了一个数据写入方法，该方法可以将数据写入指定的CSV文件中。
 class Recorder:
     def __init__(self, result_dir):
         self.model = rospy.get_param(os.path.join(rospy.get_namespace(), "model"), "")
@@ -264,7 +277,8 @@ class Recorder:
 
     def read_config(self):
         with open(self.base_dir + "/data_recorder_config.yaml") as file:
-            return yaml.safe_load(file)
+            return yaml.safe_load(file)  # 在读取未知来源的 YAML 数据时，建议使用 safe_load() 函数而不是 load() 函数，从而增强数据处理的安全性
+        # 将yaml文件解析为Python字典格式，最后返回该字典。
 
     def get_class_for_topic_name(self, topic_name):
         if "/scan" in topic_name:
@@ -277,6 +291,7 @@ class Recorder:
             return ["pedsim_agents_data", pedsim_msgs.PedsimAgentsDataframe]
         raise ValueError(f"Unknown topic name: {topic_name}")
 
+    # 在ROS节点中,可以通过订阅这些主题,并使用相应的处理函数获取消息内容并进行记录和分析。
     def get_topics_to_monitor(self):
         return [
             (os.path.join(rospy.get_namespace(), "scan"), LaserScan),
@@ -286,14 +301,17 @@ class Recorder:
             ("/pedsim_simulator/pedsim_agents_data", pedsim_msgs.PedsimAgentsDataframe)
         ]
 
+    # 用于将数据写入到指定的 CSV 文件中。
     def write_data(self, file_name, data, mode="a"):
         with open(f"{self.result_dir}/{file_name}.csv", mode, newline = "") as file:
             writer = csv.writer(file, delimiter = ',')
             writer.writerow(data)
             file.close()
     
+    # 作用是将ROS参数写入YAML格式的文件中。具体来说，该函数在节点运行过程中调用
     def write_params(self):
         with open(self.result_dir + "/params.yaml", "w") as file:
+            # 将参数字典装化为yaml格式
             yaml.dump({
                 "model": self.model,
                 "map_file": rospy.get_param("/map_file", ""),
@@ -306,16 +324,20 @@ class Recorder:
 
 
 if __name__=="__main__":
-
+    # 命令行解析器对象 parser
+    # 这段代码的作用是在记录运行数据时解析用户输入的参数并初始化ROS节点。
+    # 其中，argparse模块中的ArgumentParser()方法用于创建一个解析器对象，可以从命令行获取参数值。
+    # 使用该解析器对象来指定可选参数和位置参数，以便在运行节点时接收这些参数。
+    # 通过在命令行中传递--dir或-d参数可以指定结果目录的路径。如果没有指定，则会使用默认值"auto:"。
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", "-d", default="auto:")
     parser.add_argument('args', nargs=argparse.REMAINDER) # ingore extra args
     arguments = parser.parse_args()
 
-    rospy.init_node("data_recorder", anonymous=True)
+    rospy.init_node("data_recorder", anonymous=True) # 初始化ROS节点，并将其命名为"data_recorder"，同时设置anonymous=True以避免节点名称冲突。
 
     
-
+    # 用于获取数据保存的目录路径。
     def get_directory(directory:str):
         AUTO_PREFIX = "auto:/"
         PARAM_AUTO_PREFIX = "/data_recorder_autoprefix"
@@ -333,6 +355,7 @@ if __name__=="__main__":
 
     recorder = Recorder(get_directory(arguments.dir))
 
+    # 用于重新配置 Recorder 对象的数据保存目录
     def reconfigure(directory:str):
         global recorder
         del recorder
