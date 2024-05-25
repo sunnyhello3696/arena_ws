@@ -89,7 +89,7 @@ class TaskConfig_General:
     WAIT_FOR_SERVICE_TIMEOUT: float = dataclasses.field(default_factory=lambda:rosparam_get(float, "timeout_wait_for_service", 60))
     MAX_RESET_FAIL_TIMES: int = dataclasses.field(default_factory=lambda:rosparam_get(int, "max_reset_fail_times", 10))
     RNG: np.random.Generator = dataclasses.field(default_factory=lambda:np.random.default_rng())
-    DESIRED_EPISODES: float = float("inf")
+    DESIRED_EPISODES: float = 550
 
 
 @dataclasses.dataclass
@@ -97,7 +97,7 @@ class TaskConfig_Robot:
     GOAL_TOLERANCE_RADIUS: float = 1.0
     GOAL_TOLERANCE_ANGLE: float = 40 * math.pi/180
     SPAWN_ROBOT_SAFE_DIST: float = 0.25
-    TIMEOUT: float = float("inf")
+    TIMEOUT: float = float("inf")  #float("inf")是Python内置函数float()的一种用法，它返回一个特殊的浮点数（正无穷大），表示比任何其他实数都要大。然后，将这个值赋给名称为TIMEOUT的变量
 
 
 @dataclasses.dataclass

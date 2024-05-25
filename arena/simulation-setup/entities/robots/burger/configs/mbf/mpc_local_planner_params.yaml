@@ -3,8 +3,10 @@ MpcLocalPlannerROS:
     type: unicycle
     unicycle:
       max_vel_x: 1
+      min_vel_x: -0.5 
       max_vel_x_backwards: 0.2  # 0.2
       max_vel_theta: 0.3  # 0.3
+      max_scaling_factor: 0.5 # 最大缩放因子，用于调整运动速度
       acc_lim_x: 3 # 0.2 deactive bounds with zero
       dec_lim_x: 0.2 # 0.2 deactive bounds with zero
       acc_lim_theta: 0.2 # 0.2 deactivate bounds with zero
@@ -34,8 +36,8 @@ MpcLocalPlannerROS:
     objective:
       type: minimum_time   # minimum_time requires grid/variable_grid/enable=True and grid/xf_fixed set properly
       quadratic_form:
-        state_weights: [2.0, 2.0, 2.0]
-        control_weights: [1.0, 1.0]
+        state_weights: [-2.0, 2.0, 2.0] # 此处调为-2.0，为了实现后退运动，需要将机器人在X轴方向上的速度和加速度设为负值
+        control_weights: [1.0, 1.0]  # -1
       minimum_time_via_points:
         position_weight: 10.5
         orientation_weight: 0.0

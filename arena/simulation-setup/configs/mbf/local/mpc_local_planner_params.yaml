@@ -40,8 +40,8 @@ MpcLocalPlannerROS:
 # control_weights 表示对机器人控制输入的权重设置，包括 v 和 w 两个控制量。
 # 可以尝试增大 v 的权重，以使机器人在直线行驶时速度更快。
 # 同时，为了防止机器人出现剧烈震荡，需要适当增大 w 的权重。
-        - 0.4   # 0.1
-        - 0.2  # 0.05
+        - 0.6   # 0.1
+        - 0.4  # 0.05
         integral_form: false
       minimum_time_via_points: {}
     terminal_cost:

@@ -233,9 +233,15 @@ class Metrics:
         self.dir = dir
         # self.robot_params = self._get_robot_params()
 
+        """
+        # 首先，使用pd.concat()方法将多个数据文件中的数据合并成一个DataFrame对象，并使用join="inner"参数保留所有数据共同存在的行。
+        # 然后，使用.loc[]方法和~data.columns.duplicated()表达式来去除DataFrame对象中所有重复的列，以确保每个列名都只对应唯一的一列数据。
+        # 最后，使用.copy()方法生成一个新的DataFrame对象data，以确保对原始数据没有影响。
+        # 在得到干净完整的DataFrame对象data之后，可以通过data["episode"].max()方法获取DataFrame中"episode"列的最大值，即所有记录中episode值的最大值。
+        # 这个值可以被用于计算指标或控制程序流程，例如统计模拟的总次数、按episode划分样本等等。
+        """
         data = pd.concat(self._load_data(), axis=1, join="inner")
         data = data.loc[:,~data.columns.duplicated()].copy()
-
         max_episode = data["episode"].max()
         print(f"Max episode: {max_episode}")
 
@@ -249,7 +255,7 @@ class Metrics:
                 break
 
             print(f"Analyzing episode {i}")
-            current_episode = data[data["episode"] == i]
+            current_episode = data[data["episode"] == i]  # 将data赋值给current_episode
             
             # check current_episode's data items length
             if len(current_episode) < Config.MIN_EPISODE_LENGTH:
@@ -272,7 +278,7 @@ class Metrics:
 
         # 将纳秒转换为秒
         # episode["time"] /= 10**10
-        episode.loc[:, "time"] /= 10**10
+        episode.loc[:, "time"] /= 10**10  # ".loc[:, "time"]"表示选取所有行和名为"time"的列
         
         positions = np.array([frame["position"] for frame in episode["odom"]])
         velocities = np.array([frame["velocity"] for frame in episode["odom"]])

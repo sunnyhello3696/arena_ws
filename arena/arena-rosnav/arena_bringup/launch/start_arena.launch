@@ -22,7 +22,7 @@
   <!-- You can launch a single robot and his local_planner with arguments -->
   <arg name="model" default="burger" doc="robot model type [burger, jackal, ridgeback, agvota, rto, ...]" />
   <arg name="inter_planner" default="bypass" doc="inter planner type [bypass, shortsighted, polite, aggressive, sideways]" />
-  <arg name="local_planner" default="rlca" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <arg name="local_planner" default="mpc" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
   <param name="scenario_file" value="4.json" />
   <arg name="simulator" default="flatland" doc="[flatland, gazebo]" />
   <arg name="headless" default="0" doc="0 = show all, 1 = show only rviz, 2 = show nothing" />
@@ -43,7 +43,7 @@
   <arg name="robot_setup_file" default="" doc="" />
 
   <!-- 是否记录数据  -->
-  <arg name="record_data" default="false" />  
+  <arg name="record_data" default="true" />  
   <arg name="record_data_dir" default="auto:" />
   <param name="record_data_dir" type="str" value="$(arg record_data_dir)" if="$(eval arg('record_data'))"/>
 
