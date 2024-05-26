@@ -150,9 +150,9 @@ class RobotManager:
             self.pub_cmd_vel = rospy.Publisher(self.namespace("cmd_vel_manual"), Twist, queue_size=5)
             self.recovery_behavior_loop = 0
             self.nums_of_exception_stop = 0
-            # 0: move_forward
-            # 1: cmd_vel_internal
-            self.recoveryMode = 1
+            # 0: move_forward      mpc
+            # 1: cmd_vel_internal  rlca
+            self.recoveryMode = 0
 
         self._SUCCESS_INFO= {
             "is_done": True,
@@ -189,7 +189,7 @@ class RobotManager:
                 # 如果满足连续四秒的条件，则执行恢复行为
                 recovery_start_time = rospy.Time.now()
                 recovery_cmd_vel = Twist()
-                recovery_cmd_vel.linear.x = -2.0  # 倒车速度
+                recovery_cmd_vel.linear.x = -0.5  # 倒车速度
                 self.pub_cmd_vel.publish(recovery_cmd_vel)
             elif self.recoveryMode == 1:
                 # self.cmd_vel_internal.linear.x = self.cmd_vel_internal.linear.x * 4
@@ -207,7 +207,7 @@ class RobotManager:
 
         if self.nums_of_exception_stop >= 20:
             self.nums_of_exception_stop = 0
-            self.recovery_behavior_loop = 70
+            self.recovery_behavior_loop = 30  # rlca : 70, mpc: 30
         
         self.pub_cmd_vel.publish(msg)
 

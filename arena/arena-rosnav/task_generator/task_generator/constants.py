@@ -89,7 +89,7 @@ class TaskConfig_General:
     WAIT_FOR_SERVICE_TIMEOUT: float = dataclasses.field(default_factory=lambda:rosparam_get(float, "timeout_wait_for_service", 60))
     MAX_RESET_FAIL_TIMES: int = dataclasses.field(default_factory=lambda:rosparam_get(int, "max_reset_fail_times", 10))
     RNG: np.random.Generator = dataclasses.field(default_factory=lambda:np.random.default_rng())
-    DESIRED_EPISODES: float = 550
+    DESIRED_EPISODES: float =650
 
 
 @dataclasses.dataclass
