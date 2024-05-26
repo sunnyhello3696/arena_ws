@@ -80,6 +80,10 @@ class RobotManager:
             float, "goal_tolerance_angle", Config.Robot.GOAL_TOLERANCE_ANGLE
         )
 
+        self.if_manual_recovery_behavior = rosparam_get(
+            bool, "if_manual_recovery_behavior", False
+        )
+
         self._robot = robot
         self._safety_distance = rosparam_get(
             float,
@@ -134,19 +138,21 @@ class RobotManager:
             self.namespace("scan"), LaserScan, self._scan_callback
         )
 
-        rospy.Subscriber(
-            self.namespace("cmd_vel"), Twist, self.cmd_vel_callback
-        )
-        rospy.Subscriber(
-            self.namespace("cmd_vel_internal"), Twist, self.cmd_vel_internal_callback
-        )
-        self.cmd_vel_internal = Twist()
-        self.pub_cmd_vel = rospy.Publisher(self.namespace("cmd_vel"), Twist, queue_size=1)
-        self.recovery_behavior_loop = 0
-        self.nums_of_exception_stop = 0
-        # 0: move_forward
-        # 1: cmd_vel_internal
-        self.recoveryMode = 1
+
+        if self.if_manual_recovery_behavior:    
+            rospy.Subscriber(
+                self.namespace("cmd_vel"), Twist, self.cmd_vel_callback
+            )
+            rospy.Subscriber(
+                self.namespace("cmd_vel_internal"), Twist, self.cmd_vel_internal_callback
+            )
+            self.cmd_vel_internal = Twist()
+            self.pub_cmd_vel = rospy.Publisher(self.namespace("cmd_vel_manual"), Twist, queue_size=5)
+            self.recovery_behavior_loop = 0
+            self.nums_of_exception_stop = 0
+            # 0: move_forward
+            # 1: cmd_vel_internal
+            self.recoveryMode = 1
 
         self._SUCCESS_INFO= {
             "is_done": True,
@@ -178,29 +184,32 @@ class RobotManager:
     def cmd_vel_callback(self, msg):
 
         if self.recovery_behavior_loop > 0:
+            rospy.logerr("/// ManualRecoveryBehavior behavior triggered ///")
             if self.recoveryMode == 0:
-                rospy.logerr("/// ManualRecoveryBehavior behavior triggered ///")
                 # 如果满足连续四秒的条件，则执行恢复行为
                 recovery_start_time = rospy.Time.now()
                 recovery_cmd_vel = Twist()
-                recovery_cmd_vel.linear.x = 1.5  # 倒车速度
+                recovery_cmd_vel.linear.x = -2.0  # 倒车速度
                 self.pub_cmd_vel.publish(recovery_cmd_vel)
             elif self.recoveryMode == 1:
+                # self.cmd_vel_internal.linear.x = self.cmd_vel_internal.linear.x * 4
                 recovery_cmd_vel = self.cmd_vel_internal
                 self.pub_cmd_vel.publish(recovery_cmd_vel)
-                
             self.recovery_behavior_loop -= 1
             return
 
         # 检查连续四秒内的线性速度是否小于0.1
-        if msg.linear.x < 0.1:
+        if abs(msg.linear.x) < 0.1:
             self.nums_of_exception_stop += 1
             rospy.loginfo("Linear velocity is less than 0.1")
         else:
             self.nums_of_exception_stop = 0
 
         if self.nums_of_exception_stop >= 20:
-            self.recovery_behavior_loop = 50
+            self.nums_of_exception_stop = 0
+            self.recovery_behavior_loop = 70
+        
+        self.pub_cmd_vel.publish(msg)
 
     def cmd_vel_internal_callback(self, msg):
         self.cmd_vel_internal = msg
@@ -246,6 +255,9 @@ class RobotManager:
         Publishes start and goal to data_recorder, publishes goal to move_base
         """
         self._done_info = {}
+
+        self.recovery_behavior_loop = 0
+        self.nums_of_exception_stop = 0
 
         if start_pos is not None:
             self._start_pos = start_pos

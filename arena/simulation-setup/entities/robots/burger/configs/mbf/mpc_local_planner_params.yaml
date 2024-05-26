@@ -2,11 +2,11 @@ MpcLocalPlannerROS:
   robot:
     type: unicycle
     unicycle:
-      max_vel_x: 1
+      max_vel_x: 2
       min_vel_x: -0.5 
       max_vel_x_backwards: 0.2  # 0.2
       max_vel_theta: 0.3  # 0.3
-      max_scaling_factor: 0.5 # 最大缩放因子，用于调整运动速度
+      max_scaling_factor: 1 # 最大缩放因子，用于调整运动速度
       acc_lim_x: 3 # 0.2 deactive bounds with zero
       dec_lim_x: 0.2 # 0.2 deactive bounds with zero
       acc_lim_theta: 0.2 # 0.2 deactivate bounds with zero

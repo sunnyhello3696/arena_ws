@@ -283,11 +283,11 @@ class Metrics:
         positions = np.array([frame["position"] for frame in episode["odom"]])
         velocities = np.array([frame["velocity"] for frame in episode["odom"]])
 
-        curvature, normalized_curvature = Math.curvature(positions)
+        curvature, normalized_curvature = Math.curvature(positions)  # 曲率和归一化曲率
         roughness = Math.roughness(positions)
 
         vel_absolute = np.linalg.norm(velocities, axis=1)
-        acceleration = Math.acceleration(vel_absolute)
+        acceleration = Math.acceleration(vel_absolute)  # 计算出加速度大小
         jerk = Math.jerk(vel_absolute)
 
         collisions, collision_amount = self._get_collisions(
