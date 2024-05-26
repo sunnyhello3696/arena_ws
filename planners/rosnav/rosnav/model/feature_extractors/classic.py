@@ -96,6 +96,8 @@ class EXTRACTOR_1(RosnavBaseExtractor):
         else:
             # observations in shape [batch_size, num_stacks, obs_size]
             laser_scan = observations[:, :, :-_robot_state_size]
+
+            # flatten(1, 2) -> [batch_size, num_stacks * obs_size]
             robot_state = observations[:, :, -_robot_state_size:].flatten(1, 2)
 
             cnn_features = self.cnn(laser_scan)

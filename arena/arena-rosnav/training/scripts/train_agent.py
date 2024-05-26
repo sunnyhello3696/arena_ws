@@ -64,6 +64,8 @@ def main():
         agent_description, observation_manager, config, train_env, paths
     )
 
+    # print(model.policy)
+
     rospy.on_shutdown(lambda: on_shutdown(model, paths))
 
     # start training

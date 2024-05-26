@@ -1,7 +1,7 @@
 mpc:
    T: 0.2 # [s]
    N: 10 # Receding horizon (steps), N > 20 seems to require too much CPU power
-   k: 2 # b-spline order
+   k: 1 # b-spline order
 
    if_add_robot_pt: true # Add robot position at the first point of the action points
    feasible_position_speed_factor: 1.0 # Factor to calculate the feasible position speed
@@ -12,7 +12,7 @@ mpc:
 
    # Reduce the angle sampling range to [pi/2,3/2*pi] to keep the robot facing forward
    # angle_or_last_pt can not be true
-   if_reduce_angle_sample: false
+   if_reduce_angle_sample: true
 
    fix_sample_region: false # Fix the sample region for the action points
    

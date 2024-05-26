@@ -569,7 +569,7 @@ class ConvexExtractor_2d_with_ActPts_with_ConvexQueue(RosnavBaseExtractor):
         if not self._stacked_obs:
             # For non-stacked observations
             convex_map_flat = observations[:, :(-_robot_state_size-self._convex_queue_size)]
-            convex_queue = observations[:, (-_robot_state_size-self._convex_queue_size):-_robot_state_size]
+            convex_queue = th.unsqueeze(observations[:, (-_robot_state_size-self._convex_queue_size):-_robot_state_size], 1)
             robot_state = observations[:, -_robot_state_size:]
 
             # Reshape convex_map_flat to [batch_size, num_channels, height, width]
@@ -578,6 +578,7 @@ class ConvexExtractor_2d_with_ActPts_with_ConvexQueue(RosnavBaseExtractor):
             # # 保存第一个批次的convex_map图像
             # self.save_convex_map(convex_map_reshaped, batch_idx=0)
             # self.print_partial_data(robot_state[0], name="Robot State", num_elements=5)
+            # self.print_partial_data(convex_queue[0],name="Convex Queue",num_elements=5)
 
             
             cnn_features = self.cnn(convex_map_reshaped)
@@ -597,6 +598,39 @@ class ConvexExtractor_2d_with_ActPts_with_ConvexQueue(RosnavBaseExtractor):
             extracted_features = th.cat((cnn_features, cnn_features_1d, robot_state), dim=1)
 
         return self.fc(extracted_features)
+    
+    # 假设这个方法在您的类中
+    def save_convex_map(self, convex_map, batch_idx=0, save_path='/home/dmz/Pictures/convex_map'):
+        """
+        保存指定批次索引的convex_map图像到本地。
+
+        参数:
+        - convex_map: 卷积地图的张量。
+        - batch_idx: 批次中要保存的样本的索引。
+        - save_path: 保存图像的路径。
+        """
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        if convex_map.dim() == 4:  # [batch_size, num_channels, height, width]
+            image = convex_map[batch_idx, 0].cpu().detach().numpy()  # 选取第一个通道的图像数据
+            plt.imshow(image, cmap='gray')
+            plt.axis('off')  # 不显示坐标轴
+
+            # 构造保存图像的完整路径
+            image_path = os.path.join(save_path, f'convex_map_{batch_idx}.png')
+            plt.savefig(image_path, bbox_inches='tight', pad_inches=0)
+            time.sleep(2)
+            plt.close()  # 关闭图像，避免在notebook中显示
+            print(f"Convex map saved to {image_path}")
+        else:
+            print("Unexpected convex_map dimension:", convex_map.dim())
+
+    def print_partial_data(self, data, name="Data", num_elements=5):
+        """
+        打印指定数据的前几个元素。
+        """
+        print(f"{name} (partial):", data[:num_elements])
     
 
 class ConvexExtractor_2d_with_ActPts_2(ConvexExtractor_2d_with_ActPts):

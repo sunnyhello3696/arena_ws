@@ -641,7 +641,7 @@ class AGENT_99(BaseAgent):
         "norm_func": "max_abs_scaling",
     }
     features_extractor_class = ConvexExtractor_2d_with_ActPts_with_ConvexQueue
-    features_extractor_kwargs = {"features_dim": 512}
+    features_extractor_kwargs = {"features_dim": 256}
     net_arch = dict(pi=[256, 256, 128], vf=[256, 256, 128])
     activation_fn = nn.ReLU
 

@@ -24,6 +24,9 @@ import std_srvs.srv as std_srvs
 from sensor_msgs.msg import LaserScan
 from typing import Any, Dict
 
+from geometry_msgs.msg import Twist
+
+
 class RobotManager:
     """
     The robot manager manages the goal and start
@@ -131,6 +134,20 @@ class RobotManager:
             self.namespace("scan"), LaserScan, self._scan_callback
         )
 
+        rospy.Subscriber(
+            self.namespace("cmd_vel"), Twist, self.cmd_vel_callback
+        )
+        rospy.Subscriber(
+            self.namespace("cmd_vel_internal"), Twist, self.cmd_vel_internal_callback
+        )
+        self.cmd_vel_internal = Twist()
+        self.pub_cmd_vel = rospy.Publisher(self.namespace("cmd_vel_manual"), Twist, queue_size=1)
+        self.recovery_behavior_loop = 0
+        self.nums_of_exception_stop = 0
+        # 0: move_forward
+        # 1: cmd_vel_internal
+        self.recoveryMode = 1
+
         self._SUCCESS_INFO= {
             "is_done": True,
             "done_reason": 2,
@@ -158,6 +175,38 @@ class RobotManager:
             self.namespace("move_base", "clear_costmaps"), std_srvs.Empty
         )
 
+    def cmd_vel_callback(self, msg):
+
+        if self.recovery_behavior_loop > 0:
+            if self.recoveryMode == 0:
+                rospy.logerr("/// ManualRecoveryBehavior behavior triggered ///")
+                # 如果满足连续四秒的条件，则执行恢复行为
+                recovery_start_time = rospy.Time.now()
+                recovery_cmd_vel = Twist()
+                recovery_cmd_vel.linear.x = 1.5  # 倒车速度
+                self.pub_cmd_vel.publish(recovery_cmd_vel)
+            elif self.recoveryMode == 1:
+                recovery_cmd_vel = self.cmd_vel_internal
+                self.pub_cmd_vel.publish(recovery_cmd_vel)
+                
+            self.recovery_behavior_loop -= 1
+            return
+
+        # 检查连续四秒内的线性速度是否小于0.1
+        if msg.linear.x < 0.1:
+            self.nums_of_exception_stop += 1
+            rospy.loginfo("Linear velocity is less than 0.1")
+        else:
+            self.nums_of_exception_stop = 0
+
+        if self.nums_of_exception_stop >= 20:
+            self.recovery_behavior_loop = 50
+        
+        self.pub_cmd_vel.publish(msg)
+
+    def cmd_vel_internal_callback(self, msg):
+        self.cmd_vel_internal = msg
+        
     @property
     def safe_distance(self) -> float:
         return self._robot_radius + self._safety_distance

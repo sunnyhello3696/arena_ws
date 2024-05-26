@@ -65,7 +65,7 @@ callbacks:
 rl_agent:
   # name of architecture defined in the Policy factory
   # architecture_name: "RosnavResNet_3"
-  architecture_name: "AGENT_98"
+  architecture_name: "AGENT_99"
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
   # resume: "burger_AGENT_91_2024_05_17__22_37_39"
   resume: null
