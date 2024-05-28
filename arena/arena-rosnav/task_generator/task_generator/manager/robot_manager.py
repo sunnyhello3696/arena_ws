@@ -280,7 +280,7 @@ class RobotManager:
         )
 
         is_goal_reached = (
-            distance_to_goal < 1.0
+            distance_to_goal < 0.75
         )
         if is_goal_reached:
             self._done_info.update(self._SUCCESS_INFO)

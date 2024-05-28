@@ -56,8 +56,8 @@
   <param name="complexity" value="$(arg complexity)" />
   
 
-  <arg name="tm_robots" default="scenario" doc="random, scenario"/>
-  <arg name="tm_obstacles" default="scenario" doc="random, scenario"/>
+  <arg name="tm_robots" default="random" doc="random, scenario"/>
+  <arg name="tm_obstacles" default="random" doc="random, scenario"/>
   <arg name="tm_modules" default="" />
   <arg name="benchmark_resume" default="false" />
   

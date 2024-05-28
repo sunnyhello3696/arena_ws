@@ -10,8 +10,8 @@
     <arg name="inter_planner" />
     <arg name="local_planner" />
 
-    <arg name="start_move_base" default="true" />
-    <!-- <arg name="start_move_base" default="false" /> -->
+    <!-- <arg name="start_move_base" default="true" /> -->
+    <arg name="start_move_base" default="false" />
 
     <arg name="agent_name" default="$(arg model)" if="$(eval arg('local_planner') == 'rosnav')" />
 
