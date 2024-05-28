@@ -36,3 +36,6 @@ if __name__ == "__main__":
         )
 
     metrics.data.to_csv(os.path.join(arguments.dir, "metrics.csv"))
+    # 这段代码的作用是将metrics.data数据保存为一个CSV文件，并存储到指定目录下。
+    # 具体来说，metrics.data是一个Pandas DataFrame对象，通常用于处理和分析结构化的表格数据。
+    # 而to_csv()是该对象的一个方法，用于将DataFrame中的数据保存为一个标准的CSV文件。该方法接受一个文件路径参数，指定CSV文件应该保存在哪个位置。
