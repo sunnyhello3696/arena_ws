@@ -3,10 +3,10 @@
 
   <env name="ARENA_TYPE" value="deployment" />
 
-  <param name="if_viz" value="true" />
+  <param name="if_viz" value="false" />
   <param name="if_evenly_convex" value="true" />
   <param name="max_vertex_num" value="120" />
-  <param name="if_compute_convex" value="true" />
+  <param name="if_compute_convex" value="false" />
   <param name="action_dis_min" value="0.15" />
   
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
@@ -22,7 +22,7 @@
   <!-- You can launch a single robot and his local_planner with arguments -->
   <arg name="model" default="burger" doc="robot model type [burger, jackal, ridgeback, agvota, rto, ...]" />
   <arg name="inter_planner" default="bypass" doc="inter planner type [bypass, shortsighted, polite, aggressive, sideways]" />
-  <arg name="local_planner" default="rlca" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <arg name="local_planner" default="rosnav" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
   <param name="scenario_file" value="4.json" />
   <arg name="simulator" default="flatland" doc="[flatland, gazebo]" />
   <arg name="headless" default="0" doc="0 = show all, 1 = show only rviz, 2 = show nothing" />
@@ -37,7 +37,7 @@
   <arg name="complexity" default="1" doc="1 = Map known, Position known; 2 = Map known, Position unknown (AMCL); 3 = Map unknown, Position unknown (SLAM)" />
   
 
-  <arg name="agent_name" default="burger_AGENT_91_2024_05_16__14_25_51"     doc = "DRL agent name to be deployed" unless="$(eval arg('local_planner') != 'rosnav')" />
+  <arg name="agent_name" default="burger_AGENT_70_2024_05_11__14_40_49"     doc = "DRL agent name to be deployed" unless="$(eval arg('local_planner') != 'rosnav')" />
   <!-- Or you can load a robot setup file to launch multiple robots in the same simulation -->
   <!-- If the robot_setup_file is specified it is always loaded -->
   <arg name="robot_setup_file" default="" doc="" />
