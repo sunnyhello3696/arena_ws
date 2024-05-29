@@ -118,13 +118,26 @@ class Math:
     
     @classmethod
     def path_length(cls, position: np.ndarray) -> np.ndarray:
-        """
-        首先，调用 grouping 方法，将路径点分组成两两一组，形成路径中相邻的点的对。
-        然后，计算每对相邻点之间的距离，通过计算每个对中两个点之间的欧氏距离。
-        最后，将这些距离组合成一个NumPy数组，并返回该数组作为路径长度。
-        """
-        pairs = cls.grouping(position, 2)
-        return np.linalg.norm(pairs[:,0,:] - pairs[:,1,:], axis=1)
+        # """
+        # 首先，调用 grouping 方法，将路径点分组成两两一组，形成路径中相邻的点的对。
+        # 然后，计算每对相邻点之间的距离，通过计算每个对中两个点之间的欧氏距离。
+        # 最后，将这些距离组合成一个NumPy数组，并返回该数组作为路径长度。
+        # """
+        # pairs = cls.grouping(position, 2)
+        # return np.linalg.norm(pairs[:,0,:] - pairs[:,1,:], axis=1)
+        # 取出所有点的x和y坐标
+        # x, y = position[:, 0], position[:, 1]
+        # 计算相邻点之间的欧几里得距离（忽略theta）
+        # deltas = np.diff(position, axis=0)
+        # distances = np.sqrt(deltas[:, 0]**2 + deltas[:, 1]**2)
+        # # 将第一点的距离加到结果数组中
+        # path_lengths = np.concatenate(([0], np.cumsum(distances)))
+        # return path_lengths
+        # 计算相邻点之间的差异 
+        diff = np.diff(position[:, :2], axis=0) 
+        # 计算欧几里得距离 
+        path_lengths = np.sqrt(np.sum(diff**2, axis=1))
+        return path_lengths
 
     @classmethod
     def curvature(cls, position: np.ndarray) -> typing.Tuple[np.ndarray, np.ndarray]:
@@ -199,6 +212,12 @@ class Metrics:
     dir: str
     _episode_data: typing.Dict[int, Metric]
 
+    vel_array: np.ndarray
+    time_array: np.ndarray
+    path_length_array: np.ndarray
+    result_str_array: np.ndarray
+    sucucess_num: int
+
     def _load_data(self) -> typing.List[pd.DataFrame]:
 
         # converters 参数允许你传递一个字典，其中键是列名，值是一个函数，用于对该列的值进行转换。
@@ -232,6 +251,11 @@ class Metrics:
     def __init__(self, dir: str):
 
         self.dir = dir
+        self.vel_array = np.array([])
+        self.time_array = np.array([])
+        self.path_length_array = np.array([])
+        self.result_str_array = np.array([])
+        self.sucucess_num = 0
         # self.robot_params = self._get_robot_params()
 
         """
@@ -247,12 +271,16 @@ class Metrics:
         print(f"Max episode: {max_episode}")
 
         i = 0
+        j = 0
 
         episode_data = self._episode_data = {}
 
         while True:
             if i > max_episode:
                 print(f"Finished analyzing {max_episode} episodes")
+                break
+            if j > 499:
+                print(f"Finished analyzing 499 episodes")
                 break
 
             print(f"Analyzing episode {i}")
@@ -269,9 +297,22 @@ class Metrics:
             
             episode_data[i] = self._analyze_episode(current_episode, i)
             i = i + 1
+            j = j + 1
 
     @property
     def data(self) -> pd.DataFrame:
+
+        # keep 2 decimal places
+        mean_vel = round(np.mean(self.vel_array), 2)
+        mean_path_length = round(np.mean(self.path_length_array), 2)
+        mean_time = round(np.mean(self.time_array), 2)
+        success_rate = round(self.sucucess_num / len(self._episode_data), 2)
+
+        print("mean vel: ", mean_vel)
+        print("mean path length: ", mean_path_length)
+        print("mean time: ", mean_time)
+        print("success rate: ", success_rate)
+
         return pd.DataFrame.from_dict(self._episode_data).transpose().set_index("episode")
 
     
@@ -290,6 +331,10 @@ class Metrics:
         vel_absolute = np.linalg.norm(velocities, axis=1)
         # vel_mean
         vel_mean = np.mean(vel_absolute)
+
+        # append vel_mean to vel_array
+        self.vel_array = np.append(self.vel_array, vel_mean)
+
         acceleration = Math.acceleration(vel_absolute)  # 计算出加速度大小
         jerk = Math.jerk(vel_absolute)
 
@@ -299,13 +344,18 @@ class Metrics:
         )
 
         path_length = Math.path_length(positions)
+        # append path_length.sum() to path_length_array
+        self.path_length_array = np.append(self.path_length_array, path_length.sum())
         turn = Math.turn(positions[:,2])
 
         time = list(episode["time"])[-1] - list(episode["time"])[0]
+        # append time to time_array
+        self.time_array = np.append(self.time_array, time)
 
         start_position = self._get_mean_position(episode, "start")
         goal_position = self._get_mean_position(episode, "goal")
 
+        # self.result_str_array = np.append(self.result_str_array, self._get_success(time, collision_amount, positions, goal_position))
         # print("PATH LENGTH", path_length, path_length_per_step)
 
         return Metric(
@@ -394,6 +444,7 @@ class Metrics:
 
     def _get_success(self, time, collisions, positions, goal_position):
         if np.linalg.norm(positions[-1] - goal_position) < 0.8:
+            self.sucucess_num += 1
             return DoneReason.GOAL_REACHED
         
         if time >= Config.TIMEOUT_TRESHOLD:
@@ -402,6 +453,7 @@ class Metrics:
         if collisions >= Config.MAX_COLLISIONS:
             return DoneReason.COLLISION
 
+        self.sucucess_num += 1
         return DoneReason.GOAL_REACHED
     
     def _get_collisions(self, laser_scans, lower_bound):
