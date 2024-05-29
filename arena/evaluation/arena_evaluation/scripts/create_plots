@@ -104,7 +104,7 @@ def read_datasets(data_paths):
     scenarios = []
 
     for path in data_paths:
-        base_path = os.path.join("data", path)
+        base_path = os.path.join("data", path)  # os.path.join()函数构建出其对应的数据文件路径
         metrics = os.path.join(base_path, "metrics.csv")
         params = os.path.join(base_path, "params.yaml")
 
@@ -391,7 +391,7 @@ class PathVisualizer:
             - Only plot the paths were the goal is reached
             - Plot the path that took the least amount of time
         """
-        possible_paths = dataset[dataset["result"] == "GOAL_REACHED"]
+        possible_paths = dataset[dataset["result"] == "GOAL_REACHED"]  # DataFrame数据结构
 
         namespaces = list(set(possible_paths["local_planner"].to_list()))
 
@@ -430,7 +430,7 @@ class PathVisualizer:
 
             x, y, z = zip(*verts)
 
-            ax.plot(x, y, "x--", lw=1, color="black", ms=10, alpha=0.4)
+            ax.plot(x, y, "x--", lw=1, color="black", ms=10, alpha=0.4)  # 为什么这里调用不到自己写的plot()函数？
 
     def add_start_and_goal_to_plot(self, ax, start, goal):
         start = self.ros_to_real_coord(start)

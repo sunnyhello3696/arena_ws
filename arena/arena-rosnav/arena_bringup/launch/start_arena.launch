@@ -10,7 +10,7 @@
   <param name="action_dis_min" value="0.25" />
 
   <!-- 恢复行为，remap in arena_bringup/launch/testing/simulators/flatland.launch -->
-  <param name="if_manual_recovery_behavior" value="false" />  
+  <param name="if_manual_recovery_behavior" value="true" />  
   
   <param name="mpc_config_path" value="$(find arena_bringup)/params/mpc_config.yaml" />
   <param name="debug_mode" value="true" />
@@ -25,7 +25,7 @@
   <!-- You can launch a single robot and his local_planner with arguments -->
   <arg name="model" default="burger" doc="robot model type [burger, jackal, ridgeback, agvota, rto, ...]" />
   <arg name="inter_planner" default="bypass" doc="inter planner type [bypass, shortsighted, polite, aggressive, sideways]" />
-  <arg name="local_planner" default="teb" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
+  <arg name="local_planner" default="mpc" doc="local planner type [teb, dwa, mpc, rlca, arena, rosnav, cohan]" />
   <param name="scenario_file" value="4.json" />
   <arg name="simulator" default="flatland" doc="[flatland, gazebo]" />
   <arg name="headless" default="0" doc="0 = show all, 1 = show only rviz, 2 = show nothing" />
