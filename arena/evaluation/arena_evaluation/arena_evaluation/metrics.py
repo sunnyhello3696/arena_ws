@@ -49,6 +49,7 @@ class Metric(typing.TypedDict):
     velocity: typing.List
     acceleration: typing.List
     jerk: typing.List
+    vel_mean: float
     
     collision_amount: int
     collisions: typing.List
@@ -117,13 +118,26 @@ class Math:
     
     @classmethod
     def path_length(cls, position: np.ndarray) -> np.ndarray:
-        """
-        首先，调用 grouping 方法，将路径点分组成两两一组，形成路径中相邻的点的对。
-        然后，计算每对相邻点之间的距离，通过计算每个对中两个点之间的欧氏距离。
-        最后，将这些距离组合成一个NumPy数组，并返回该数组作为路径长度。
-        """
-        pairs = cls.grouping(position, 2)
-        return np.linalg.norm(pairs[:,0,:] - pairs[:,1,:], axis=1)
+        # """
+        # 首先，调用 grouping 方法，将路径点分组成两两一组，形成路径中相邻的点的对。
+        # 然后，计算每对相邻点之间的距离，通过计算每个对中两个点之间的欧氏距离。
+        # 最后，将这些距离组合成一个NumPy数组，并返回该数组作为路径长度。
+        # """
+        # pairs = cls.grouping(position, 2)
+        # return np.linalg.norm(pairs[:,0,:] - pairs[:,1,:], axis=1)
+        # 取出所有点的x和y坐标
+        # x, y = position[:, 0], position[:, 1]
+        # 计算相邻点之间的欧几里得距离（忽略theta）
+        # deltas = np.diff(position, axis=0)
+        # distances = np.sqrt(deltas[:, 0]**2 + deltas[:, 1]**2)
+        # # 将第一点的距离加到结果数组中
+        # path_lengths = np.concatenate(([0], np.cumsum(distances)))
+        # return path_lengths
+        # 计算相邻点之间的差异 
+        diff = np.diff(position[:, :2], axis=0) 
+        # 计算欧几里得距离 
+        path_lengths = np.sqrt(np.sum(diff**2, axis=1))
+        return path_lengths
 
     @classmethod
     def curvature(cls, position: np.ndarray) -> typing.Tuple[np.ndarray, np.ndarray]:
@@ -246,12 +260,16 @@ class Metrics:
         print(f"Max episode: {max_episode}")
 
         i = 0
+        j = 0
 
         episode_data = self._episode_data = {}
 
         while True:
             if i > max_episode:
                 print(f"Finished analyzing {max_episode} episodes")
+                break
+            if j > 499:
+                print(f"Finished analyzing 499 episodes")
                 break
 
             print(f"Analyzing episode {i}")
@@ -268,6 +286,7 @@ class Metrics:
             
             episode_data[i] = self._analyze_episode(current_episode, i)
             i = i + 1
+            j = j + 1
 
     @property
     def data(self) -> pd.DataFrame:
@@ -287,6 +306,8 @@ class Metrics:
         roughness = Math.roughness(positions)
 
         vel_absolute = np.linalg.norm(velocities, axis=1)
+        # vel_mean
+        vel_mean = np.mean(vel_absolute)
         acceleration = Math.acceleration(vel_absolute)  # 计算出加速度大小
         jerk = Math.jerk(vel_absolute)
 
@@ -322,6 +343,7 @@ class Metrics:
             acceleration = Math.round_values(acceleration),
             jerk = Math.round_values(jerk),
             velocity = Math.round_values(vel_absolute),
+            vel_mean = vel_mean,
 
             # collision_amount 是碰撞次数，collisions 是碰撞的时间点index
             collision_amount = collision_amount,
@@ -389,7 +411,7 @@ class Metrics:
         return collisions
 
     def _get_success(self, time, collisions, positions, goal_position):
-        if np.linalg.norm(positions[-1] - goal_position) < 1.0:
+        if np.linalg.norm(positions[-1] - goal_position) < 0.8:
             return DoneReason.GOAL_REACHED
         
         if time >= Config.TIMEOUT_TRESHOLD:

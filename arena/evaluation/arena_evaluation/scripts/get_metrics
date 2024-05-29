@@ -6,7 +6,7 @@ import arena_evaluation.metrics as Metrics
 import time
 
 # python your_script.py your_directory --pedsim
-# rosrun arena_evaluation get_metrics /home/dmz/arena_ws/src/arena/evaluation/arena_evaluation/data/24-05-13_10-27-43/burger/
+# rosrun arena_evaluation get_metrics /media/lwf/Bak_U/arena_backup/eval_data/240529/s10d10_convex/burger
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("dir") #表示用户需要指定的数据目录
