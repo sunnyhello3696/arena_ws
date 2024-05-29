@@ -27,7 +27,6 @@ class DoneReason(str, enum.Enum):
     TIMEOUT = "TIMEOUT"
     GOAL_REACHED = "GOAL_REACHED"
     COLLISION = "COLLISION"
-    UNKNOWN = "UNKNOWN"
 
 
 class Metric(typing.TypedDict):
@@ -50,6 +49,7 @@ class Metric(typing.TypedDict):
     velocity: typing.List
     acceleration: typing.List
     jerk: typing.List
+    vel_mean: float
     
     collision_amount: int
     collisions: typing.List
@@ -80,11 +80,13 @@ class Config:
     PERSONAL_SPACE_RADIUS = 1 # personal space is estimated at around 1'-4'
     ROBOT_GAZE_ANGLE = np.radians(5) # size of (one half of) direct robot gaze cone
     PEDESTRIAN_GAZE_ANGLE = np.radians(5) # size of (one half of) direct ped gaze cone
-
+    # 表示机器人或行人注视方向的角度范围
+    # np.radians() 是 NumPy 库中的一个函数，用于将角度值转化为弧度值
 class Math:
 
     @classmethod
     def round_values(cls, values, digits=3):
+        # 保留有效数字
         return [round(v, digits) for v in values]
 
     @classmethod
@@ -232,9 +234,15 @@ class Metrics:
         self.dir = dir
         # self.robot_params = self._get_robot_params()
 
+        """
+        # 首先，使用pd.concat()方法将多个数据文件中的数据合并成一个DataFrame对象，并使用join="inner"参数保留所有数据共同存在的行。
+        # 然后，使用.loc[]方法和~data.columns.duplicated()表达式来去除DataFrame对象中所有重复的列，以确保每个列名都只对应唯一的一列数据。
+        # 最后，使用.copy()方法生成一个新的DataFrame对象data，以确保对原始数据没有影响。
+        # 在得到干净完整的DataFrame对象data之后，可以通过data["episode"].max()方法获取DataFrame中"episode"列的最大值，即所有记录中episode值的最大值。
+        # 这个值可以被用于计算指标或控制程序流程，例如统计模拟的总次数、按episode划分样本等等。
+        """
         data = pd.concat(self._load_data(), axis=1, join="inner")
         data = data.loc[:,~data.columns.duplicated()].copy()
-
         max_episode = data["episode"].max()
         print(f"Max episode: {max_episode}")
 
@@ -248,7 +256,7 @@ class Metrics:
                 break
 
             print(f"Analyzing episode {i}")
-            current_episode = data[data["episode"] == i]
+            current_episode = data[data["episode"] == i]  # 将data赋值给current_episode
             
             # check current_episode's data items length
             if len(current_episode) < Config.MIN_EPISODE_LENGTH:
@@ -271,16 +279,18 @@ class Metrics:
 
         # 将纳秒转换为秒
         # episode["time"] /= 10**10
-        episode.loc[:, "time"] /= 10**10
+        episode.loc[:, "time"] /= 10**10  # ".loc[:, "time"]"表示选取所有行和名为"time"的列
         
         positions = np.array([frame["position"] for frame in episode["odom"]])
         velocities = np.array([frame["velocity"] for frame in episode["odom"]])
 
-        curvature, normalized_curvature = Math.curvature(positions)
+        curvature, normalized_curvature = Math.curvature(positions)  # 曲率和归一化曲率
         roughness = Math.roughness(positions)
 
         vel_absolute = np.linalg.norm(velocities, axis=1)
-        acceleration = Math.acceleration(vel_absolute)
+        # vel_mean
+        vel_mean = np.mean(vel_absolute)
+        acceleration = Math.acceleration(vel_absolute)  # 计算出加速度大小
         jerk = Math.jerk(vel_absolute)
 
         collisions, collision_amount = self._get_collisions(
@@ -315,6 +325,7 @@ class Metrics:
             acceleration = Math.round_values(acceleration),
             jerk = Math.round_values(jerk),
             velocity = Math.round_values(vel_absolute),
+            vel_mean = vel_mean,
 
             # collision_amount 是碰撞次数，collisions 是碰撞的时间点index
             collision_amount = collision_amount,
@@ -382,8 +393,7 @@ class Metrics:
         return collisions
 
     def _get_success(self, time, collisions, positions, goal_position):
-        # if last position distance to goal is less than 0.8m
-        if np.linalg.norm(positions[-1] - goal_position) < 1.0:
+        if np.linalg.norm(positions[-1] - goal_position) < 0.8:
             return DoneReason.GOAL_REACHED
         
         if time >= Config.TIMEOUT_TRESHOLD:
