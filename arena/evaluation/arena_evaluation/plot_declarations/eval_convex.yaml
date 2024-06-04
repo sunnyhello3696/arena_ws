@@ -7,7 +7,8 @@ save_location: convex_eval_plots
 # Name of the directory in ./data
 datasets:
   [
-    "24-05-16_09-21-52/burger",
+    "s10d10_rlca/burger",
+    "s10d10_convex/burger",
   ]
 
 # Wether you want to plot the result counts

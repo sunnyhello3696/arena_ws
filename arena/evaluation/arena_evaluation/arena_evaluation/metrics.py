@@ -75,7 +75,7 @@ class PedsimMetric(Metric, typing.TypedDict):
 class Config:
     TIMEOUT_TRESHOLD = 75
     MAX_COLLISIONS = 1
-    MIN_EPISODE_LENGTH = 5
+    MIN_EPISODE_LENGTH = 8
     
     PERSONAL_SPACE_RADIUS = 1 # personal space is estimated at around 1'-4'
     ROBOT_GAZE_ANGLE = np.radians(5) # size of (one half of) direct robot gaze cone
@@ -306,7 +306,7 @@ class Metrics:
         mean_vel = round(np.mean(self.vel_array), 2)
         mean_path_length = round(np.mean(self.path_length_array), 2)
         mean_time = round(np.mean(self.time_array), 2)
-        success_rate = round(self.sucucess_num / len(self._episode_data), 2)
+        success_rate = round(self.sucucess_num / len(self._episode_data), 4)
 
         print("mean vel: ", mean_vel)
         print("mean path length: ", mean_path_length)
