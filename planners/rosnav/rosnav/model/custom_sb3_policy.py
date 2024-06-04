@@ -24,6 +24,7 @@ from rosnav.model.feature_extractors.convex import (
     ConvexExtractor_2d_cgd,
     ConvexExtractor_2d_with_ActPts,
     ConvexExtractor_2d_with_ActPts_2,
+    ConvexExtractor_2d_with_ActPts_3,
     ConvexExtractor_2d_with_ActPts_with_ConvexQueue,
 )
 
@@ -666,6 +667,29 @@ class AGENT_100(BaseAgent):
     features_extractor_class = RESNET_COVEXMAP_EXTRACTOR_1
     features_extractor_kwargs = {"features_dim": 256}
     net_arch = dict(pi=[256, 64], vf=[256, 64])
+    activation_fn = nn.ReLU
+
+@AgentFactory.register("AGENT_101")
+class AGENT_101(BaseAgent):
+    type = PolicyType.CNN
+    space_encoder_class = ConvexMPCEncoder
+
+    # 注意顺序
+    observation_spaces = [
+        SPACE_INDEX.CONVEX,
+        # SPACE_INDEX.LASER,
+        SPACE_INDEX.GOAL,
+        SPACE_INDEX.LAST_ACTION,
+        SPACE_INDEX.LAST_ACTION_POINTS,
+    ]
+    observation_space_kwargs = {
+        "convex_map_size": 128,
+        "normalize": False,
+        "norm_func": "max_abs_scaling",
+    }
+    features_extractor_class = ConvexExtractor_2d_with_ActPts_3
+    features_extractor_kwargs = {"features_dim": 256}
+    net_arch = dict(pi=[128, 128, 64], vf=[128, 128, 64])
     activation_fn = nn.ReLU
 
 @AgentFactory.register("BarnResNet")
