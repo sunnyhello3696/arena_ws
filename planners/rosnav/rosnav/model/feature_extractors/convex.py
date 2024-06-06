@@ -788,3 +788,56 @@ class ConvexExtractor_2d_with_ActPts_4(ConvexExtractor_2d_with_ActPts):
             ), 
             nn.ReLU(),
         )
+
+
+class ConvexExtractor_2d_with_ActPts_5(ConvexExtractor_2d_with_ActPts):
+
+    def __init__(
+        self,
+        observation_space: gym.spaces.Box,
+        observation_space_manager: ObservationSpaceManager,
+        features_dim: int = 256,
+        stacked_obs: bool = False,
+        *args,
+        **kwargs
+    ) -> None:
+        
+        # init father class
+        super(ConvexExtractor_2d_with_ActPts_5,self).__init__(
+            observation_space=observation_space,
+            observation_space_manager=observation_space_manager,
+            features_dim=features_dim,
+            stacked_obs=stacked_obs,
+        )
+
+    def _setup_network(self):
+        # self.cnn = nn.Sequential(
+        #     nn.Conv1d(self._num_stacks, 32, 5, 2),
+        #     nn.ReLU(),
+        #     nn.Flatten(),
+        # )
+        self.cnn = nn.Sequential(
+            nn.Conv2d(self._num_stacks, 32, kernel_size=7, stride=3, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
+
+        # Compute shape by doing one forward pass
+        with th.no_grad():
+            # desired_shape = (1, self._num_stacks, self._convex_map_size)
+            desired_shape = (1, self._num_stacks, self.convex_map_side, self.convex_map_side)
+            tensor_forward = th.randn(desired_shape)
+            n_flatten = self.cnn(tensor_forward).shape[-1]
+
+        self.fc = nn.Sequential(
+            nn.Linear(
+                n_flatten
+                + (self._goal_size + self._last_action_size + self._last_action_points_size) * self._num_stacks,
+                self._features_dim,
+            ), 
+            nn.ReLU(),
+        )
